@@ -98,9 +98,9 @@ class PantristAPI:
 
     # --- Shopping Cart ---
 
-    def get_shopping_cart(self) -> dict:
-        """Returns ItemListDto for the current user's shopping cart."""
-        return self._get("/shopping-cart")
+    def get_shopping_cart(self, list_id: str) -> list[dict]:
+        """Returns ShoppingCartItemDto[] for the given list."""
+        return self._get(f"/list/{list_id}/shoppingCart")
 
     # --- Barcodes ---
 
@@ -121,11 +121,11 @@ class PantristAPI:
         return self.add_to_shopping_list_by_name(barcode_data["name"])
 
     def add_to_pantry_by_name(
-        self, name: str, amount: float = 1, unit_id: str = "pieces"
+        self, list_id: str, name: str, amount: float = 1, unit_id: str = "pieces"
     ) -> dict:
-        """Adds an item to the current pantry by name. Returns ArticleDto."""
+        """Adds an item to the pantry by name. Returns ArticleDto."""
         return self._post(
-            "/pantry-list/add-by-name",
+            f"/list/{list_id}/pantryList/add-by-name",
             {"name": name, "amount": amount, "unitId": unit_id},
         )
 

@@ -97,15 +97,24 @@ def build_pantry_state(data: dict) -> tuple[str, dict]:
     }
 
 
-def build_shopping_cart_state(data: dict) -> tuple[str, dict]:
-    """Convert ItemListDto to (state, attributes) for sensor.pantrist_shopping_cart."""
-    items = data.get("items", [])
-    return str(len(items)), {
+def build_shopping_cart_state(items: list[dict]) -> tuple[str, dict]:
+    """Convert ShoppingCartItemDto[] to (state, attributes) for sensor.pantrist_shopping_cart.
+
+    Each ShoppingCartItemDto has shape: { uuid, article: ArticleDto, movedAt: number }.
+    """
+    formatted = [
+        {
+            "cart_uuid": i.get("uuid"),
+            "moved_at": i.get("movedAt"),
+            **_format_item(i.get("article") or {}),
+        }
+        for i in items
+    ]
+    return str(len(formatted)), {
         "friendly_name": "Pantrist Shopping Cart",
         "icon": "mdi:cart-check",
         "unit_of_measurement": "items",
-        "list_id": data.get("listId"),
-        "items": [_format_item(i) for i in items],
+        "items": formatted,
     }
 
 

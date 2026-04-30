@@ -81,6 +81,7 @@ def _send_json(request: BaseHTTPRequestHandler, status: int, body: dict) -> None
 
 class _ServiceHandler(BaseHTTPRequestHandler):
     api: PantristAPI
+    current_ids: dict  # {"shopping": str, "pantry": str}
 
     def do_GET(self) -> None:  # noqa: N802
         if self.path == "/health":
@@ -109,7 +110,9 @@ class _ServiceHandler(BaseHTTPRequestHandler):
             return self.api.add_to_shopping_list_by_barcode(body["barcode"])
 
         if path == "/services/add_to_pantry":
+            list_id = body.get("list_id") or self.current_ids.get("pantry", "")
             return self.api.add_to_pantry_by_name(
+                list_id,
                 body["name"],
                 float(body.get("amount", 1)),
                 body.get("unit_id", "pieces"),
@@ -142,11 +145,12 @@ class _ServiceHandler(BaseHTTPRequestHandler):
         logger.debug("HTTP %s", fmt % args)
 
 
-def make_handler_factory(api: PantristAPI):
+def make_handler_factory(api: PantristAPI, current_ids: dict):
     class BoundHandler(_ServiceHandler):
         pass
 
     BoundHandler.api = api
+    BoundHandler.current_ids = current_ids
     return BoundHandler
 
 
@@ -211,9 +215,9 @@ def main() -> None:
         ha.set_state("sensor.pantrist_expiring_soon", es, ea)
         return a.get("list_id", ""), s, a
 
-    def _fetch_cart(list_id: str | None = None) -> tuple[str, dict]:
-        data = api.get_shopping_cart()
-        s, a = build_shopping_cart_state(data)
+    def _fetch_cart(list_id: str) -> tuple[str, dict]:
+        items = api.get_shopping_cart(list_id)
+        s, a = build_shopping_cart_state(items)
         ha.set_state("sensor.pantrist_shopping_cart", s, a)
         return s, a
 
@@ -232,7 +236,7 @@ def main() -> None:
         pantry_list_id = ""
 
     try:
-        s, _ = _fetch_cart()
+        s, _ = _fetch_cart(shopping_list_id)
         logger.info("Initial shopping cart: %s items", s)
     except Exception:
         logger.exception("Failed to fetch initial shopping cart")
@@ -260,9 +264,9 @@ def main() -> None:
         except Exception:
             logger.exception("Failed to refresh pantry %s", list_id)
 
-    def on_cart_updated(_list_id: str) -> None:
+    def on_cart_updated(list_id: str) -> None:
         try:
-            s, _ = _fetch_cart()
+            s, _ = _fetch_cart(list_id)
             logger.info("Shopping cart updated: %s items", s)
         except Exception:
             logger.exception("Failed to refresh shopping cart")
@@ -317,7 +321,7 @@ def main() -> None:
     # ------------------------------------------------------------------
     # HTTP server for mutating service calls
     # ------------------------------------------------------------------
-    server = HTTPServer(("0.0.0.0", SERVICE_PORT), make_handler_factory(api))
+    server = HTTPServer(("0.0.0.0", SERVICE_PORT), make_handler_factory(api, current_ids))
     server_thread = threading.Thread(target=server.serve_forever, daemon=True)
     server_thread.start()
     logger.info("Service server listening on port %d", SERVICE_PORT)
