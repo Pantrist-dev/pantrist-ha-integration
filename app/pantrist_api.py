@@ -1,9 +1,39 @@
-"""Pantrist API client based on the OpenAPI specification."""
+"""Pantrist API client — thin wrapper around the generated pantrist_client package.
+
+Regenerate the underlying client whenever the API changes:
+    python scripts/generate_openapi_client.py --python-only
+
+The generated package lives at:
+    homeassistant-addon/pantrist/app/pantrist_client/
+
+This wrapper keeps the rest of the addon decoupled from the generated naming
+conventions (e.g. shopping_list_controller_get_items → get_shopping_list).
+"""
+
+from __future__ import annotations
 
 import logging
 from typing import Any
 
-import httpx
+from pantrist_client import AuthenticatedClient
+from pantrist_client.api.barcode import barcode_controller_find_one
+from pantrist_client.api.list import list_controller_get_list
+from pantrist_client.api.pantry_list import (
+    pantry_list_controller_change_amount_of_item,
+    pantry_list_controller_delete_item_of_list,
+    pantry_list_controller_get_items as pantry_get_current,
+    pantry_list_controller_get_locations_by_list_id as pantry_get_by_id,
+)
+from pantrist_client.api.pantry_list_items import pantry_list_items_controller_add_by_name
+from pantrist_client.api.shopping_cart import shopping_cart_items_controller_get_items
+from pantrist_client.api.shopping_list import (
+    shopping_list_controller_add,
+    shopping_list_controller_check,
+    shopping_list_controller_delete_item_of_list,
+    shopping_list_controller_get_items as shopping_get_current,
+    shopping_list_controller_get_locations_by_list_id as shopping_get_by_id,
+)
+from pantrist_client.models import AddByNameDto, ChangeAmountOfItemDto
 
 logger = logging.getLogger(__name__)
 
@@ -15,125 +45,94 @@ class PantristAPIError(Exception):
 
 
 class PantristAPI:
-    def __init__(self, token: str):
-        self._headers = {
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json",
-        }
-        self._client = httpx.Client(headers=self._headers, timeout=30)
+    def __init__(self, token: str) -> None:
+        self._client = AuthenticatedClient(base_url=BASE_URL, token=token)
 
     def update_token(self, token: str) -> None:
-        """Update the bearer token for all subsequent requests."""
-        self._client.headers.update({"Authorization": f"Bearer {token}"})
-
-    def _get(self, path: str) -> Any:
-        response = self._client.get(f"{BASE_URL}{path}")
-        response.raise_for_status()
-        return response.json()
-
-    def _post(self, path: str, body: dict | None = None) -> Any:
-        response = self._client.post(f"{BASE_URL}{path}", json=body or {})
-        response.raise_for_status()
-        return response.json() if response.content else None
-
-    def _put(self, path: str, body: dict) -> Any:
-        response = self._client.put(f"{BASE_URL}{path}", json=body)
-        response.raise_for_status()
-        return response.json() if response.content else None
-
-    def _delete(self, path: str) -> None:
-        response = self._client.delete(f"{BASE_URL}{path}")
-        response.raise_for_status()
+        """Swap in a new bearer token (called after OAuth refresh)."""
+        self._client = AuthenticatedClient(base_url=BASE_URL, token=token)
 
     # --- Lists ---
 
-    def get_lists(self) -> list[dict]:
-        """Returns all lists the authenticated user has access to."""
-        return self._get("/list")
+    def get_lists(self) -> list[Any]:
+        return list_controller_get_list.sync(client=self._client) or []
 
-    # --- Shopping List ---
+    # --- Shopping list ---
 
-    def get_current_shopping_list(self) -> dict:
-        """Returns ItemListDto for the current shopping list."""
-        return self._get("/shopping-list/current-list")
+    def get_current_shopping_list(self) -> Any:
+        return shopping_get_current.sync(client=self._client)
 
-    def get_shopping_list(self, list_id: str) -> dict:
-        """Returns ItemListDto for a specific shopping list."""
-        return self._get(f"/shopping-list/{list_id}")
+    def get_shopping_list(self, list_id: str) -> Any:
+        return shopping_get_by_id.sync(list_id=list_id, client=self._client)
 
-    def add_to_shopping_list_by_name(self, name: str) -> dict:
-        """Adds an item to the current shopping list by name. Returns ArticleDto."""
-        return self._post("/shopping-list/add-by-name", {"name": name})
+    def add_to_shopping_list_by_name(self, name: str) -> Any:
+        return shopping_list_controller_add.sync(
+            client=self._client, body=AddByNameDto(name=name)
+        )
 
     def check_shopping_list_item(self, item_id: str) -> None:
-        """Checks off an item in the shopping list (marks as bought)."""
-        self._post(f"/shopping-list/{item_id}/check")
+        shopping_list_controller_check.sync(id=item_id, client=self._client)
 
     def delete_shopping_list_item(self, list_id: str, item_id: str) -> None:
-        """Removes an item from the shopping list."""
-        self._delete(f"/shopping-list/{list_id}/{item_id}")
+        shopping_list_controller_delete_item_of_list.sync(
+            list_id=list_id, item_id=item_id, client=self._client
+        )
 
-    # --- Pantry List ---
+    # --- Pantry list ---
 
-    def get_current_pantry_list(self) -> dict:
-        """Returns ItemListDto for the current pantry list."""
-        return self._get("/pantry-list/current-list")
+    def get_current_pantry_list(self) -> Any:
+        return pantry_get_current.sync(client=self._client)
 
-    def get_pantry_list(self, list_id: str) -> dict:
-        """Returns ItemListDto for a specific pantry list."""
-        return self._get(f"/pantry-list/{list_id}")
+    def get_pantry_list(self, list_id: str) -> Any:
+        return pantry_get_by_id.sync(list_id=list_id, client=self._client)
 
     def delete_pantry_item(self, list_id: str, item_id: str) -> None:
-        """Removes an item from the pantry list."""
-        self._delete(f"/pantry-list/{list_id}/{item_id}")
+        pantry_list_controller_delete_item_of_list.sync(
+            list_id=list_id, item_id=item_id, client=self._client
+        )
 
     def change_pantry_item_amount(
         self, list_id: str, item_id: str, change: float, unit_id: str
-    ) -> dict:
-        """Changes the amount of a pantry item by the given delta. Returns ItemDto."""
-        return self._put(
-            f"/pantry-list/change-amount/{list_id}/{item_id}",
-            {"change": change, "unitId": unit_id},
+    ) -> Any:
+        return pantry_list_controller_change_amount_of_item.sync(
+            list_id=list_id,
+            item_id=item_id,
+            body=ChangeAmountOfItemDto(change=change, unit_id=unit_id),
+            client=self._client,
         )
 
-    # --- Shopping Cart ---
+    # --- Shopping cart ---
 
-    def get_shopping_cart(self, list_id: str) -> list[dict]:
-        """Returns ShoppingCartItemDto[] for the given list."""
-        return self._get(f"/list/{list_id}/shoppingCart")
+    def get_shopping_cart(self, list_id: str) -> list[Any]:
+        return shopping_cart_items_controller_get_items.sync(
+            list_id=list_id, client=self._client
+        ) or []
 
-    # --- Barcodes ---
-
-    def lookup_barcode(self, barcode: str) -> dict | None:
-        """Returns BarcodeDto for the given barcode, or None if not found."""
-        try:
-            return self._get(f"/barcodes/{barcode}")
-        except httpx.HTTPStatusError as exc:
-            if exc.response.status_code == 404:
-                return None
-            raise
-
-    def add_to_shopping_list_by_barcode(self, barcode: str) -> dict:
-        """Looks up a barcode and adds the matching article to the shopping list."""
-        barcode_data = self.lookup_barcode(barcode)
-        if barcode_data is None:
-            raise PantristAPIError(f"Barcode not found: {barcode}")
-        return self.add_to_shopping_list_by_name(barcode_data["name"])
+    # --- Pantry add-by-name (new list-scoped route) ---
 
     def add_to_pantry_by_name(
         self, list_id: str, name: str, amount: float = 1, unit_id: str = "pieces"
-    ) -> dict:
-        """Adds an item to the pantry by name. Returns ArticleDto."""
-        return self._post(
-            f"/list/{list_id}/pantryList/add-by-name",
-            {"name": name, "amount": amount, "unitId": unit_id},
+    ) -> Any:
+        return pantry_list_items_controller_add_by_name.sync(
+            list_id=list_id,
+            body=AddByNameDto(name=name, amount=amount, unit_id=unit_id),
+            client=self._client,
         )
 
-    # --- Storage Locations ---
+    # --- Barcodes ---
 
-    def get_current_storage_locations(self) -> list[dict]:
-        """Returns all storage locations for the current list."""
-        return self._get("/storage-location/current-list")
+    def lookup_barcode(self, barcode: str) -> Any | None:
+        try:
+            return barcode_controller_find_one.sync(barcode=barcode, client=self._client)
+        except Exception:
+            return None
+
+    def add_to_shopping_list_by_barcode(self, barcode: str) -> Any:
+        result = self.lookup_barcode(barcode)
+        if result is None:
+            raise PantristAPIError(f"Barcode not found: {barcode}")
+        return self.add_to_shopping_list_by_name(result.name)
 
     def close(self) -> None:
-        self._client.close()
+        # AuthenticatedClient manages its own httpx session; nothing to close explicitly.
+        pass
