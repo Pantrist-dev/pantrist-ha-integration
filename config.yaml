@@ -4,6 +4,8 @@ version: "1.0.0"
 slug: pantrist
 url: https://github.com/nlueg/pantrist
 init: false
+ingress: true
+ingress_port: 8100
 arch:
   - aarch64
   - amd64
@@ -11,18 +13,17 @@ arch:
   - armv7
   - i386
 homeassistant_api: true
+hassio_api: true
 options:
-  api_token: ""
-  refresh_token: ""
   socket_url: "https://api.pantrist.app"
   expiry_warning_days: 7
+  custom_ha_url: ""
 schema:
-  api_token: str?
-  refresh_token: str?
   socket_url: str
   expiry_warning_days: int
+  custom_ha_url: str?
 ports:
-  8099/tcp: null
+  8099/tcp: 8099
 ports_description:
   8099/tcp: Pantrist service API (used by HA rest_command integration)
 map:
