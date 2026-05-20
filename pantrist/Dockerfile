@@ -3,8 +3,6 @@ FROM $BUILD_FROM
 
 ENV LANG C.UTF-8
 
-RUN apk add --no-cache python3 py3-pip
-
 WORKDIR /app
 
 COPY requirements.txt .
