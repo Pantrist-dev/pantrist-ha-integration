@@ -1,6 +1,6 @@
 pytest==8.3.5
 pytest-asyncio==0.24.0
-respx==0.21.1
+respx==0.23.1
 aiohttp==3.11.10
 jinja2==3.1.4
 aiohttp-jinja2==1.6
