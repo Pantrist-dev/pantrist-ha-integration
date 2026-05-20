@@ -1,46 +1,34 @@
 """
-Pantrist Home Assistant Addon
+Pantrist Home Assistant Add-on — entrypoint.
 
-Connects to the Pantrist Socket.IO server for real-time updates and pushes
-them into HA as sensor states. Also runs a local HTTP server so HA can call
-mutating Pantrist actions via rest_command.
+Two-phase bootstrap:
+  1. Always-on web servers (ingress UI + rest_command service).
+  2. Data pipeline (PantristSession) starts only when /data/credentials.json exists.
 
-Sensor entities:
-  sensor.pantrist_shopping_list  – item count + items attribute
-  sensor.pantrist_pantry         – item count + items / low_stock attributes
-  sensor.pantrist_expiring_soon  – count of items expiring within warning window
-  sensor.pantrist_shopping_cart  – items in the intermediate shopping cart
-
-HTTP service endpoints (POST, JSON body):
-  /services/add_to_shopping_list             { "name": "Milk" }
-  /services/add_to_shopping_list_by_barcode  { "barcode": "4006381333931" }
-  /services/add_to_pantry                    { "name": "Milk", "amount": 2,
-                                               "unit_id": "pieces" }
-  /services/check_shopping_list_item         { "item_id": "<uuid>" }
-  /services/delete_shopping_list_item        { "list_id": "<id>", "item_id": "<uuid>" }
-  /services/delete_pantry_item               { "list_id": "<id>", "item_id": "<uuid>" }
-  /services/change_pantry_item_amount        { "list_id": "<id>", "item_id": "<uuid>",
-                                               "change": -1, "unit_id": "pieces" }
-  /health                                    (GET) {"status":"ok"}
+The user runs through an OAuth flow via the ingress UI to populate credentials;
+on token-refresh failure or user disconnect, the data pipeline stops while the
+web UI stays up so the user can reconnect.
 """
 
+from __future__ import annotations
+
+import asyncio
 import json
 import logging
 import signal
 import sys
-import threading
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from dataclasses import dataclass, field
+from typing import Optional
 
-from ha_integration import (
-    HAClient,
-    build_expiring_soon_state,
-    build_pantry_state,
-    build_shopping_cart_state,
-    build_shopping_list_state,
-)
-from pantrist_api import PantristAPI
-from socketio_listener import PantristSocketIOListener
-from token_manager import TokenManager
+from aiohttp import web
+
+import credentials as creds_store
+from credentials import Credentials
+from ha_integration import HAClient
+from ingress_server import make_ingress_app
+from oauth_flow import OAuthFlow
+from pantrist_session import PantristSession
+from service_server import make_service_app
 
 logging.basicConfig(
     level=logging.INFO,
@@ -50,8 +38,58 @@ logging.basicConfig(
 logger = logging.getLogger("pantrist_addon")
 
 CONFIG_PATH = "/data/options.json"
+INGRESS_PORT = 8100
 SERVICE_PORT = 8099
-LIST_POLL_INTERVAL = 300  # seconds between active-list checks
+
+
+@dataclass
+class AddonState:
+    socket_url: str
+    expiry_warning_days: int
+    custom_ha_url: str
+    ha_client: HAClient
+    session: PantristSession
+    oauth_flow: OAuthFlow = field(default_factory=OAuthFlow)
+    _list_name_cache: dict = field(default_factory=dict)
+
+    def get_credentials(self) -> Optional[Credentials]:
+        return creds_store.load()
+
+    def save_credentials(self, c: Credentials) -> None:
+        creds_store.save(c)
+
+    def clear_credentials(self) -> None:
+        creds_store.clear()
+
+    def start_session(self, c: Credentials) -> None:
+        # Idempotent: stop a previous session first
+        self.session.stop()
+        self.session.start(c)
+        self._list_name_cache.clear()
+
+    def stop_session(self) -> None:
+        self.session.stop()
+
+    def get_list_name(self, list_id: str) -> Optional[str]:
+        if list_id in self._list_name_cache:
+            return self._list_name_cache[list_id]
+        if not self.session.is_running:
+            return None
+        api = getattr(self.session, "_api", None)
+        if api is None:
+            return None
+        try:
+            lists = api.get_lists() or []
+        except Exception:
+            logger.exception("get_lists failed")
+            return None
+        for li in lists:
+            lid = li.get("uuid") if isinstance(li, dict) else getattr(li, "uuid", None)
+            settings = li.get("settings", {}) if isinstance(li, dict) else getattr(li, "settings", {})
+            name = settings.get("name") if isinstance(settings, dict) else getattr(settings, "name", None)
+            if lid and name:
+                self._list_name_cache[lid] = name
+        return self._list_name_cache.get(list_id)
 
 
 def load_config() -> dict:
@@ -59,289 +97,74 @@ def load_config() -> dict:
         return json.load(fh)
 
 
-# ---------------------------------------------------------------------------
-# HTTP service server
-# ---------------------------------------------------------------------------
+async def main_async() -> None:
+    cfg = load_config()
+    socket_url = cfg["socket_url"]
+    expiry_warning_days = int(cfg.get("expiry_warning_days", 7))
+    custom_ha_url = (cfg.get("custom_ha_url") or "").strip()
 
+    ha_client = HAClient()
+    session = PantristSession(
+        socket_url=socket_url,
+        expiry_warning_days=expiry_warning_days,
+        ha_client=ha_client,
+    )
+    state = AddonState(
+        socket_url=socket_url,
+        expiry_warning_days=expiry_warning_days,
+        custom_ha_url=custom_ha_url,
+        ha_client=ha_client,
+        session=session,
+    )
 
-def _json_body(request: BaseHTTPRequestHandler) -> dict:
-    length = int(request.headers.get("Content-Length", 0))
-    raw = request.rfile.read(length) if length else b"{}"
-    return json.loads(raw)
+    # Phase 1: always-on servers
+    ingress_app = make_ingress_app(state)
+    service_app = make_service_app(api_provider=lambda: getattr(session, "_api", None))
 
+    ingress_runner = web.AppRunner(ingress_app)
+    await ingress_runner.setup()
+    await web.TCPSite(ingress_runner, "0.0.0.0", INGRESS_PORT).start()
+    logger.info("Ingress UI listening on port %d", INGRESS_PORT)
 
-def _send_json(request: BaseHTTPRequestHandler, status: int, body: dict) -> None:
-    data = json.dumps(body).encode()
-    request.send_response(status)
-    request.send_header("Content-Type", "application/json")
-    request.send_header("Content-Length", str(len(data)))
-    request.end_headers()
-    request.wfile.write(data)
+    service_runner = web.AppRunner(service_app)
+    await service_runner.setup()
+    await web.TCPSite(service_runner, "0.0.0.0", SERVICE_PORT).start()
+    logger.info("Service server listening on port %d", SERVICE_PORT)
 
-
-class _ServiceHandler(BaseHTTPRequestHandler):
-    api: PantristAPI
-    current_ids: dict  # {"shopping": str, "pantry": str}
-
-    def do_GET(self) -> None:  # noqa: N802
-        if self.path == "/health":
-            _send_json(self, 200, {"status": "ok"})
-        else:
-            _send_json(self, 404, {"error": "not found"})
-
-    def do_POST(self) -> None:  # noqa: N802
+    # Phase 2: start session if credentials already exist
+    existing = creds_store.load()
+    if existing:
+        logger.info("Resuming session from /data/credentials.json")
         try:
-            body = _json_body(self)
-            result = self._dispatch(body)
-            _send_json(self, 200, result if result is not None else {"success": True})
-        except KeyError as exc:
-            _send_json(self, 400, {"error": f"Missing field: {exc}"})
-        except Exception as exc:
-            logger.exception("Service call to %s failed", self.path)
-            _send_json(self, 500, {"error": str(exc)})
+            state.start_session(existing)
+        except Exception:
+            logger.exception("Failed to resume session from existing credentials")
+    else:
+        logger.info("No credentials yet — waiting for OAuth flow via UI")
 
-    def _dispatch(self, body: dict) -> dict | None:
-        path = self.path
+    stop_event = asyncio.Event()
+    loop = asyncio.get_running_loop()
 
-        if path == "/services/add_to_shopping_list":
-            return self.api.add_to_shopping_list_by_name(body["name"])
+    def _signal_handler():
+        logger.info("Shutting down…")
+        stop_event.set()
 
-        if path == "/services/add_to_shopping_list_by_barcode":
-            return self.api.add_to_shopping_list_by_barcode(body["barcode"])
+    for sig in (signal.SIGTERM, signal.SIGINT):
+        loop.add_signal_handler(sig, _signal_handler)
 
-        if path == "/services/add_to_pantry":
-            list_id = body.get("list_id") or self.current_ids.get("pantry", "")
-            return self.api.add_to_pantry_by_name(
-                list_id,
-                body["name"],
-                float(body.get("amount", 1)),
-                body.get("unit_id", "pieces"),
-            )
-
-        if path == "/services/check_shopping_list_item":
-            self.api.check_shopping_list_item(body["item_id"])
-            return None
-
-        if path == "/services/delete_shopping_list_item":
-            self.api.delete_shopping_list_item(body["list_id"], body["item_id"])
-            return None
-
-        if path == "/services/delete_pantry_item":
-            self.api.delete_pantry_item(body["list_id"], body["item_id"])
-            return None
-
-        if path == "/services/change_pantry_item_amount":
-            return self.api.change_pantry_item_amount(
-                body["list_id"],
-                body["item_id"],
-                float(body["change"]),
-                body["unit_id"],
-            )
-
-        _send_json(self, 404, {"error": "unknown service endpoint"})
-        return None
-
-    def log_message(self, fmt: str, *args) -> None:  # noqa: D401
-        logger.debug("HTTP %s", fmt % args)
-
-
-def make_handler_factory(api: PantristAPI, current_ids: dict):
-    class BoundHandler(_ServiceHandler):
-        pass
-
-    BoundHandler.api = api
-    BoundHandler.current_ids = current_ids
-    return BoundHandler
-
-
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
+    try:
+        await stop_event.wait()
+    finally:
+        session.stop()
+        await ingress_runner.cleanup()
+        await service_runner.cleanup()
 
 
 def main() -> None:
-    config = load_config()
-    api_token: str = (config.get("api_token") or "").strip()
-    refresh_token: str = (config.get("refresh_token") or "").strip()
-    socket_url: str = config["socket_url"]
-    expiry_warning_days: int = int(config.get("expiry_warning_days", 7))
-
-    if not api_token and not refresh_token:
-        logger.error("Either api_token or refresh_token must be configured.")
-        sys.exit(1)
-    if not socket_url:
-        logger.error("socket_url is not configured.")
-        sys.exit(1)
-
-    # ------------------------------------------------------------------
-    # Auth: use OAuth refresh flow when refresh_token is provided,
-    # otherwise fall back to a static Firebase ID token.
-    # ------------------------------------------------------------------
-    token_manager: TokenManager | None = None
-
-    if refresh_token:
-        token_manager = TokenManager(
-            refresh_token=refresh_token,
-            on_token_updated=lambda t: None,  # callbacks wired below after objects exist
-        )
-        logger.info("Starting with OAuth refresh token — performing initial refresh…")
-        token_manager.start()
-        active_token = token_manager.access_token
-        logger.info("Initial access token obtained.")
-    else:
-        logger.warning(
-            "Using static api_token — it expires in ~1 hour. "
-            "Configure refresh_token for automatic renewal."
-        )
-        active_token = api_token
-
-    api = PantristAPI(active_token)
-    ha = HAClient()
-
-    # ------------------------------------------------------------------
-    # Initial data fetch — populate all sensors and capture list IDs
-    # ------------------------------------------------------------------
-    def _fetch_shopping(list_id: str | None = None) -> tuple[str, str, dict]:
-        data = api.get_shopping_list(list_id) if list_id else api.get_current_shopping_list()
-        s, a = build_shopping_list_state(data)
-        ha.set_state("sensor.pantrist_shopping_list", s, a)
-        return a.get("list_id", ""), s, a
-
-    def _fetch_pantry(list_id: str | None = None) -> tuple[str, str, dict]:
-        data = api.get_pantry_list(list_id) if list_id else api.get_current_pantry_list()
-        s, a = build_pantry_state(data)
-        ha.set_state("sensor.pantrist_pantry", s, a)
-        es, ea = build_expiring_soon_state(data, expiry_warning_days)
-        ha.set_state("sensor.pantrist_expiring_soon", es, ea)
-        return a.get("list_id", ""), s, a
-
-    def _fetch_cart(list_id: str) -> tuple[str, dict]:
-        items = api.get_shopping_cart(list_id)
-        s, a = build_shopping_cart_state(items)
-        ha.set_state("sensor.pantrist_shopping_cart", s, a)
-        return s, a
-
     try:
-        shopping_list_id, s, _ = _fetch_shopping()
-        logger.info("Initial shopping list: %s items (id=%s)", s, shopping_list_id)
-    except Exception:
-        logger.exception("Failed to fetch initial shopping list")
-        shopping_list_id = ""
-
-    try:
-        pantry_list_id, s, _ = _fetch_pantry()
-        logger.info("Initial pantry: %s items (id=%s)", s, pantry_list_id)
-    except Exception:
-        logger.exception("Failed to fetch initial pantry list")
-        pantry_list_id = ""
-
-    try:
-        s, _ = _fetch_cart(shopping_list_id)
-        logger.info("Initial shopping cart: %s items", s)
-    except Exception:
-        logger.exception("Failed to fetch initial shopping cart")
-
-    # Track current list IDs so the poll thread can detect switches.
-    current_ids: dict[str, str] = {
-        "shopping": shopping_list_id,
-        "pantry": pantry_list_id,
-    }
-
-    # ------------------------------------------------------------------
-    # Socket.IO callbacks
-    # ------------------------------------------------------------------
-    def on_shopping_updated(list_id: str) -> None:
-        try:
-            _fetch_shopping(list_id)
-            logger.info("Shopping list updated")
-        except Exception:
-            logger.exception("Failed to refresh shopping list %s", list_id)
-
-    def on_pantry_updated(list_id: str) -> None:
-        try:
-            _, s, a = _fetch_pantry(list_id)
-            logger.info("Pantry updated: %s items (%s low stock)", s, a.get("low_stock_count"))
-        except Exception:
-            logger.exception("Failed to refresh pantry %s", list_id)
-
-    def on_cart_updated(list_id: str) -> None:
-        try:
-            s, _ = _fetch_cart(list_id)
-            logger.info("Shopping cart updated: %s items", s)
-        except Exception:
-            logger.exception("Failed to refresh shopping cart")
-
-    sio_listener = PantristSocketIOListener(
-        base_url=socket_url,
-        token=active_token,
-        shopping_list_id=shopping_list_id,
-        pantry_list_id=pantry_list_id,
-        on_shopping_updated=on_shopping_updated,
-        on_pantry_updated=on_pantry_updated,
-        on_shopping_cart_updated=on_cart_updated,
-    )
-    sio_listener.start()
-
-    # Wire token refresh into API + Socket.IO after both objects exist.
-    if token_manager is not None:
-        def _on_token_updated(new_token: str) -> None:
-            api.update_token(new_token)
-            sio_listener.update_token(new_token)
-
-        token_manager._on_token_updated = _on_token_updated  # noqa: SLF001
-
-    # ------------------------------------------------------------------
-    # List-switching poll — re-join rooms when the user switches lists
-    # ------------------------------------------------------------------
-    stop_poll = threading.Event()
-
-    def _list_poll() -> None:
-        while not stop_poll.wait(timeout=LIST_POLL_INTERVAL):
-            try:
-                new_shopping_id, _, _ = _fetch_shopping()
-                new_pantry_id, _, _ = _fetch_pantry()
-                if (
-                    new_shopping_id != current_ids["shopping"]
-                    or new_pantry_id != current_ids["pantry"]
-                ):
-                    logger.info(
-                        "Active list changed (shopping: %s→%s, pantry: %s→%s) — rejoining rooms",
-                        current_ids["shopping"], new_shopping_id,
-                        current_ids["pantry"], new_pantry_id,
-                    )
-                    current_ids["shopping"] = new_shopping_id
-                    current_ids["pantry"] = new_pantry_id
-                    sio_listener.update_list_ids(new_shopping_id, new_pantry_id)
-            except Exception:
-                logger.exception("List poll failed")
-
-    poll_thread = threading.Thread(target=_list_poll, daemon=True, name="pantrist-list-poll")
-    poll_thread.start()
-
-    # ------------------------------------------------------------------
-    # HTTP server for mutating service calls
-    # ------------------------------------------------------------------
-    server = HTTPServer(("0.0.0.0", SERVICE_PORT), make_handler_factory(api, current_ids))
-    server_thread = threading.Thread(target=server.serve_forever, daemon=True)
-    server_thread.start()
-    logger.info("Service server listening on port %d", SERVICE_PORT)
-
-    def _shutdown(sig, _frame) -> None:
-        logger.info("Shutting down (signal %s)…", sig)
-        stop_poll.set()
-        sio_listener.stop()
-        if token_manager is not None:
-            token_manager.stop()
-        server.shutdown()
-        api.close()
-        ha.close()
-        sys.exit(0)
-
-    signal.signal(signal.SIGTERM, _shutdown)
-    signal.signal(signal.SIGINT, _shutdown)
-
-    logger.info("Pantrist addon running (Socket.IO mode)")
-    signal.pause()
+        asyncio.run(main_async())
+    except KeyboardInterrupt:
+        pass
 
 
 if __name__ == "__main__":
