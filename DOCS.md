@@ -8,20 +8,23 @@ The addon connects to the Pantrist Socket.IO server at the `/lists` namespace. W
 
 ## Configuration
 
-| Option       | Type   | Required | Default                        | Description                              |
-|--------------|--------|----------|--------------------------------|------------------------------------------|
-| `api_token`  | string | yes      | –                              | Firebase ID token from your Pantrist account |
-| `socket_url` | string | yes      | `https://api.pantrist.app`     | Pantrist server base URL (used for both Socket.IO and determining the active list) |
+| Option              | Type   | Required | Default                    | Description                                                                                  |
+|---------------------|--------|----------|----------------------------|----------------------------------------------------------------------------------------------|
+| `socket_url`        | string | yes      | `https://api.pantrist.app` | Pantrist server base URL (used for both Socket.IO and REST).                                |
+| `expiry_warning_days`| int   | yes      | 7                          | How many days ahead the `sensor.pantrist_expiring_soon` should count items as "expiring".   |
+| `custom_ha_url`     | string | no       | `""`                       | Override the OAuth redirect base URL. Only needed if your HA is on a custom domain that isn't `homeassistant.local`, `*.ui.nabu.casa`, or a private IP. Example: `https://ha.example.com`. |
 
 The addon reconnects automatically with exponential back-off (2 s → 60 s) on any disconnect.
 
-## Getting your API token
+## Connecting your Pantrist account
 
-1. Open [app.pantrist.app](https://app.pantrist.app) and sign in.
-2. Open browser developer tools → **Application → Local Storage**.
-3. Find the key containing `idToken` and copy its value.
+1. Open the add-on UI in Home Assistant.
+2. Click **Connect Pantrist Account**.
+3. You'll be redirected to Pantrist, where you'll log in (if needed) and pick which list to expose to Home Assistant.
+4. After approving, you'll be redirected back to the add-on UI.
+5. The status page should now show **✓ Connected**.
 
-Firebase ID tokens expire after **1 hour**. When the token expires the Socket.IO connection will be rejected and the addon logs an authentication error. Update the token in the addon configuration to reconnect.
+The add-on auto-refreshes its access token every hour using a 30-day refresh token. If the refresh fails (e.g., you revoked the connection from your Pantrist account), Home Assistant will show a persistent notification asking you to reconnect.
 
 ## Entities created
 
