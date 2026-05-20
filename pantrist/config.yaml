@@ -2,7 +2,7 @@ name: Pantrist
 description: Integrates Pantrist shopping list and pantry manager with Home Assistant. Exposes shopping list and pantry items as sensors and provides services to add/check items.
 version: "1.0.0"
 slug: pantrist
-url: https://github.com/nlueg/pantrist
+url: https://github.com/Pantrist-dev/pantrist-ha-addon
 init: false
 ingress: true
 ingress_port: 8100
