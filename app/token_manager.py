@@ -6,6 +6,7 @@ Refresh tokens rotate on each use — the new token is persisted in memory.
 
 import logging
 import threading
+from typing import Callable
 
 import httpx
 
@@ -24,11 +25,18 @@ class TokenRefreshError(Exception):
 class TokenManager:
     """Fetches and auto-refreshes an OAuth access token using a refresh token."""
 
-    def __init__(self, refresh_token: str, on_token_updated: callable) -> None:
+    def __init__(
+        self,
+        refresh_token: str,
+        on_token_updated: Callable[[str], None],
+        on_failure: Callable[[], None] | None = None,
+    ) -> None:
         self._refresh_token = refresh_token
         self._on_token_updated = on_token_updated
+        self._on_failure = on_failure
         self._access_token: str = ""
         self._expires_in: int = 3600
+        self._unauthorized_failures = 0
         self._stop = threading.Event()
         self._thread = threading.Thread(
             target=self._run, daemon=True, name="pantrist-token"
@@ -46,6 +54,20 @@ class TokenManager:
     def stop(self) -> None:
         self._stop.set()
 
+    def _record_unauthorized(self) -> None:
+        """Increment the consecutive-401 counter and fire the failure callback at 3."""
+        self._unauthorized_failures += 1
+        if self._unauthorized_failures >= 3 and self._on_failure is not None:
+            self._unauthorized_failures = 0
+            try:
+                self._on_failure()
+            except Exception:
+                logger.exception("on_failure callback raised an exception")
+
+    def _record_success(self) -> None:
+        """Reset the consecutive-401 counter after a successful refresh."""
+        self._unauthorized_failures = 0
+
     def _run(self) -> None:
         while not self._stop.is_set():
             sleep_seconds = max(self._expires_in - _REFRESH_BUFFER_SECONDS, 60)
@@ -55,6 +77,12 @@ class TokenManager:
                 break
             try:
                 self._do_refresh()
+                self._record_success()
+            except TokenRefreshError as exc:
+                logger.exception("Token refresh failed; retrying in 60 s")
+                if "HTTP 401" in str(exc):
+                    self._record_unauthorized()
+                self._stop.wait(timeout=60)
             except Exception:
                 logger.exception("Token refresh failed; retrying in 60 s")
                 self._stop.wait(timeout=60)
