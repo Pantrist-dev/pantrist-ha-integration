@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, TypeVar, cast
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..models.update_item_dto_unit_id import UpdateItemDtoUnitId
+from ..models.volume_unit import VolumeUnit
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
@@ -23,8 +23,7 @@ class UpdateItemDto:
         name (str | Unset): Name of the item
         brand (str | Unset): Brand of the item
         content_volume (float | Unset): Content of a single item
-        unit_id (UpdateItemDtoUnitId | Unset): Unit of the content. Besides the enum it's possible that custom IDs are
-            used here
+        unit_id (VolumeUnit | Unset): Unit of the content. Besides the enum it's possible that custom IDs are used here
         barcode (list[str] | Unset): Barcode(s) of the product
         product_groups (list[ArticleProductGroup] | Unset): Product groups contain all relevant information about
             everything related to storage.
@@ -33,7 +32,7 @@ class UpdateItemDto:
     name: str | Unset = UNSET
     brand: str | Unset = UNSET
     content_volume: float | Unset = UNSET
-    unit_id: UpdateItemDtoUnitId | Unset = UNSET
+    unit_id: VolumeUnit | Unset = UNSET
     barcode: list[str] | Unset = UNSET
     product_groups: list[ArticleProductGroup] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -90,11 +89,11 @@ class UpdateItemDto:
         content_volume = d.pop("contentVolume", UNSET)
 
         _unit_id = d.pop("unitId", UNSET)
-        unit_id: UpdateItemDtoUnitId | Unset
+        unit_id: VolumeUnit | Unset
         if isinstance(_unit_id, Unset):
             unit_id = UNSET
         else:
-            unit_id = UpdateItemDtoUnitId(_unit_id)
+            unit_id = VolumeUnit(_unit_id)
 
         barcode = cast(list[str], d.pop("barcode", UNSET))
 

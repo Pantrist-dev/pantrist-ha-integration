@@ -6,6 +6,7 @@ from typing import Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..models.parse_recipe_request_dto_type import ParseRecipeRequestDtoType
 from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="ParseRecipeRequestDto")
@@ -15,18 +16,21 @@ T = TypeVar("T", bound="ParseRecipeRequestDto")
 class ParseRecipeRequestDto:
     """
     Attributes:
-        url (str):
-        type_ (str | Unset):
+        url (str): The URL of the recipe to parse Example: https://www.example.com/recipe/123.
+        type_ (ParseRecipeRequestDtoType | Unset): The type of parsing to perform Default:
+            ParseRecipeRequestDtoType.NORMAL.
     """
 
     url: str
-    type_: str | Unset = UNSET
+    type_: ParseRecipeRequestDtoType | Unset = ParseRecipeRequestDtoType.NORMAL
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         url = self.url
 
-        type_ = self.type_
+        type_: str | Unset = UNSET
+        if not isinstance(self.type_, Unset):
+            type_ = self.type_.value
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -45,7 +49,12 @@ class ParseRecipeRequestDto:
         d = dict(src_dict)
         url = d.pop("url")
 
-        type_ = d.pop("type", UNSET)
+        _type_ = d.pop("type", UNSET)
+        type_: ParseRecipeRequestDtoType | Unset
+        if isinstance(_type_, Unset):
+            type_ = UNSET
+        else:
+            type_ = ParseRecipeRequestDtoType(_type_)
 
         parse_recipe_request_dto = cls(
             url=url,

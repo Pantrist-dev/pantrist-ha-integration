@@ -7,6 +7,8 @@ from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..models.user_subscription_dto_status import UserSubscriptionDtoStatus
+from ..models.user_subscription_dto_store import UserSubscriptionDtoStore
+from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="UserSubscriptionDto")
 
@@ -18,11 +20,13 @@ class UserSubscriptionDto:
         status (UserSubscriptionDtoStatus):
         product_id (str):
         expires_at (str):
+        store (UserSubscriptionDtoStore | Unset):
     """
 
     status: UserSubscriptionDtoStatus
     product_id: str
     expires_at: str
+    store: UserSubscriptionDtoStore | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -31,6 +35,10 @@ class UserSubscriptionDto:
         product_id = self.product_id
 
         expires_at = self.expires_at
+
+        store: str | Unset = UNSET
+        if not isinstance(self.store, Unset):
+            store = self.store.value
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -41,6 +49,8 @@ class UserSubscriptionDto:
                 "expiresAt": expires_at,
             }
         )
+        if store is not UNSET:
+            field_dict["store"] = store
 
         return field_dict
 
@@ -53,10 +63,18 @@ class UserSubscriptionDto:
 
         expires_at = d.pop("expiresAt")
 
+        _store = d.pop("store", UNSET)
+        store: UserSubscriptionDtoStore | Unset
+        if isinstance(_store, Unset):
+            store = UNSET
+        else:
+            store = UserSubscriptionDtoStore(_store)
+
         user_subscription_dto = cls(
             status=status,
             product_id=product_id,
             expires_at=expires_at,
+            store=store,
         )
 
         user_subscription_dto.additional_properties = d

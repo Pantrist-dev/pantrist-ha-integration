@@ -20,6 +20,7 @@ class UpdateUserDto:
         display_name (str | Unset):
         profile_image (str | Unset):
         current_list (str | Unset):
+        language (str | Unset):
     """
 
     uid: str | Unset = UNSET
@@ -27,6 +28,7 @@ class UpdateUserDto:
     display_name: str | Unset = UNSET
     profile_image: str | Unset = UNSET
     current_list: str | Unset = UNSET
+    language: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -39,6 +41,8 @@ class UpdateUserDto:
         profile_image = self.profile_image
 
         current_list = self.current_list
+
+        language = self.language
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -53,6 +57,8 @@ class UpdateUserDto:
             field_dict["profileImage"] = profile_image
         if current_list is not UNSET:
             field_dict["currentList"] = current_list
+        if language is not UNSET:
+            field_dict["language"] = language
 
         return field_dict
 
@@ -69,12 +75,15 @@ class UpdateUserDto:
 
         current_list = d.pop("currentList", UNSET)
 
+        language = d.pop("language", UNSET)
+
         update_user_dto = cls(
             uid=uid,
             email=email,
             display_name=display_name,
             profile_image=profile_image,
             current_list=current_list,
+            language=language,
         )
 
         update_user_dto.additional_properties = d

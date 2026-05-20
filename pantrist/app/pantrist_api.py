@@ -1,10 +1,10 @@
 """Pantrist API client — thin wrapper around the generated pantrist_client package.
 
 Regenerate the underlying client whenever the API changes:
-    python scripts/generate_openapi_client.py --python-only
+    python scripts/generate_client.py
 
 The generated package lives at:
-    homeassistant-addon/pantrist/app/pantrist_client/
+    pantrist/app/pantrist_client/
 
 This wrapper keeps the rest of the addon decoupled from the generated naming
 conventions (e.g. shopping_list_controller_get_items → get_shopping_list).
@@ -16,15 +16,14 @@ import logging
 from typing import Any
 
 from pantrist_client import AuthenticatedClient
-from pantrist_client.api.barcode import barcode_controller_find_one
-from pantrist_client.api.list import list_controller_get_list
+from pantrist_client.api.list_ import list_controller_get_list
 from pantrist_client.api.pantry_list import (
-    pantry_list_controller_change_amount_of_item,
     pantry_list_controller_delete_item_of_list,
     pantry_list_controller_get_items as pantry_get_current,
     pantry_list_controller_get_locations_by_list_id as pantry_get_by_id,
+    pantry_list_controller_reduce_amount_of_item,
+    pantry_list_items_controller_add_by_name,
 )
-from pantrist_client.api.pantry_list_items import pantry_list_items_controller_add_by_name
 from pantrist_client.api.shopping_cart import shopping_cart_items_controller_get_items
 from pantrist_client.api.shopping_list import (
     shopping_list_controller_add,
@@ -33,7 +32,7 @@ from pantrist_client.api.shopping_list import (
     shopping_list_controller_get_items as shopping_get_current,
     shopping_list_controller_get_locations_by_list_id as shopping_get_by_id,
 )
-from pantrist_client.models import AddByNameDto, ChangeAmountOfItemDto
+from pantrist_client.models import AddByNameDto, AddPantryByNameDto, ChangeAmountOfItemDto
 
 logger = logging.getLogger(__name__)
 
@@ -94,7 +93,7 @@ class PantristAPI:
     def change_pantry_item_amount(
         self, list_id: str, item_id: str, change: float, unit_id: str
     ) -> Any:
-        return pantry_list_controller_change_amount_of_item.sync(
+        return pantry_list_controller_reduce_amount_of_item.sync(
             list_id=list_id,
             item_id=item_id,
             body=ChangeAmountOfItemDto(change=change, unit_id=unit_id),
@@ -108,30 +107,22 @@ class PantristAPI:
             list_id=list_id, client=self._client
         ) or []
 
-    # --- Pantry add-by-name (new list-scoped route) ---
+    # --- Pantry add-by-name ---
 
     def add_to_pantry_by_name(
         self, list_id: str, name: str, amount: float = 1, unit_id: str = "pieces"
     ) -> Any:
         return pantry_list_items_controller_add_by_name.sync(
             list_id=list_id,
-            body=AddByNameDto(name=name, amount=amount, unit_id=unit_id),
+            body=AddPantryByNameDto(name=name, amount=amount, unit_id=unit_id),
             client=self._client,
         )
 
     # --- Barcodes ---
 
-    def lookup_barcode(self, barcode: str) -> Any | None:
-        try:
-            return barcode_controller_find_one.sync(barcode=barcode, client=self._client)
-        except Exception:
-            return None
-
     def add_to_shopping_list_by_barcode(self, barcode: str) -> Any:
-        result = self.lookup_barcode(barcode)
-        if result is None:
-            raise PantristAPIError(f"Barcode not found: {barcode}")
-        return self.add_to_shopping_list_by_name(result.name)
+        # Barcode lookup endpoint was removed from the API.
+        raise PantristAPIError("Barcode lookup is not supported by the current API")
 
     def close(self) -> None:
         # AuthenticatedClient manages its own httpx session; nothing to close explicitly.

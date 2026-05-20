@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, TypeVar
+from typing import Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..models.storage_location_dto_location_type import StorageLocationDtoLocationType
+from ..models.location_type import LocationType
 
 T = TypeVar("T", bound="StorageLocationDto")
 
@@ -18,13 +18,15 @@ class StorageLocationDto:
         id (str): ID of the location
         name (str): Name of the location
         is_favourite (bool): Indicates whether the location is marked as your favourite
-        location_type (StorageLocationDtoLocationType): Type of the location
+        location_type (LocationType):
+        icon (None | str): Icon for the location
     """
 
     id: str
     name: str
     is_favourite: bool
-    location_type: StorageLocationDtoLocationType
+    location_type: LocationType
+    icon: None | str
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -36,6 +38,9 @@ class StorageLocationDto:
 
         location_type = self.location_type.value
 
+        icon: None | str
+        icon = self.icon
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -44,6 +49,7 @@ class StorageLocationDto:
                 "name": name,
                 "isFavourite": is_favourite,
                 "locationType": location_type,
+                "icon": icon,
             }
         )
 
@@ -58,13 +64,21 @@ class StorageLocationDto:
 
         is_favourite = d.pop("isFavourite")
 
-        location_type = StorageLocationDtoLocationType(d.pop("locationType"))
+        location_type = LocationType(d.pop("locationType"))
+
+        def _parse_icon(data: object) -> None | str:
+            if data is None:
+                return data
+            return cast(None | str, data)
+
+        icon = _parse_icon(d.pop("icon"))
 
         storage_location_dto = cls(
             id=id,
             name=name,
             is_favourite=is_favourite,
             location_type=location_type,
+            icon=icon,
         )
 
         storage_location_dto.additional_properties = d

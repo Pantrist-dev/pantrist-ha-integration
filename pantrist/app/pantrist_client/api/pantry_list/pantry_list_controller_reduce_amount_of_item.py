@@ -8,7 +8,7 @@ from ... import errors
 from ...client import AuthenticatedClient, Client
 from ...models.change_amount_of_item_dto import ChangeAmountOfItemDto
 from ...models.item_dto import ItemDto
-from ...types import Response
+from ...types import UNSET, Response, Unset
 
 
 def _get_kwargs(
@@ -16,8 +16,11 @@ def _get_kwargs(
     item_id: str,
     *,
     body: ChangeAmountOfItemDto,
+    x_socket_id: str | Unset = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
+    if not isinstance(x_socket_id, Unset):
+        headers["x-socket-id"] = x_socket_id
 
     _kwargs: dict[str, Any] = {
         "method": "put",
@@ -70,13 +73,16 @@ def sync_detailed(
     *,
     client: AuthenticatedClient,
     body: ChangeAmountOfItemDto,
+    x_socket_id: str | Unset = UNSET,
 ) -> Response[Any | ItemDto]:
-    """Changes the amount of an item by the amount given in the body. The item will never be removed from
-    the list. You should use the 'DELETE' method for this.
+    """Changes the amount of a pantry item
+
+     Use PUT /list/:listId/pantryList/:itemId/change-amount instead.
 
     Args:
         list_id (str):
         item_id (str):
+        x_socket_id (str | Unset):
         body (ChangeAmountOfItemDto):
 
     Raises:
@@ -91,6 +97,7 @@ def sync_detailed(
         list_id=list_id,
         item_id=item_id,
         body=body,
+        x_socket_id=x_socket_id,
     )
 
     response = client.get_httpx_client().request(
@@ -106,13 +113,16 @@ def sync(
     *,
     client: AuthenticatedClient,
     body: ChangeAmountOfItemDto,
+    x_socket_id: str | Unset = UNSET,
 ) -> Any | ItemDto | None:
-    """Changes the amount of an item by the amount given in the body. The item will never be removed from
-    the list. You should use the 'DELETE' method for this.
+    """Changes the amount of a pantry item
+
+     Use PUT /list/:listId/pantryList/:itemId/change-amount instead.
 
     Args:
         list_id (str):
         item_id (str):
+        x_socket_id (str | Unset):
         body (ChangeAmountOfItemDto):
 
     Raises:
@@ -128,6 +138,7 @@ def sync(
         item_id=item_id,
         client=client,
         body=body,
+        x_socket_id=x_socket_id,
     ).parsed
 
 
@@ -137,13 +148,16 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
     body: ChangeAmountOfItemDto,
+    x_socket_id: str | Unset = UNSET,
 ) -> Response[Any | ItemDto]:
-    """Changes the amount of an item by the amount given in the body. The item will never be removed from
-    the list. You should use the 'DELETE' method for this.
+    """Changes the amount of a pantry item
+
+     Use PUT /list/:listId/pantryList/:itemId/change-amount instead.
 
     Args:
         list_id (str):
         item_id (str):
+        x_socket_id (str | Unset):
         body (ChangeAmountOfItemDto):
 
     Raises:
@@ -158,6 +172,7 @@ async def asyncio_detailed(
         list_id=list_id,
         item_id=item_id,
         body=body,
+        x_socket_id=x_socket_id,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -171,13 +186,16 @@ async def asyncio(
     *,
     client: AuthenticatedClient,
     body: ChangeAmountOfItemDto,
+    x_socket_id: str | Unset = UNSET,
 ) -> Any | ItemDto | None:
-    """Changes the amount of an item by the amount given in the body. The item will never be removed from
-    the list. You should use the 'DELETE' method for this.
+    """Changes the amount of a pantry item
+
+     Use PUT /list/:listId/pantryList/:itemId/change-amount instead.
 
     Args:
         list_id (str):
         item_id (str):
+        x_socket_id (str | Unset):
         body (ChangeAmountOfItemDto):
 
     Raises:
@@ -194,5 +212,6 @@ async def asyncio(
             item_id=item_id,
             client=client,
             body=body,
+            x_socket_id=x_socket_id,
         )
     ).parsed

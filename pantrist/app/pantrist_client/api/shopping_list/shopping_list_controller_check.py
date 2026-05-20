@@ -6,12 +6,17 @@ import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
-from ...types import Response
+from ...types import UNSET, Response, Unset
 
 
 def _get_kwargs(
     id: str,
+    *,
+    x_socket_id: str | Unset = UNSET,
 ) -> dict[str, Any]:
+    headers: dict[str, Any] = {}
+    if not isinstance(x_socket_id, Unset):
+        headers["x-socket-id"] = x_socket_id
 
     _kwargs: dict[str, Any] = {
         "method": "post",
@@ -20,6 +25,7 @@ def _get_kwargs(
         ),
     }
 
+    _kwargs["headers"] = headers
     return _kwargs
 
 
@@ -46,14 +52,15 @@ def sync_detailed(
     id: str,
     *,
     client: AuthenticatedClient,
+    x_socket_id: str | Unset = UNSET,
 ) -> Response[Any]:
-    """Checks of an item in the shopping list
+    """Checks off an item in the shopping list
 
-     Depending of the settings of the current list, its removed, added to the pantry list or added to the
-    shopping cart.
+     Use POST /list/:listId/shoppingList/:itemId/check instead.
 
     Args:
         id (str):
+        x_socket_id (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -65,6 +72,7 @@ def sync_detailed(
 
     kwargs = _get_kwargs(
         id=id,
+        x_socket_id=x_socket_id,
     )
 
     response = client.get_httpx_client().request(
@@ -78,14 +86,15 @@ async def asyncio_detailed(
     id: str,
     *,
     client: AuthenticatedClient,
+    x_socket_id: str | Unset = UNSET,
 ) -> Response[Any]:
-    """Checks of an item in the shopping list
+    """Checks off an item in the shopping list
 
-     Depending of the settings of the current list, its removed, added to the pantry list or added to the
-    shopping cart.
+     Use POST /list/:listId/shoppingList/:itemId/check instead.
 
     Args:
         id (str):
+        x_socket_id (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -97,6 +106,7 @@ async def asyncio_detailed(
 
     kwargs = _get_kwargs(
         id=id,
+        x_socket_id=x_socket_id,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)

@@ -6,13 +6,18 @@ import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
-from ...types import Response
+from ...types import UNSET, Response, Unset
 
 
 def _get_kwargs(
     list_id: str,
     item_id: str,
+    *,
+    x_socket_id: str | Unset = UNSET,
 ) -> dict[str, Any]:
+    headers: dict[str, Any] = {}
+    if not isinstance(x_socket_id, Unset):
+        headers["x-socket-id"] = x_socket_id
 
     _kwargs: dict[str, Any] = {
         "method": "delete",
@@ -22,6 +27,7 @@ def _get_kwargs(
         ),
     }
 
+    _kwargs["headers"] = headers
     return _kwargs
 
 
@@ -55,12 +61,16 @@ def sync_detailed(
     item_id: str,
     *,
     client: AuthenticatedClient,
+    x_socket_id: str | Unset = UNSET,
 ) -> Response[Any]:
     """Removes the item from the pantry list
+
+     Use DELETE /list/:listId/pantryList/:itemId instead.
 
     Args:
         list_id (str):
         item_id (str):
+        x_socket_id (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -73,6 +83,7 @@ def sync_detailed(
     kwargs = _get_kwargs(
         list_id=list_id,
         item_id=item_id,
+        x_socket_id=x_socket_id,
     )
 
     response = client.get_httpx_client().request(
@@ -87,12 +98,16 @@ async def asyncio_detailed(
     item_id: str,
     *,
     client: AuthenticatedClient,
+    x_socket_id: str | Unset = UNSET,
 ) -> Response[Any]:
     """Removes the item from the pantry list
+
+     Use DELETE /list/:listId/pantryList/:itemId instead.
 
     Args:
         list_id (str):
         item_id (str):
+        x_socket_id (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -105,6 +120,7 @@ async def asyncio_detailed(
     kwargs = _get_kwargs(
         list_id=list_id,
         item_id=item_id,
+        x_socket_id=x_socket_id,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)

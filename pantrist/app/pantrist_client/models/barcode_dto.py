@@ -6,13 +6,14 @@ from typing import TYPE_CHECKING, Any, TypeVar, cast
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..models.volume_unit import VolumeUnit
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
+    from ..models.article_catalog_best_before_dates_dto import ArticleCatalogBestBeforeDatesDto
+    from ..models.article_nutriments_dto import ArticleNutrimentsDto
     from ..models.barcode_affiliate_product_dto import BarcodeAffiliateProductDto
-    from ..models.barcode_dto_complex_best_before_data import BarcodeDtoComplexBestBeforeData
     from ..models.barcode_dto_language_specific import BarcodeDtoLanguageSpecific
-    from ..models.barcode_dto_nutriments import BarcodeDtoNutriments
 
 
 T = TypeVar("T", bound="BarcodeDto")
@@ -27,15 +28,17 @@ class BarcodeDto:
         slug (str):
         category_uuid (str):
         content_volume (float):
-        volume_unit (str):
+        volume_unit (VolumeUnit): Unit of the content. Besides the enum it's possible that custom IDs are used here
         offers (list[BarcodeAffiliateProductDto]):
+        indexable (bool): False when the page should render <meta name="robots" content="noindex">. Computed from name
+            length, brand, category, image, and offer presence.
         brand (str | Unset):
         language_specific (BarcodeDtoLanguageSpecific | Unset):
         author (str | Unset):
         image_url (str | Unset):
         tags (list[str] | Unset):
-        nutriments (BarcodeDtoNutriments | Unset):
-        complex_best_before_data (BarcodeDtoComplexBestBeforeData | Unset):
+        nutriments (ArticleNutrimentsDto | Unset):
+        complex_best_before_data (ArticleCatalogBestBeforeDatesDto | Unset):
     """
 
     barcode: str
@@ -43,15 +46,16 @@ class BarcodeDto:
     slug: str
     category_uuid: str
     content_volume: float
-    volume_unit: str
+    volume_unit: VolumeUnit
     offers: list[BarcodeAffiliateProductDto]
+    indexable: bool
     brand: str | Unset = UNSET
     language_specific: BarcodeDtoLanguageSpecific | Unset = UNSET
     author: str | Unset = UNSET
     image_url: str | Unset = UNSET
     tags: list[str] | Unset = UNSET
-    nutriments: BarcodeDtoNutriments | Unset = UNSET
-    complex_best_before_data: BarcodeDtoComplexBestBeforeData | Unset = UNSET
+    nutriments: ArticleNutrimentsDto | Unset = UNSET
+    complex_best_before_data: ArticleCatalogBestBeforeDatesDto | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -65,12 +69,14 @@ class BarcodeDto:
 
         content_volume = self.content_volume
 
-        volume_unit = self.volume_unit
+        volume_unit = self.volume_unit.value
 
         offers = []
         for offers_item_data in self.offers:
             offers_item = offers_item_data.to_dict()
             offers.append(offers_item)
+
+        indexable = self.indexable
 
         brand = self.brand
 
@@ -105,6 +111,7 @@ class BarcodeDto:
                 "contentVolume": content_volume,
                 "volumeUnit": volume_unit,
                 "offers": offers,
+                "indexable": indexable,
             }
         )
         if brand is not UNSET:
@@ -126,10 +133,10 @@ class BarcodeDto:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+        from ..models.article_catalog_best_before_dates_dto import ArticleCatalogBestBeforeDatesDto
+        from ..models.article_nutriments_dto import ArticleNutrimentsDto
         from ..models.barcode_affiliate_product_dto import BarcodeAffiliateProductDto
-        from ..models.barcode_dto_complex_best_before_data import BarcodeDtoComplexBestBeforeData
         from ..models.barcode_dto_language_specific import BarcodeDtoLanguageSpecific
-        from ..models.barcode_dto_nutriments import BarcodeDtoNutriments
 
         d = dict(src_dict)
         barcode = d.pop("barcode")
@@ -142,7 +149,7 @@ class BarcodeDto:
 
         content_volume = d.pop("contentVolume")
 
-        volume_unit = d.pop("volumeUnit")
+        volume_unit = VolumeUnit(d.pop("volumeUnit"))
 
         offers = []
         _offers = d.pop("offers")
@@ -150,6 +157,8 @@ class BarcodeDto:
             offers_item = BarcodeAffiliateProductDto.from_dict(offers_item_data)
 
             offers.append(offers_item)
+
+        indexable = d.pop("indexable")
 
         brand = d.pop("brand", UNSET)
 
@@ -167,18 +176,18 @@ class BarcodeDto:
         tags = cast(list[str], d.pop("tags", UNSET))
 
         _nutriments = d.pop("nutriments", UNSET)
-        nutriments: BarcodeDtoNutriments | Unset
+        nutriments: ArticleNutrimentsDto | Unset
         if isinstance(_nutriments, Unset):
             nutriments = UNSET
         else:
-            nutriments = BarcodeDtoNutriments.from_dict(_nutriments)
+            nutriments = ArticleNutrimentsDto.from_dict(_nutriments)
 
         _complex_best_before_data = d.pop("complexBestBeforeData", UNSET)
-        complex_best_before_data: BarcodeDtoComplexBestBeforeData | Unset
+        complex_best_before_data: ArticleCatalogBestBeforeDatesDto | Unset
         if isinstance(_complex_best_before_data, Unset):
             complex_best_before_data = UNSET
         else:
-            complex_best_before_data = BarcodeDtoComplexBestBeforeData.from_dict(_complex_best_before_data)
+            complex_best_before_data = ArticleCatalogBestBeforeDatesDto.from_dict(_complex_best_before_data)
 
         barcode_dto = cls(
             barcode=barcode,
@@ -188,6 +197,7 @@ class BarcodeDto:
             content_volume=content_volume,
             volume_unit=volume_unit,
             offers=offers,
+            indexable=indexable,
             brand=brand,
             language_specific=language_specific,
             author=author,

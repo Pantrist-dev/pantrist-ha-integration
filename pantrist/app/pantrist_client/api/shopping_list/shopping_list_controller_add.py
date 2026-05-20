@@ -6,14 +6,17 @@ import httpx
 from ...client import AuthenticatedClient, Client
 from ...models.add_by_name_dto import AddByNameDto
 from ...models.article_dto import ArticleDto
-from ...types import Response
+from ...types import UNSET, Response, Unset
 
 
 def _get_kwargs(
     *,
     body: AddByNameDto,
+    x_socket_id: str | Unset = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
+    if not isinstance(x_socket_id, Unset):
+        headers["x-socket-id"] = x_socket_id
 
     _kwargs: dict[str, Any] = {
         "method": "post",
@@ -47,10 +50,14 @@ def sync_detailed(
     *,
     client: AuthenticatedClient,
     body: AddByNameDto,
+    x_socket_id: str | Unset = UNSET,
 ) -> Response[ArticleDto]:
     """Adds an item to the shopping list by its name
 
+     Use POST /list/:listId/shoppingList/add-by-name instead.
+
     Args:
+        x_socket_id (str | Unset):
         body (AddByNameDto):
 
     Raises:
@@ -63,6 +70,7 @@ def sync_detailed(
 
     kwargs = _get_kwargs(
         body=body,
+        x_socket_id=x_socket_id,
     )
 
     response = client.get_httpx_client().request(
@@ -76,10 +84,14 @@ def sync(
     *,
     client: AuthenticatedClient,
     body: AddByNameDto,
+    x_socket_id: str | Unset = UNSET,
 ) -> ArticleDto | None:
     """Adds an item to the shopping list by its name
 
+     Use POST /list/:listId/shoppingList/add-by-name instead.
+
     Args:
+        x_socket_id (str | Unset):
         body (AddByNameDto):
 
     Raises:
@@ -93,6 +105,7 @@ def sync(
     return sync_detailed(
         client=client,
         body=body,
+        x_socket_id=x_socket_id,
     ).parsed
 
 
@@ -100,10 +113,14 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
     body: AddByNameDto,
+    x_socket_id: str | Unset = UNSET,
 ) -> Response[ArticleDto]:
     """Adds an item to the shopping list by its name
 
+     Use POST /list/:listId/shoppingList/add-by-name instead.
+
     Args:
+        x_socket_id (str | Unset):
         body (AddByNameDto):
 
     Raises:
@@ -116,6 +133,7 @@ async def asyncio_detailed(
 
     kwargs = _get_kwargs(
         body=body,
+        x_socket_id=x_socket_id,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -127,10 +145,14 @@ async def asyncio(
     *,
     client: AuthenticatedClient,
     body: AddByNameDto,
+    x_socket_id: str | Unset = UNSET,
 ) -> ArticleDto | None:
     """Adds an item to the shopping list by its name
 
+     Use POST /list/:listId/shoppingList/add-by-name instead.
+
     Args:
+        x_socket_id (str | Unset):
         body (AddByNameDto):
 
     Raises:
@@ -145,5 +167,6 @@ async def asyncio(
         await asyncio_detailed(
             client=client,
             body=body,
+            x_socket_id=x_socket_id,
         )
     ).parsed

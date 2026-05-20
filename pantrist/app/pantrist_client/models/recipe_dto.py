@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..models.recipe_dto_categories_item import RecipeDtoCategoriesItem
+from ..models.receipt_category import ReceiptCategory
 from ..models.recipe_dto_language import RecipeDtoLanguage
 from ..types import UNSET, Unset
 
@@ -32,7 +32,7 @@ class RecipeDto:
         default_servings (float): Default number of servings
         servings_unit (str): Unit used for servings (e.g. Portion, g, ml) Example: Portion.
         should_be_public (bool): Whether the recipe is publicly visible
-        categories (list[RecipeDtoCategoriesItem]): Recipe categories
+        categories (list[ReceiptCategory]): Recipe categories
         language (RecipeDtoLanguage): Recipe language (IETF locale) Example: en-US.
         show_author (bool): Whether to show the author publicly
         author_uuid (str): Author UUID
@@ -48,6 +48,10 @@ class RecipeDto:
         nutriments (ArticleNutrimentsDto | Unset):
         created_at (str | Unset): Creation date of the recipe
         updated_at (str | Unset): Last update date of the recipe
+        ingredient_count (float | Unset): Number of ingredients in the recipe. Only set when requesting recipe
+            pagination with current stock
+        matching_ingredient_count (float | Unset): Number of ingredients in the recipe that match to the stock. Only set
+            when requesting recipe pagination with current stock
     """
 
     uuid: str
@@ -58,7 +62,7 @@ class RecipeDto:
     default_servings: float
     servings_unit: str
     should_be_public: bool
-    categories: list[RecipeDtoCategoriesItem]
+    categories: list[ReceiptCategory]
     language: RecipeDtoLanguage
     show_author: bool
     author_uuid: str
@@ -74,6 +78,8 @@ class RecipeDto:
     nutriments: ArticleNutrimentsDto | Unset = UNSET
     created_at: str | Unset = UNSET
     updated_at: str | Unset = UNSET
+    ingredient_count: float | Unset = UNSET
+    matching_ingredient_count: float | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -141,6 +147,10 @@ class RecipeDto:
 
         updated_at = self.updated_at
 
+        ingredient_count = self.ingredient_count
+
+        matching_ingredient_count = self.matching_ingredient_count
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -181,6 +191,10 @@ class RecipeDto:
             field_dict["createdAt"] = created_at
         if updated_at is not UNSET:
             field_dict["updatedAt"] = updated_at
+        if ingredient_count is not UNSET:
+            field_dict["ingredientCount"] = ingredient_count
+        if matching_ingredient_count is not UNSET:
+            field_dict["matchingIngredientCount"] = matching_ingredient_count
 
         return field_dict
 
@@ -211,7 +225,7 @@ class RecipeDto:
         categories = []
         _categories = d.pop("categories")
         for categories_item_data in _categories:
-            categories_item = RecipeDtoCategoriesItem(categories_item_data)
+            categories_item = ReceiptCategory(categories_item_data)
 
             categories.append(categories_item)
 
@@ -267,6 +281,10 @@ class RecipeDto:
 
         updated_at = d.pop("updatedAt", UNSET)
 
+        ingredient_count = d.pop("ingredientCount", UNSET)
+
+        matching_ingredient_count = d.pop("matchingIngredientCount", UNSET)
+
         recipe_dto = cls(
             uuid=uuid,
             name=name,
@@ -292,6 +310,8 @@ class RecipeDto:
             nutriments=nutriments,
             created_at=created_at,
             updated_at=updated_at,
+            ingredient_count=ingredient_count,
+            matching_ingredient_count=matching_ingredient_count,
         )
 
         recipe_dto.additional_properties = d

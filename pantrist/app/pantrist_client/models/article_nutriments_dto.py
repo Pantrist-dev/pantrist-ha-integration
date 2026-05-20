@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..models.article_nutriments_dto_nutri_score import ArticleNutrimentsDtoNutriScore
+from ..models.nutri_score import NutriScore
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
@@ -29,7 +29,7 @@ class ArticleNutrimentsDto:
         fiber (GeneralNutrimentsDto | Unset):
         proteins (GeneralNutrimentsDto | Unset):
         salt (GeneralNutrimentsDto | Unset):
-        nutri_score (ArticleNutrimentsDtoNutriScore | Unset): Nutri-Score rating Example: B.
+        nutri_score (NutriScore | Unset): Nutri-Score rating
     """
 
     energy_kcal: GeneralNutrimentsDto | Unset = UNSET
@@ -41,7 +41,7 @@ class ArticleNutrimentsDto:
     fiber: GeneralNutrimentsDto | Unset = UNSET
     proteins: GeneralNutrimentsDto | Unset = UNSET
     salt: GeneralNutrimentsDto | Unset = UNSET
-    nutri_score: ArticleNutrimentsDtoNutriScore | Unset = UNSET
+    nutri_score: NutriScore | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -180,11 +180,11 @@ class ArticleNutrimentsDto:
             salt = GeneralNutrimentsDto.from_dict(_salt)
 
         _nutri_score = d.pop("nutriScore", UNSET)
-        nutri_score: ArticleNutrimentsDtoNutriScore | Unset
+        nutri_score: NutriScore | Unset
         if isinstance(_nutri_score, Unset):
             nutri_score = UNSET
         else:
-            nutri_score = ArticleNutrimentsDtoNutriScore(_nutri_score)
+            nutri_score = NutriScore(_nutri_score)
 
         article_nutriments_dto = cls(
             energy_kcal=energy_kcal,

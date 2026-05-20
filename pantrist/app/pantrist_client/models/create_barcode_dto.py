@@ -6,12 +6,13 @@ from typing import TYPE_CHECKING, Any, TypeVar, cast
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..models.volume_unit import VolumeUnit
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.create_barcode_dto_complex_best_before_data import CreateBarcodeDtoComplexBestBeforeData
+    from ..models.article_catalog_best_before_dates_dto import ArticleCatalogBestBeforeDatesDto
+    from ..models.article_nutriments_dto import ArticleNutrimentsDto
     from ..models.create_barcode_dto_language_specific import CreateBarcodeDtoLanguageSpecific
-    from ..models.create_barcode_dto_nutriments import CreateBarcodeDtoNutriments
 
 
 T = TypeVar("T", bound="CreateBarcodeDto")
@@ -25,28 +26,28 @@ class CreateBarcodeDto:
         name (str):
         category_uuid (str):
         content_volume (float):
-        volume_unit (str):
+        volume_unit (VolumeUnit): Unit of the content. Besides the enum it's possible that custom IDs are used here
         brand (str | Unset):
         language_specific (CreateBarcodeDtoLanguageSpecific | Unset):
         author (str | Unset):
         image_url (str | Unset):
         tags (list[str] | Unset):
-        nutriments (CreateBarcodeDtoNutriments | Unset):
-        complex_best_before_data (CreateBarcodeDtoComplexBestBeforeData | Unset):
+        nutriments (ArticleNutrimentsDto | Unset):
+        complex_best_before_data (ArticleCatalogBestBeforeDatesDto | Unset):
     """
 
     barcode: str
     name: str
     category_uuid: str
     content_volume: float
-    volume_unit: str
+    volume_unit: VolumeUnit
     brand: str | Unset = UNSET
     language_specific: CreateBarcodeDtoLanguageSpecific | Unset = UNSET
     author: str | Unset = UNSET
     image_url: str | Unset = UNSET
     tags: list[str] | Unset = UNSET
-    nutriments: CreateBarcodeDtoNutriments | Unset = UNSET
-    complex_best_before_data: CreateBarcodeDtoComplexBestBeforeData | Unset = UNSET
+    nutriments: ArticleNutrimentsDto | Unset = UNSET
+    complex_best_before_data: ArticleCatalogBestBeforeDatesDto | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -58,7 +59,7 @@ class CreateBarcodeDto:
 
         content_volume = self.content_volume
 
-        volume_unit = self.volume_unit
+        volume_unit = self.volume_unit.value
 
         brand = self.brand
 
@@ -112,9 +113,9 @@ class CreateBarcodeDto:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.create_barcode_dto_complex_best_before_data import CreateBarcodeDtoComplexBestBeforeData
+        from ..models.article_catalog_best_before_dates_dto import ArticleCatalogBestBeforeDatesDto
+        from ..models.article_nutriments_dto import ArticleNutrimentsDto
         from ..models.create_barcode_dto_language_specific import CreateBarcodeDtoLanguageSpecific
-        from ..models.create_barcode_dto_nutriments import CreateBarcodeDtoNutriments
 
         d = dict(src_dict)
         barcode = d.pop("barcode")
@@ -125,7 +126,7 @@ class CreateBarcodeDto:
 
         content_volume = d.pop("contentVolume")
 
-        volume_unit = d.pop("volumeUnit")
+        volume_unit = VolumeUnit(d.pop("volumeUnit"))
 
         brand = d.pop("brand", UNSET)
 
@@ -143,18 +144,18 @@ class CreateBarcodeDto:
         tags = cast(list[str], d.pop("tags", UNSET))
 
         _nutriments = d.pop("nutriments", UNSET)
-        nutriments: CreateBarcodeDtoNutriments | Unset
+        nutriments: ArticleNutrimentsDto | Unset
         if isinstance(_nutriments, Unset):
             nutriments = UNSET
         else:
-            nutriments = CreateBarcodeDtoNutriments.from_dict(_nutriments)
+            nutriments = ArticleNutrimentsDto.from_dict(_nutriments)
 
         _complex_best_before_data = d.pop("complexBestBeforeData", UNSET)
-        complex_best_before_data: CreateBarcodeDtoComplexBestBeforeData | Unset
+        complex_best_before_data: ArticleCatalogBestBeforeDatesDto | Unset
         if isinstance(_complex_best_before_data, Unset):
             complex_best_before_data = UNSET
         else:
-            complex_best_before_data = CreateBarcodeDtoComplexBestBeforeData.from_dict(_complex_best_before_data)
+            complex_best_before_data = ArticleCatalogBestBeforeDatesDto.from_dict(_complex_best_before_data)
 
         create_barcode_dto = cls(
             barcode=barcode,

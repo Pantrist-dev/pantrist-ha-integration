@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, TypeVar, cast
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..models.item_dto_unit_id import ItemDtoUnitId
+from ..models.volume_unit import VolumeUnit
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
@@ -24,7 +24,7 @@ class ItemDto:
         name (str): Name of the item
         amount (float): Amount of the item
         content_volume (float): Content of a single item
-        unit_id (ItemDtoUnitId): Unit of the content. Besides the enum it's possible that custom IDs are used here
+        unit_id (VolumeUnit): Unit of the content. Besides the enum it's possible that custom IDs are used here
         barcode (list[str]): Barcode(s) of the product
         product_groups (list[ArticleProductGroup]): Product groups contain all relevant information about everything
             related to storage.
@@ -35,7 +35,7 @@ class ItemDto:
     name: str
     amount: float
     content_volume: float
-    unit_id: ItemDtoUnitId
+    unit_id: VolumeUnit
     barcode: list[str]
     product_groups: list[ArticleProductGroup]
     brand: str | Unset = UNSET
@@ -92,7 +92,7 @@ class ItemDto:
 
         content_volume = d.pop("contentVolume")
 
-        unit_id = ItemDtoUnitId(d.pop("unitId"))
+        unit_id = VolumeUnit(d.pop("unitId"))
 
         barcode = cast(list[str], d.pop("barcode"))
 

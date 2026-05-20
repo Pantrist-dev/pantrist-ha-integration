@@ -11,6 +11,8 @@ from ..models.user_dto_user_country_source import UserDtoUserCountrySource
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
+    from ..models.notification_settings_dto import NotificationSettingsDto
+    from ..models.premium_invitation_data_dto import PremiumInvitationDataDto
     from ..models.user_permissions_dto import UserPermissionsDto
     from ..models.user_subscription_dto import UserSubscriptionDto
 
@@ -26,6 +28,7 @@ class UserDto:
         display_name (str):
         email (str):
         forced_premium_tariff (UserDtoForcedPremiumTariff | Unset):
+        language (str | Unset):
         is_test_user (bool | Unset):
         profile_image (str | Unset):
         provider_id (str | Unset):
@@ -37,12 +40,15 @@ class UserDto:
         permissions (UserPermissionsDto | Unset):
         user_country (str | Unset):
         user_country_source (UserDtoUserCountrySource | Unset):
+        premium_invitation (PremiumInvitationDataDto | Unset):
+        notification_settings (NotificationSettingsDto | Unset):
     """
 
     uid: str
     display_name: str
     email: str
     forced_premium_tariff: UserDtoForcedPremiumTariff | Unset = UNSET
+    language: str | Unset = UNSET
     is_test_user: bool | Unset = UNSET
     profile_image: str | Unset = UNSET
     provider_id: str | Unset = UNSET
@@ -54,6 +60,8 @@ class UserDto:
     permissions: UserPermissionsDto | Unset = UNSET
     user_country: str | Unset = UNSET
     user_country_source: UserDtoUserCountrySource | Unset = UNSET
+    premium_invitation: PremiumInvitationDataDto | Unset = UNSET
+    notification_settings: NotificationSettingsDto | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -66,6 +74,8 @@ class UserDto:
         forced_premium_tariff: str | Unset = UNSET
         if not isinstance(self.forced_premium_tariff, Unset):
             forced_premium_tariff = self.forced_premium_tariff.value
+
+        language = self.language
 
         is_test_user = self.is_test_user
 
@@ -95,6 +105,14 @@ class UserDto:
         if not isinstance(self.user_country_source, Unset):
             user_country_source = self.user_country_source.value
 
+        premium_invitation: dict[str, Any] | Unset = UNSET
+        if not isinstance(self.premium_invitation, Unset):
+            premium_invitation = self.premium_invitation.to_dict()
+
+        notification_settings: dict[str, Any] | Unset = UNSET
+        if not isinstance(self.notification_settings, Unset):
+            notification_settings = self.notification_settings.to_dict()
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -106,6 +124,8 @@ class UserDto:
         )
         if forced_premium_tariff is not UNSET:
             field_dict["forcedPremiumTariff"] = forced_premium_tariff
+        if language is not UNSET:
+            field_dict["language"] = language
         if is_test_user is not UNSET:
             field_dict["isTestUser"] = is_test_user
         if profile_image is not UNSET:
@@ -128,11 +148,17 @@ class UserDto:
             field_dict["userCountry"] = user_country
         if user_country_source is not UNSET:
             field_dict["userCountrySource"] = user_country_source
+        if premium_invitation is not UNSET:
+            field_dict["premiumInvitation"] = premium_invitation
+        if notification_settings is not UNSET:
+            field_dict["notificationSettings"] = notification_settings
 
         return field_dict
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+        from ..models.notification_settings_dto import NotificationSettingsDto
+        from ..models.premium_invitation_data_dto import PremiumInvitationDataDto
         from ..models.user_permissions_dto import UserPermissionsDto
         from ..models.user_subscription_dto import UserSubscriptionDto
 
@@ -149,6 +175,8 @@ class UserDto:
             forced_premium_tariff = UNSET
         else:
             forced_premium_tariff = UserDtoForcedPremiumTariff(_forced_premium_tariff)
+
+        language = d.pop("language", UNSET)
 
         is_test_user = d.pop("isTestUser", UNSET)
 
@@ -187,11 +215,26 @@ class UserDto:
         else:
             user_country_source = UserDtoUserCountrySource(_user_country_source)
 
+        _premium_invitation = d.pop("premiumInvitation", UNSET)
+        premium_invitation: PremiumInvitationDataDto | Unset
+        if isinstance(_premium_invitation, Unset):
+            premium_invitation = UNSET
+        else:
+            premium_invitation = PremiumInvitationDataDto.from_dict(_premium_invitation)
+
+        _notification_settings = d.pop("notificationSettings", UNSET)
+        notification_settings: NotificationSettingsDto | Unset
+        if isinstance(_notification_settings, Unset):
+            notification_settings = UNSET
+        else:
+            notification_settings = NotificationSettingsDto.from_dict(_notification_settings)
+
         user_dto = cls(
             uid=uid,
             display_name=display_name,
             email=email,
             forced_premium_tariff=forced_premium_tariff,
+            language=language,
             is_test_user=is_test_user,
             profile_image=profile_image,
             provider_id=provider_id,
@@ -203,6 +246,8 @@ class UserDto:
             permissions=permissions,
             user_country=user_country,
             user_country_source=user_country_source,
+            premium_invitation=premium_invitation,
+            notification_settings=notification_settings,
         )
 
         user_dto.additional_properties = d

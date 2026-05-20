@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, TypeVar
+from typing import Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -17,18 +17,21 @@ class UnitDto:
     Attributes:
         uid (str):
         name (str):
-        show_at_item (bool):
-        differentiation (bool):
-        plural (str | Unset):
-        singular (str | Unset):
+        show_at_item (bool | None | Unset):
+        differentiation (bool | None | Unset):
+        plural (None | str | Unset):
+        singular (None | str | Unset):
+        list_id (str | Unset): Origin list of this unit when returned by the cross-list "merged" endpoint in all-blocks
+            mode. Not set on per-list responses.
     """
 
     uid: str
     name: str
-    show_at_item: bool
-    differentiation: bool
-    plural: str | Unset = UNSET
-    singular: str | Unset = UNSET
+    show_at_item: bool | None | Unset = UNSET
+    differentiation: bool | None | Unset = UNSET
+    plural: None | str | Unset = UNSET
+    singular: None | str | Unset = UNSET
+    list_id: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -36,13 +39,31 @@ class UnitDto:
 
         name = self.name
 
-        show_at_item = self.show_at_item
+        show_at_item: bool | None | Unset
+        if isinstance(self.show_at_item, Unset):
+            show_at_item = UNSET
+        else:
+            show_at_item = self.show_at_item
 
-        differentiation = self.differentiation
+        differentiation: bool | None | Unset
+        if isinstance(self.differentiation, Unset):
+            differentiation = UNSET
+        else:
+            differentiation = self.differentiation
 
-        plural = self.plural
+        plural: None | str | Unset
+        if isinstance(self.plural, Unset):
+            plural = UNSET
+        else:
+            plural = self.plural
 
-        singular = self.singular
+        singular: None | str | Unset
+        if isinstance(self.singular, Unset):
+            singular = UNSET
+        else:
+            singular = self.singular
+
+        list_id = self.list_id
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -50,14 +71,18 @@ class UnitDto:
             {
                 "uid": uid,
                 "name": name,
-                "showAtItem": show_at_item,
-                "differentiation": differentiation,
             }
         )
+        if show_at_item is not UNSET:
+            field_dict["showAtItem"] = show_at_item
+        if differentiation is not UNSET:
+            field_dict["differentiation"] = differentiation
         if plural is not UNSET:
             field_dict["plural"] = plural
         if singular is not UNSET:
             field_dict["singular"] = singular
+        if list_id is not UNSET:
+            field_dict["listId"] = list_id
 
         return field_dict
 
@@ -68,13 +93,43 @@ class UnitDto:
 
         name = d.pop("name")
 
-        show_at_item = d.pop("showAtItem")
+        def _parse_show_at_item(data: object) -> bool | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(bool | None | Unset, data)
 
-        differentiation = d.pop("differentiation")
+        show_at_item = _parse_show_at_item(d.pop("showAtItem", UNSET))
 
-        plural = d.pop("plural", UNSET)
+        def _parse_differentiation(data: object) -> bool | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(bool | None | Unset, data)
 
-        singular = d.pop("singular", UNSET)
+        differentiation = _parse_differentiation(d.pop("differentiation", UNSET))
+
+        def _parse_plural(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        plural = _parse_plural(d.pop("plural", UNSET))
+
+        def _parse_singular(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        singular = _parse_singular(d.pop("singular", UNSET))
+
+        list_id = d.pop("listId", UNSET)
 
         unit_dto = cls(
             uid=uid,
@@ -83,6 +138,7 @@ class UnitDto:
             differentiation=differentiation,
             plural=plural,
             singular=singular,
+            list_id=list_id,
         )
 
         unit_dto.additional_properties = d

@@ -21,6 +21,7 @@ class PantrySettingsDto:
         calculated_best_before_date (bool | Unset):
         article_is_open (bool | Unset):
         article_is_open_since (float | str | Unset):
+        remaining_amount (float | Unset):
     """
 
     pantry_uuid: str
@@ -29,6 +30,7 @@ class PantrySettingsDto:
     calculated_best_before_date: bool | Unset = UNSET
     article_is_open: bool | Unset = UNSET
     article_is_open_since: float | str | Unset = UNSET
+    remaining_amount: float | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -48,6 +50,8 @@ class PantrySettingsDto:
         else:
             article_is_open_since = self.article_is_open_since
 
+        remaining_amount = self.remaining_amount
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -65,6 +69,8 @@ class PantrySettingsDto:
             field_dict["articleIsOpen"] = article_is_open
         if article_is_open_since is not UNSET:
             field_dict["articleIsOpenSince"] = article_is_open_since
+        if remaining_amount is not UNSET:
+            field_dict["remainingAmount"] = remaining_amount
 
         return field_dict
 
@@ -88,6 +94,8 @@ class PantrySettingsDto:
 
         article_is_open_since = _parse_article_is_open_since(d.pop("articleIsOpenSince", UNSET))
 
+        remaining_amount = d.pop("remainingAmount", UNSET)
+
         pantry_settings_dto = cls(
             pantry_uuid=pantry_uuid,
             count=count,
@@ -95,6 +103,7 @@ class PantrySettingsDto:
             calculated_best_before_date=calculated_best_before_date,
             article_is_open=article_is_open,
             article_is_open_since=article_is_open_since,
+            remaining_amount=remaining_amount,
         )
 
         pantry_settings_dto.additional_properties = d

@@ -60,6 +60,8 @@ def sync_detailed(
 ) -> Response[Any | ItemListDto]:
     """Returns all items of a specific shopping list
 
+     Use GET /list/:listId/shoppingList instead.
+
     Args:
         list_id (str):
 
@@ -89,6 +91,8 @@ def sync(
 ) -> Any | ItemListDto | None:
     """Returns all items of a specific shopping list
 
+     Use GET /list/:listId/shoppingList instead.
+
     Args:
         list_id (str):
 
@@ -112,6 +116,8 @@ async def asyncio_detailed(
     client: AuthenticatedClient,
 ) -> Response[Any | ItemListDto]:
     """Returns all items of a specific shopping list
+
+     Use GET /list/:listId/shoppingList instead.
 
     Args:
         list_id (str):
@@ -139,6 +145,8 @@ async def asyncio(
     client: AuthenticatedClient,
 ) -> Any | ItemListDto | None:
     """Returns all items of a specific shopping list
+
+     Use GET /list/:listId/shoppingList instead.
 
     Args:
         list_id (str):

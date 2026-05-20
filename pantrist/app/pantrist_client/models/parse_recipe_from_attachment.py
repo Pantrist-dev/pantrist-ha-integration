@@ -15,12 +15,13 @@ T = TypeVar("T", bound="ParseRecipeFromAttachment")
 class ParseRecipeFromAttachment:
     """
     Attributes:
-        base64 (str):
-        mime_type (str | Unset):
+        base64 (str): The base64 encoded data of the attachment (image/document) Example:
+            iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==.
+        mime_type (str | Unset): The mime type of the attachment Default: 'image/jpeg'. Example: image/jpeg.
     """
 
     base64: str
-    mime_type: str | Unset = UNSET
+    mime_type: str | Unset = "image/jpeg"
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
