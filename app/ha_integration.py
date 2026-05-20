@@ -47,6 +47,26 @@ class HAClient:
             logger.error("Request error while updating %s: %s", entity_id, exc)
         return False
 
+    def post_persistent_notification(
+        self, notification_id: str, title: str, message: str
+    ) -> None:
+        """Best-effort HA persistent notification. Errors are logged, not raised."""
+        token = os.environ.get("SUPERVISOR_TOKEN", "")
+        try:
+            response = httpx.post(
+                "http://supervisor/core/api/services/persistent_notification/create",
+                headers={"Authorization": f"Bearer {token}"},
+                json={
+                    "notification_id": notification_id,
+                    "title": title,
+                    "message": message,
+                },
+                timeout=10,
+            )
+            response.raise_for_status()
+        except Exception:
+            logger.exception("post_persistent_notification failed")
+
     def close(self) -> None:
         self._client.close()
 
