@@ -258,9 +258,9 @@ and paste these URLs:
 | Blueprint | URL | What it does |
 |---|---|---|
 | Voice — Add to shopping list | `https://github.com/Pantrist-dev/pantrist-ha-addon/blob/main/blueprints/automation/pantrist/voice_add_to_shopping_list.yaml` | Say "Add milk to the shopping list" (or German "Schreib Milch auf die Einkaufsliste") via HA Assist and the item lands on the list. |
-| Low-stock auto-add | `https://github.com/Pantrist-dev/pantrist-ha-addon/blob/main/blueprints/automation/pantrist/low_stock_auto_add.yaml` | Pantry items that fall at or below their configured minimum amount are automatically added to the shopping list. |
+| Low-stock auto-add | `https://github.com/Pantrist-dev/pantrist-ha-addon/blob/main/blueprints/automation/pantrist/low_stock_auto_add.yaml` | Pantry items that fall at or below their configured minimum amount are automatically added to the shopping list. Items already on the list (by name) are skipped, so it composes safely with the server-side `autoRestock` flag — whichever fires first wins. |
 | Expiring-soon notification | `https://github.com/Pantrist-dev/pantrist-ha-addon/blob/main/blueprints/automation/pantrist/expiring_notification.yaml` | Fires a notify action (push / TTS / persistent notification — your choice) once per day if any pantry items are within the expiry window. |
-| NFC consume pantry item | `https://github.com/Pantrist-dev/pantrist-ha-addon/blob/main/blueprints/automation/pantrist/nfc_consume_pantry_item.yaml` | Scan an NFC tag (Companion app, ESPHome PN532, …) to decrement the bound pantry item. Pair with the **Low-stock auto-add** blueprint and an empty jar lands on the shopping list the moment you scan it past zero. |
+| NFC consume pantry item | `https://github.com/Pantrist-dev/pantrist-ha-addon/blob/main/blueprints/automation/pantrist/nfc_consume_pantry_item.yaml` | Scan an NFC tag (Companion app, ESPHome PN532, …) to decrement the bound pantry item. With **Auto-restock when below minimum** enabled (default), one scan does both halves server-side: pantry decrement *and* shopping-list insert, with full article metadata. |
 
 After import: **Automations → + Create from blueprint** → pick one → fill in the inputs → Save.
 

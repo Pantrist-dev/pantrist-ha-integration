@@ -3,8 +3,10 @@ blueprint:
   description: >
     Whenever an item in your Pantrist pantry drops at or below its
     configured minimum amount, automatically add it (by name) to the
-    shopping list. Only re-fires when the low-stock list changes, so
-    the same item isn't added repeatedly.
+    shopping list. Items that are already on the shopping list (by
+    name match) are skipped, so this blueprint composes safely with
+    the API-side ``autoRestock`` flag — if the server already restocked
+    on the same decrement, the blueprint becomes a no-op for that item.
   source_url: https://github.com/Pantrist-dev/pantrist-ha-addon/blob/main/blueprints/automation/pantrist/low_stock_auto_add.yaml
   domain: automation
   homeassistant:
@@ -18,6 +20,19 @@ blueprint:
           domain: sensor
           integration: pantrist
       default: sensor.pantrist_pantry
+    shopping_sensor:
+      name: Shopping-list sensor
+      description: >
+        Pantrist shopping-list sensor for the SAME list as the pantry
+        sensor above (typically ``sensor.<list>_shopping_list``). Used
+        to skip items that are already on the list — prevents double-
+        adds when the server-side ``autoRestock`` flag is also in
+        play.
+      selector:
+        entity:
+          domain: sensor
+          integration: pantrist
+      default: sensor.pantrist_shopping_list
 
 mode: queued
 max: 10
@@ -32,9 +47,21 @@ condition:
     value_template: >
       {{ state_attr(trigger.entity_id, 'low_stock_count') | int(0) > 0 }}
 
+variables:
+  shopping_sensor: !input shopping_sensor
+
 action:
+  - variables:
+      low_stock: "{{ state_attr(trigger.entity_id, 'low_stock_items') or [] }}"
+      shopping_names: >
+        {{ (state_attr(shopping_sensor, 'items') or [])
+           | map(attribute='name') | list }}
+      missing: >
+        {{ low_stock
+           | rejectattr('name', 'in', shopping_names)
+           | list }}
   - repeat:
-      for_each: "{{ state_attr(trigger.entity_id, 'low_stock_items') }}"
+      for_each: "{{ missing }}"
       sequence:
         - action: pantrist.add_to_shopping_list
           data:
