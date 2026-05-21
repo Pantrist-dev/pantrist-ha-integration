@@ -1,9 +1,11 @@
 blueprint:
   name: "Pantrist: Voice — Add to shopping list"
   description: >
-    Listen for sentences like "Add milk to the shopping list" or "Schreib
-    Milch auf die Einkaufsliste" via Home Assistant Assist, and forward
-    the recognised item name to Pantrist's `add_to_shopping_list` service.
+    Listen for sentences via Home Assistant Assist and forward the captured
+    item name to Pantrist's `add_to_shopping_list` service. The default
+    sentence list matches both English ("Add milk to the shopping list")
+    and German ("Schreib Milch auf die Einkaufsliste") phrasings, so the
+    automation works in either language out of the box.
 
     Customise the sentence list if you want different trigger phrases.
     Use `{item}` exactly once per sentence as the slot for the item name.
@@ -34,7 +36,7 @@ blueprint:
         Optional spoken response after adding. `{{ item }}` is the captured item.
       selector:
         text:
-      default: "{{ item }} ist auf der Einkaufsliste."
+      default: "{{ item }} is on the shopping list."
 
 mode: parallel
 

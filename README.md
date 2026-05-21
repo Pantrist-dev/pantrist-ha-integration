@@ -77,63 +77,63 @@ cards:
     title: Pantrist
     entities:
       - entity: sensor.pantrist_shopping_list
-        name: Einkauf
+        name: Shopping
       - entity: sensor.pantrist_pantry
-        name: Vorrat
+        name: Pantry
       - entity: sensor.pantrist_expiring_soon
-        name: Läuft ab
+        name: Expiring
       - entity: sensor.pantrist_shopping_cart
-        name: Korb
+        name: Cart
 
   - type: markdown
     content: |
-      ## 🛒 Einkaufsliste
+      ## 🛒 Shopping list
       {% set items = state_attr('sensor.pantrist_shopping_list', 'items') or [] %}
       {% if items %}
       {% for item in items %}
       - **{{ item.name }}**{% if item.amount %} · {{ item.amount }}{% if item.unit %} {{ item.unit }}{% endif %}{% endif %}
       {% endfor %}
       {% else %}
-      _Liste ist leer._
+      _List is empty._
       {% endif %}
 
   - type: markdown
     content: |
-      ## ⚠️ Bald ablaufend
+      ## ⚠️ Expiring soon
       {% set expiring = state_attr('sensor.pantrist_expiring_soon', 'expiring_items') or [] %}
       {% set expired = state_attr('sensor.pantrist_expiring_soon', 'expired_items') or [] %}
       {% if expired %}
-      **Abgelaufen:**
+      **Already expired:**
       {% for item in expired %}
-      - {{ item.name }} (war: {{ item.best_before }})
+      - {{ item.name }} (was: {{ item.best_before }})
       {% endfor %}
       {% endif %}
       {% if expiring %}
-      **Bald ablaufend:**
+      **Expiring soon:**
       {% for item in expiring %}
-      - {{ item.name }} (bis: {{ item.best_before }})
+      - {{ item.name }} (by: {{ item.best_before }})
       {% endfor %}
       {% endif %}
       {% if not (expiring or expired) %}
-      _Nichts läuft bald ab. 🎉_
+      _Nothing expiring soon. 🎉_
       {% endif %}
 ```
 
-## Blueprints (Ein-Klick-Automationen)
+## Blueprints (one-click automations)
 
-Die Integration liefert drei Blueprints mit. Importieren über HA:
+The integration ships three blueprints. Import them via HA:
 
-**Einstellungen → Automatisierungen → Blueprints → Blueprint importieren**
+**Settings → Automations → Blueprints → Import blueprint**
 
-und diese URLs einfügen:
+and paste these URLs:
 
-| Blueprint | URL | Was es macht |
+| Blueprint | URL | What it does |
 |---|---|---|
-| Voice — Add to shopping list | `https://github.com/Pantrist-dev/pantrist-ha-addon/blob/main/blueprints/automation/pantrist/voice_add_to_shopping_list.yaml` | „Schreib Milch auf die Einkaufsliste" / „Add bananas to the shopping list" via HA Assist |
-| Low-stock auto-add | `https://github.com/Pantrist-dev/pantrist-ha-addon/blob/main/blueprints/automation/pantrist/low_stock_auto_add.yaml` | Pantry-Items mit Mindestmenge unterschritten landen automatisch auf der Einkaufsliste |
-| Expiring-soon notification | `https://github.com/Pantrist-dev/pantrist-ha-addon/blob/main/blueprints/automation/pantrist/expiring_notification.yaml` | Tägliche Benachrichtigung (Push / TTS / persistent) wenn Items bald ablaufen |
+| Voice — Add to shopping list | `https://github.com/Pantrist-dev/pantrist-ha-addon/blob/main/blueprints/automation/pantrist/voice_add_to_shopping_list.yaml` | Say "Add milk to the shopping list" (or German "Schreib Milch auf die Einkaufsliste") via HA Assist and the item lands on the list. |
+| Low-stock auto-add | `https://github.com/Pantrist-dev/pantrist-ha-addon/blob/main/blueprints/automation/pantrist/low_stock_auto_add.yaml` | Pantry items that fall at or below their configured minimum amount are automatically added to the shopping list. |
+| Expiring-soon notification | `https://github.com/Pantrist-dev/pantrist-ha-addon/blob/main/blueprints/automation/pantrist/expiring_notification.yaml` | Fires a notify action (push / TTS / persistent notification — your choice) once per day if any pantry items are within the expiry window. |
 
-Nach dem Import: **Automatisierungen → + Erstellen aus Blueprint** → einer der drei → Felder ausfüllen → Speichern.
+After import: **Automations → + Create from blueprint** → pick one → fill in the inputs → Save.
 
 ## Example automations (manual)
 
