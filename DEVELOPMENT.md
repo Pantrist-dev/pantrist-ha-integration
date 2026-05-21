@@ -32,7 +32,7 @@ open "smb://homeassistant.local"
 
 # 2. Copy the integration
 mkdir -p /Volumes/config/custom_components
-cp -r custom_components/pantrist /Volumes/config/custom_components/pantrist
+cp -r custom_components/pantrist /Volumes/config/custom_components/
 
 # 3. Restart HA: Settings → System → Restart
 ```
