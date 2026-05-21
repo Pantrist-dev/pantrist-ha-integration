@@ -21,8 +21,6 @@ from .api import PantristApi, PantristApiError, PantristAuthError
 from .const import (
     CLIENT_ID,
     DOMAIN,
-    OAUTH2_AUTHORIZE,
-    OAUTH2_TOKEN,
     SERVICE_ADD_TO_PANTRY,
     SERVICE_ADD_TO_SHOPPING_LIST,
     SERVICE_ADD_TO_SHOPPING_LIST_BY_BARCODE,
@@ -53,43 +51,33 @@ CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Register Pantrist services + pre-bake the OAuth implementation.
+    """Register Pantrist services + import the default OAuth client credential.
 
     Bronze (action-setup): services live in `async_setup` so YAML automations
     can reference them even before the user finishes the OAuth flow. The
     handlers themselves raise `HomeAssistantError` when no entry is
     configured yet, so calling them prematurely fails cleanly.
 
-    Also pre-registers Pantrist's PKCE OAuth implementation under the
-    integration's own domain so users don't have to walk through
-    "Settings → Application Credentials → Add Credential" before adding
-    the integration. Pantrist's HA client is public (PKCE-only, no
-    client secret), so baking the client_id into the integration leaks
-    nothing — this is the same pattern HA Core uses for e.g. Spotify.
-    Users who *want* to override the client_id can still do so via
-    Application Credentials and the ``application_credentials.py``
-    platform will produce a per-credential implementation alongside.
+    Also imports Pantrist's public PKCE client into Application Credentials
+    so users don't have to walk through "Settings → Devices & Services →
+    Application Credentials → Add Credential" before adding the integration.
+    Pantrist's HA client is public (PKCE-only, no client secret), so baking
+    the client_id into the integration leaks nothing — this is the same
+    pattern HA Core uses for e.g. Spotify. ``async_import_client_credential``
+    is idempotent on ``auth_domain``; subsequent restarts are no-ops. Users
+    who *want* to override the client_id can still add their own credential
+    via the UI and select it during the config flow.
     """
-    # Local import to keep ``application_credentials`` an optional dep at
-    # module-load time — the platform module is loaded by HA Core when the
-    # ``application_credentials`` dependency in ``manifest.json`` is
-    # resolved, so this import is always safe at runtime.
-    from homeassistant.helpers.config_entry_oauth2_flow import (  # noqa: PLC0415
-        LocalOAuth2ImplementationWithPkce,
-        async_register_implementation,
+    from homeassistant.components.application_credentials import (  # noqa: PLC0415
+        ClientCredential,
+        async_import_client_credential,
     )
 
-    async_register_implementation(
+    await async_import_client_credential(
         hass,
         DOMAIN,
-        LocalOAuth2ImplementationWithPkce(
-            hass,
-            DOMAIN,
-            CLIENT_ID,
-            OAUTH2_AUTHORIZE,
-            OAUTH2_TOKEN,
-            client_secret="",
-        ),
+        ClientCredential(client_id=CLIENT_ID, client_secret=""),
+        DOMAIN,
     )
 
     _register_services(hass)

@@ -239,7 +239,7 @@ cards:
       {% set items = state_attr('sensor.pantrist_shopping_list', 'items') or [] %}
       {% if items %}
       {% for item in items %}
-      - **{{ item.name }}**{% if item.amount %} · {{ item.amount }}{% if item.unit %} {{ item.unit }}{% endif %}{% endif %}
+      - **{{ item.name }}**{% if item.display %} · {{ item.display }}{% endif %}
       {% endfor %}
       {% else %}
       _List is empty._

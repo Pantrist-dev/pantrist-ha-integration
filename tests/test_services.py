@@ -213,9 +213,14 @@ async def test_async_setup_registers_services_before_entry(
     """Bronze action-setup: services must be registered in async_setup,
     so YAML automations can resolve them before any entry is configured.
     """
-    from custom_components.pantrist import async_setup
+    from homeassistant.setup import async_setup_component
 
-    assert await async_setup(hass, {})
+    # ``async_setup_component`` resolves the ``application_credentials``
+    # dependency declared in ``manifest.json`` before invoking our
+    # ``async_setup``. Calling the latter directly would crash on the
+    # ``async_import_client_credential`` call because the platform isn't
+    # loaded yet.
+    assert await async_setup_component(hass, DOMAIN, {})
     assert hass.services.has_service(DOMAIN, SERVICE_ADD_TO_SHOPPING_LIST)
     # Calling it without a config entry must raise a clean HA error,
     # not crash the service registry.
