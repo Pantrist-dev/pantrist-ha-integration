@@ -7,7 +7,11 @@ from collections.abc import Mapping
 from typing import Any
 
 import aiohttp
-from homeassistant.config_entries import SOURCE_REAUTH, ConfigFlowResult
+from homeassistant.config_entries import (
+    SOURCE_REAUTH,
+    SOURCE_RECONFIGURE,
+    ConfigFlowResult,
+)
 from homeassistant.helpers import aiohttp_client, config_entry_oauth2_flow
 
 from .const import API_BASE, CONF_LIST_ID, DOMAIN
@@ -53,6 +57,19 @@ class PantristOAuth2FlowHandler(
             return self.async_show_form(step_id="reauth_confirm")
         return await self.async_step_user()
 
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """User clicked "Reconfigure" in Settings → Devices & Services.
+
+        Forwards into the standard OAuth picker so the user can re-authorize
+        and/or change which list this entry is bound to. The unique_id check
+        in :py:meth:`async_oauth_create_entry` then enforces that the picked
+        list still belongs to the same Pantrist account as the original
+        entry — picking a different account aborts with ``wrong_account``.
+        """
+        return await self.async_step_user()
+
     async def async_oauth_create_entry(
         self, data: dict[str, Any]
     ) -> ConfigFlowResult:
@@ -76,6 +93,15 @@ class PantristOAuth2FlowHandler(
             self._abort_if_unique_id_mismatch(reason="wrong_account")
             return self.async_update_reload_and_abort(
                 self._get_reauth_entry(),
+                data={**data, CONF_LIST_ID: list_id},
+            )
+
+        if self.source == SOURCE_RECONFIGURE:
+            # Reconfigure must stick to the same Pantrist account/list.
+            # Picking a different account is treated the same as in reauth.
+            self._abort_if_unique_id_mismatch(reason="wrong_account")
+            return self.async_update_reload_and_abort(
+                self._get_reconfigure_entry(),
                 data={**data, CONF_LIST_ID: list_id},
             )
 
