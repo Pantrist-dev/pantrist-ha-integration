@@ -224,7 +224,13 @@ class PantristCoordinator(DataUpdateCoordinator[PantristData]):
         await self._api._session.async_ensure_token_valid()  # noqa: SLF001
         token = self._api._session.token["access_token"]  # noqa: SLF001
 
-        sio = socketio.AsyncClient(logger=False, engineio_logger=False)
+        # Forward python-socketio / engineio logs into our own HA logger so
+        # connection-failure root causes (e.g. the server-side "Unauthorized"
+        # reason on a rejected handshake) surface in the HA logs instead of
+        # bubbling up as the opaque "One or more namespaces failed to connect"
+        # ConnectionError. Cost: a handful of DEBUG/INFO lines per reconnect,
+        # which the user can silence via HA's logger config if they want.
+        sio = socketio.AsyncClient(logger=_LOGGER, engineio_logger=_LOGGER)
         self._sio = sio
 
         @sio.event(namespace=SOCKET_NAMESPACE)
