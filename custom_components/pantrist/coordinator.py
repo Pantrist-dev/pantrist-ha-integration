@@ -5,14 +5,17 @@ from __future__ import annotations
 import asyncio
 import logging
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta
 from typing import Any
 
 import socketio
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
+from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.util import dt as dt_util
 
 from .api import PantristApi, PantristApiError, PantristAuthError
 from .const import API_BASE, DOMAIN, SOCKET_NAMESPACE
@@ -21,6 +24,11 @@ _LOGGER = logging.getLogger(__name__)
 
 _RECONNECT_BACKOFF_START = 2
 _RECONNECT_BACKOFF_MAX = 60
+
+# After this much continuous disconnect time we surface a HA Repair issue —
+# the user will see "Pantrist real-time updates haven't been working for X
+# minutes" in Settings → System → Repairs.
+DISCONNECT_REPAIR_THRESHOLD = timedelta(minutes=5)
 
 
 @dataclass
@@ -60,6 +68,10 @@ class PantristCoordinator(DataUpdateCoordinator[PantristData]):
         self._sio: socketio.AsyncClient | None = None
         self._sio_task: asyncio.Task | None = None
         self._stop_sio = asyncio.Event()
+        # Tracks when the Socket.IO connection first went down. Set on
+        # disconnect, cleared on successful reconnect (in the ``connect``
+        # event handler). Drives the disconnect Repair issue.
+        self._first_disconnect_at: datetime | None = None
 
     @property
     def list_id(self) -> str:
@@ -91,10 +103,35 @@ class PantristCoordinator(DataUpdateCoordinator[PantristData]):
         except PantristApiError as err:
             raise UpdateFailed(f"Pantrist API error: {err}") from err
 
-        return PantristData(
+        new_data = PantristData(
             shopping_list=shopping or {},
             pantry=pantry or {},
             shopping_cart=cart or [],
+        )
+
+        # Notify the ``number`` platform when the pantry inventory shifts so
+        # it can spawn / retire per-item entities.
+        if self._pantry_item_ids(new_data) != self._pantry_item_ids(self.data):
+            from .list_manager import signal_pantry_items_changed  # noqa: PLC0415
+
+            entry = self.config_entry
+            if entry is not None:
+                async_dispatcher_send(
+                    self.hass,
+                    signal_pantry_items_changed(entry.entry_id),
+                    self._list_id,
+                )
+
+        return new_data
+
+    @staticmethod
+    def _pantry_item_ids(data: PantristData | None) -> frozenset[str]:
+        if data is None:
+            return frozenset()
+        return frozenset(
+            str(item["uuid"])
+            for item in (data.pantry or {}).get("items", [])
+            if item.get("uuid")
         )
 
     # ------------------------------------------------------------------
@@ -122,6 +159,10 @@ class PantristCoordinator(DataUpdateCoordinator[PantristData]):
                 pass
         self._sio = None
         self._sio_task = None
+        # Tear down any pending Repair issue on shutdown so HA doesn't keep
+        # showing a stale "disconnected" warning after the integration is
+        # unloaded.
+        self._clear_disconnect_issue()
 
     async def _sio_loop(self) -> None:
         backoff = _RECONNECT_BACKOFF_START
@@ -134,12 +175,50 @@ class PantristCoordinator(DataUpdateCoordinator[PantristData]):
             except Exception:  # noqa: BLE001
                 _LOGGER.exception("Socket.IO loop error")
             if not self._stop_sio.is_set():
+                # We're between connection attempts — mark the moment we
+                # first lost the socket so the Repair-issue check can decide
+                # whether to surface the disconnect to the user.
+                if self._first_disconnect_at is None:
+                    self._first_disconnect_at = dt_util.utcnow()
+                self._maybe_register_disconnect_issue()
                 _LOGGER.info("Reconnecting Socket.IO in %d s…", backoff)
                 try:
                     await asyncio.wait_for(self._stop_sio.wait(), timeout=backoff)
                 except asyncio.TimeoutError:
                     pass
                 backoff = min(backoff * 2, _RECONNECT_BACKOFF_MAX)
+
+    def _disconnect_issue_id(self) -> str:
+        return f"socket_disconnected_{self._list_id}"
+
+    def _maybe_register_disconnect_issue(self) -> None:
+        """Register a Repair if we've been disconnected past the threshold."""
+        if self._first_disconnect_at is None:
+            return
+        elapsed = dt_util.utcnow() - self._first_disconnect_at
+        if elapsed < DISCONNECT_REPAIR_THRESHOLD:
+            return
+        ir.async_create_issue(
+            self.hass,
+            DOMAIN,
+            self._disconnect_issue_id(),
+            is_fixable=False,
+            is_persistent=False,
+            severity=ir.IssueSeverity.WARNING,
+            translation_key="socket_disconnected",
+            translation_placeholders={
+                "list_name": self._list_name or self._list_id,
+                "minutes": str(max(1, int(elapsed.total_seconds() // 60))),
+            },
+        )
+
+    def _clear_disconnect_issue(self) -> None:
+        if self._first_disconnect_at is None:
+            return
+        self._first_disconnect_at = None
+        ir.async_delete_issue(
+            self.hass, DOMAIN, self._disconnect_issue_id()
+        )
 
     async def _sio_connect_and_wait(self) -> None:
         await self._api._session.async_ensure_token_valid()  # noqa: SLF001
@@ -156,6 +235,8 @@ class PantristCoordinator(DataUpdateCoordinator[PantristData]):
                 {"listId": self._list_id},
                 namespace=SOCKET_NAMESPACE,
             )
+            # We're back. Clear the disconnect-Repair if one was raised.
+            self._clear_disconnect_issue()
             # Catch up after any disconnect window. The integration runs
             # without a periodic poll, so this is the only safety net for
             # events missed while the socket was down.
@@ -215,6 +296,47 @@ class PantristCoordinator(DataUpdateCoordinator[PantristData]):
                 self.hass,
                 signal_list_deleted(entry.entry_id),
                 self._list_id,
+            )
+
+        @sio.on("list:added", namespace=SOCKET_NAMESPACE)
+        async def on_list_added(payload: dict[str, Any]) -> None:
+            """Server pushed a new list to the per-user room.
+
+            Each authenticated socket auto-joins ``user:{uid}`` on the
+            server, so we receive ``list:added`` for any list that newly
+            belongs to (or has been shared with) the account regardless
+            of which list room this particular coordinator is in.
+            """
+            list_id = payload.get("listId") or payload.get("id")
+            if not list_id:
+                return
+            data = payload.get("data") or {}
+            list_obj = dict(data) if isinstance(data, dict) else {}
+            list_obj.setdefault("id", list_id)
+
+            entry = self.config_entry
+            if entry is None:
+                return
+            manager = getattr(entry, "runtime_data", None)
+            if manager is None:
+                return
+            manager.handle_remote_add(list_obj)
+
+        @sio.on("list:removed", namespace=SOCKET_NAMESPACE)
+        async def on_list_removed(payload: dict[str, Any]) -> None:
+            """Server pushed a list-revocation to the per-user room."""
+            list_id = payload.get("listId") or payload.get("id")
+            if not list_id:
+                return
+            from .list_manager import signal_list_deleted  # noqa: PLC0415
+
+            entry = self.config_entry
+            if entry is None:
+                return
+            async_dispatcher_send(
+                self.hass,
+                signal_list_deleted(entry.entry_id),
+                str(list_id),
             )
 
         await sio.connect(
