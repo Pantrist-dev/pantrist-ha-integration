@@ -39,6 +39,8 @@ _LOGGER = logging.getLogger(__name__)
 PLATFORMS: list[Platform] = [
     Platform.BINARY_SENSOR,
     Platform.CALENDAR,
+    Platform.IMAGE,
+    Platform.NUMBER,
     Platform.SENSOR,
     Platform.TODO,
 ]
@@ -126,20 +128,27 @@ def _coordinator_for_call(
 ) -> PantristCoordinator:
     """Resolve a service call to a coordinator.
 
-    - If `list_id` is provided, that coordinator wins.
+    - If ``list_id`` is provided, that coordinator wins.
     - Otherwise pick the first available coordinator (single-list users
       don't have to specify anything).
     """
     coords = _all_coordinators(hass)
     if not coords:
-        raise HomeAssistantError("Pantrist integration is not configured")
+        raise HomeAssistantError(
+            translation_domain=DOMAIN,
+            translation_key="not_configured",
+        )
     if list_id:
         for c in coords:
             if c.list_id == list_id:
                 return c
         raise HomeAssistantError(
-            f"No Pantrist coordinator for list_id={list_id}. "
-            f"Available: {[c.list_id for c in coords]}"
+            translation_domain=DOMAIN,
+            translation_key="unknown_list_id",
+            translation_placeholders={
+                "list_id": list_id,
+                "available": ", ".join(c.list_id for c in coords),
+            },
         )
     return coords[0]
 
@@ -161,9 +170,12 @@ def _register_services(hass: HomeAssistant) -> None:
             raise ConfigEntryAuthFailed("Pantrist auth failed") from err
         except PantristApiError as err:
             # Bronze (action-exceptions): never leak the integration-internal
-            # exception type. Wrap it so callers see a HomeAssistantError.
+            # exception type. Wrap it so callers see a HomeAssistantError
+            # with a translatable message (Gold: exception-translations).
             raise HomeAssistantError(
-                f"Pantrist API request failed: {err}"
+                translation_domain=DOMAIN,
+                translation_key="api_request_failed",
+                translation_placeholders={"error": str(err)},
             ) from err
         await coordinator.async_request_refresh()
 

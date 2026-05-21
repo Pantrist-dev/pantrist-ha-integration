@@ -107,7 +107,10 @@ class PantristShoppingTodoEntity(PantristEntity, TodoListEntity):
     async def async_create_todo_item(self, item: TodoItem) -> None:
         """User clicked + Add in the Lovelace todo card."""
         if not item.summary:
-            raise HomeAssistantError("Shopping-list item needs a name")
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="todo_missing_summary",
+            )
         try:
             await self.coordinator.api.add_to_shopping_list_by_name(
                 self.coordinator.list_id, item.summary
@@ -116,7 +119,9 @@ class PantristShoppingTodoEntity(PantristEntity, TodoListEntity):
             raise ConfigEntryAuthFailed("Pantrist auth failed") from err
         except PantristApiError as err:
             raise HomeAssistantError(
-                f"Could not add shopping-list item: {err}"
+                translation_domain=DOMAIN,
+                translation_key="todo_add_failed",
+                translation_placeholders={"error": str(err)},
             ) from err
         await self.coordinator.async_request_refresh()
 
@@ -138,7 +143,9 @@ class PantristShoppingTodoEntity(PantristEntity, TodoListEntity):
             raise ConfigEntryAuthFailed("Pantrist auth failed") from err
         except PantristApiError as err:
             raise HomeAssistantError(
-                f"Could not check shopping-list item: {err}"
+                translation_domain=DOMAIN,
+                translation_key="todo_check_failed",
+                translation_placeholders={"error": str(err)},
             ) from err
         await self.coordinator.async_request_refresh()
 
@@ -152,7 +159,9 @@ class PantristShoppingTodoEntity(PantristEntity, TodoListEntity):
                 raise ConfigEntryAuthFailed("Pantrist auth failed") from err
             except PantristApiError as err:
                 raise HomeAssistantError(
-                    f"Could not delete shopping-list item {uid}: {err}"
+                    translation_domain=DOMAIN,
+                    translation_key="todo_delete_failed",
+                    translation_placeholders={"uid": uid, "error": str(err)},
                 ) from err
         await self.coordinator.async_request_refresh()
 

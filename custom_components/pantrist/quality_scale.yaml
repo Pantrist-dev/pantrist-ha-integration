@@ -12,10 +12,12 @@ rules:
   appropriate-polling:
     status: done
     comment: >
-      The integration is fully push-driven via Socket.IO; no periodic
-      poll on per-list data. The only remaining time-interval call is
-      ``GET /list`` every 15 min to discover new lists added to the
-      account — the Pantrist API has no list-creation socket event.
+      Fully push-driven via Socket.IO. List inventory (add / remove)
+      arrives on the per-user ``user:{uid}`` room; list contents flow
+      through the per-list ``data:updated`` events; rename and delete
+      through ``list:updated`` / ``list:deleted``. The list_manager keeps
+      a 1-hour reconcile against ``GET /list`` purely as a safety net
+      for events missed while the socket was disconnected.
   brands: todo
   common-modules: done
   config-flow: done
@@ -50,3 +52,9 @@ rules:
   reconfiguration-flow: done
   dynamic-devices: done
   stale-devices: done
+  entity-category: done
+  exception-translations: done
+  repair-issues: done
+  docs-data-update: done
+  docs-known-limitations: done
+  docs-use-cases: done

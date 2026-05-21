@@ -25,6 +25,38 @@
       "default": "Successfully connected to Pantrist."
     }
   },
+  "issues": {
+    "socket_disconnected": {
+      "title": "Pantrist real-time updates interrupted",
+      "description": "The Pantrist Socket.IO connection for list {list_name} has been down for ~{minutes} min. List contents will update again automatically when the connection is restored — no action is needed unless this persists. If it does, check Settings → System → Logs for ``custom_components.pantrist`` errors."
+    }
+  },
+  "exceptions": {
+    "not_configured": {
+      "message": "Pantrist integration is not configured. Add the integration before calling this service."
+    },
+    "unknown_list_id": {
+      "message": "No Pantrist coordinator for list_id={list_id}. Available: {available}."
+    },
+    "api_request_failed": {
+      "message": "Pantrist API request failed: {error}"
+    },
+    "todo_missing_summary": {
+      "message": "Shopping-list item needs a name."
+    },
+    "todo_add_failed": {
+      "message": "Could not add shopping-list item: {error}"
+    },
+    "todo_check_failed": {
+      "message": "Could not check shopping-list item: {error}"
+    },
+    "todo_delete_failed": {
+      "message": "Could not delete shopping-list item {uid}: {error}"
+    },
+    "number_set_failed": {
+      "message": "Could not change pantry amount for {name}: {error}"
+    }
+  },
   "entity": {
     "sensor": {
       "shopping_list": {
@@ -57,6 +89,16 @@
     "calendar": {
       "pantry_calendar": {
         "name": "Pantry expirations"
+      }
+    },
+    "number": {
+      "pantry_amount": {
+        "name": "{item}"
+      }
+    },
+    "image": {
+      "latest_shopping_item": {
+        "name": "Latest shopping item"
       }
     },
     "todo": {

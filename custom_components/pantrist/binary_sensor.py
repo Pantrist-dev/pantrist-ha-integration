@@ -19,6 +19,7 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .coordinator import PantristCoordinator
@@ -123,6 +124,8 @@ class PantristShoppingListHasItemsBinarySensor(_PantristBinarySensorBase):
     _attr_icon = "mdi:cart-arrow-down"
     _attr_translation_key = "shopping_list_has_items"
     # No device_class — "has items" isn't a problem state, just a flag.
+    # Park as diagnostic so it doesn't clutter the default device tile.
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
 
     def __init__(self, coordinator: PantristCoordinator) -> None:
         super().__init__(coordinator, "shopping_list_has_items")
