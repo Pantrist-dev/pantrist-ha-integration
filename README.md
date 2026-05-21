@@ -149,6 +149,25 @@ the configured minimum; the expiring-soon sensor splits its payload into
 Ticking the box checks the item off Pantrist's shopping list (it's moved to the cart
 as you'd expect). Deletes remove it.
 
+**Important:** `sensor.<list>_shopping_list` only shows the *count* on the device tile —
+the actual items live on the `todo` entity and the sensor's `items` attribute. To see
+them on a dashboard:
+
+1. Open any dashboard → ⋮ → **Edit dashboard**.
+2. **+ Add card** → search **To-do list**.
+3. Pick **`todo.<list>_shopping_list`** (e.g. `todo.home_shopping_list`).
+4. Save.
+
+You now have a check-list card: ticking calls `pantrist.check_shopping_list_item`,
+"+ Add" at the bottom calls `pantrist.add_to_shopping_list`, swipe-to-delete calls
+`pantrist.delete_shopping_list_item`. The HA Companion app's built-in **To-Do** tab
+picks up the same entity automatically.
+
+Want richer info per item (brand, image, content volume)? Use the markdown-card
+snippet in the [Dashboard card](#dashboard-card-copy-paste) section instead — it
+renders the sensor's `items` attribute including the composed `display` field
+("3 × 1 L").
+
 ### Voice (HA Assist)
 
 The Lovelace voice assistant can read and update the shopping list via the standard
