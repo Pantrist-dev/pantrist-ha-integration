@@ -24,7 +24,10 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers import device_registry as dr
-from homeassistant.helpers.dispatcher import async_dispatcher_send
+from homeassistant.helpers.dispatcher import (
+    async_dispatcher_connect,
+    async_dispatcher_send,
+)
 from homeassistant.helpers.event import async_track_time_interval
 
 from .api import PantristApi, PantristApiError, PantristAuthError
@@ -33,13 +36,33 @@ from .coordinator import PantristCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
-LIST_RECONCILE_INTERVAL = timedelta(minutes=5)
+# Reconcile interval is only used to *discover new lists*; rename and delete
+# are driven by socket events (``list:updated`` / ``list:deleted``) so they
+# land in HA in real time. New-list discovery still needs a periodic API call
+# because the Pantrist backend has no account-scoped socket event today —
+# clients only get pushed `list:*` events for rooms they've already joined.
+LIST_RECONCILE_INTERVAL = timedelta(minutes=15)
 
 
 @callback
 def signal_new_list(entry_id: str) -> str:
     """Dispatcher signal fired when a previously-unseen list shows up."""
     return f"pantrist_new_list_{entry_id}"
+
+
+@callback
+def signal_list_deleted(entry_id: str) -> str:
+    """Dispatcher signal fired when a list is removed server-side."""
+    return f"pantrist_list_deleted_{entry_id}"
+
+
+@callback
+def signal_list_renamed(entry_id: str) -> str:
+    """Dispatcher signal fired when a list's name changes server-side.
+
+    Payload: ``(list_id, new_name)``.
+    """
+    return f"pantrist_list_renamed_{entry_id}"
 
 
 class PantristListManager:
@@ -53,6 +76,7 @@ class PantristListManager:
         self._api = api
         self._coordinators: dict[str, PantristCoordinator] = {}
         self._unsub_interval: Any | None = None
+        self._unsub_signals: list[Any] = []
         # Old entries pin themselves to a single list — preserve that
         # behaviour so a legacy single-list user doesn't suddenly see every
         # list in their account materialise.
@@ -129,11 +153,31 @@ class PantristListManager:
             self._hass, self._on_interval, LIST_RECONCILE_INTERVAL
         )
 
+        # Socket-driven rename + delete propagate via dispatcher signals
+        # fired from each coordinator's socket loop.
+        self._unsub_signals.append(
+            async_dispatcher_connect(
+                self._hass,
+                signal_list_deleted(self._entry.entry_id),
+                self._handle_remote_delete,
+            )
+        )
+        self._unsub_signals.append(
+            async_dispatcher_connect(
+                self._hass,
+                signal_list_renamed(self._entry.entry_id),
+                self._handle_remote_rename,
+            )
+        )
+
     async def async_shutdown(self) -> None:
-        """Stop the reconcile loop and tear down every coordinator."""
+        """Stop the reconcile loop, dispatcher subscriptions, and coordinators."""
         if self._unsub_interval is not None:
             self._unsub_interval()
             self._unsub_interval = None
+        for unsub in self._unsub_signals:
+            unsub()
+        self._unsub_signals.clear()
         for coord in list(self._coordinators.values()):
             await coord.async_stop_socketio()
         self._coordinators.clear()
@@ -213,3 +257,35 @@ class PantristListManager:
         device = registry.async_get_device(identifiers={(DOMAIN, list_id)})
         if device is not None:
             registry.async_remove_device(device.id)
+
+    # ------------------------------------------------------------------
+    # Socket-driven lifecycle
+    # ------------------------------------------------------------------
+
+    @callback
+    def _handle_remote_delete(self, list_id: str) -> None:
+        """Coordinator heard ``list:deleted`` for ``list_id``."""
+        if list_id not in self._coordinators:
+            return
+        self._hass.async_create_task(self._remove_list(list_id))
+
+    async def _remove_list(self, list_id: str) -> None:
+        coord = self._coordinators.pop(list_id, None)
+        if coord is not None:
+            await coord.async_stop_socketio()
+        self._remove_device(list_id)
+
+    @callback
+    def _handle_remote_rename(self, payload: tuple[str, str]) -> None:
+        """Coordinator heard ``list:updated`` carrying a new name."""
+        list_id, new_name = payload
+        coord = self._coordinators.get(list_id)
+        if coord is None or not new_name or coord.list_name == new_name:
+            return
+        coord.update_list_name(new_name)
+        # Push the rename into the device registry so the HA UI updates
+        # without waiting for the entity platform to re-register.
+        registry = dr.async_get(self._hass)
+        device = registry.async_get_device(identifiers={(DOMAIN, list_id)})
+        if device is not None:
+            registry.async_update_device(device.id, name=new_name)

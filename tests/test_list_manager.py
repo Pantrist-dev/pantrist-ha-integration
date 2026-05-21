@@ -16,8 +16,11 @@ from custom_components.pantrist.const import DOMAIN
 from custom_components.pantrist.coordinator import PantristCoordinator
 from custom_components.pantrist.list_manager import (
     PantristListManager,
+    signal_list_deleted,
+    signal_list_renamed,
     signal_new_list,
 )
+from homeassistant.helpers.dispatcher import async_dispatcher_send
 
 from .conftest import LIST_ID, LIST_NAME
 
@@ -241,6 +244,118 @@ async def test_manager_mapping_interface(
     assert dict(manager.items()) == {LIST_ID: manager[LIST_ID]}
     assert manager.api is mock_api
     assert LIST_ID in manager.coordinators
+    await manager.async_shutdown()
+
+
+@pytest.mark.usefixtures("mock_oauth_session", "mock_socketio")
+async def test_socket_delete_removes_list_and_device(
+    hass: HomeAssistant, manager_entry: MockConfigEntry, mock_api: MagicMock
+) -> None:
+    """``list:deleted`` socket → manager drops the coordinator + HA device."""
+    manager_entry.add_to_hass(hass)
+    second_id = "22222222-2222-4222-8222-222222222222"
+    mock_api.get_lists = AsyncMock(
+        return_value=[
+            {"id": LIST_ID, "name": LIST_NAME},
+            {"id": second_id, "name": "Second"},
+        ]
+    )
+    manager = PantristListManager(hass, manager_entry, mock_api)
+    await manager.async_initial_setup()
+
+    # Pre-register a device for the second list so we can confirm removal.
+    registry = dr.async_get(hass)
+    registry.async_get_or_create(
+        config_entry_id=manager_entry.entry_id,
+        identifiers={(DOMAIN, second_id)},
+    )
+    assert registry.async_get_device(identifiers={(DOMAIN, second_id)}) is not None
+
+    async_dispatcher_send(
+        hass, signal_list_deleted(manager_entry.entry_id), second_id
+    )
+    await hass.async_block_till_done()
+
+    assert second_id not in manager
+    assert registry.async_get_device(identifiers={(DOMAIN, second_id)}) is None
+    await manager.async_shutdown()
+
+
+@pytest.mark.usefixtures("mock_oauth_session", "mock_socketio")
+async def test_socket_delete_ignored_for_unknown_list(
+    hass: HomeAssistant, manager_entry: MockConfigEntry, mock_api: MagicMock
+) -> None:
+    """A delete signal for a list we don't own is a no-op."""
+    manager_entry.add_to_hass(hass)
+    mock_api.get_lists = AsyncMock(
+        return_value=[{"id": LIST_ID, "name": LIST_NAME}]
+    )
+    manager = PantristListManager(hass, manager_entry, mock_api)
+    await manager.async_initial_setup()
+
+    async_dispatcher_send(
+        hass,
+        signal_list_deleted(manager_entry.entry_id),
+        "ffffffff-ffff-4fff-8fff-ffffffffffff",
+    )
+    await hass.async_block_till_done()
+    assert LIST_ID in manager
+    await manager.async_shutdown()
+
+
+@pytest.mark.usefixtures("mock_oauth_session", "mock_socketio")
+async def test_socket_rename_updates_name_and_device(
+    hass: HomeAssistant, manager_entry: MockConfigEntry, mock_api: MagicMock
+) -> None:
+    """``list:updated`` socket → coordinator name + HA device name update."""
+    manager_entry.add_to_hass(hass)
+    mock_api.get_lists = AsyncMock(
+        return_value=[{"id": LIST_ID, "name": LIST_NAME}]
+    )
+    manager = PantristListManager(hass, manager_entry, mock_api)
+    await manager.async_initial_setup()
+
+    registry = dr.async_get(hass)
+    device = registry.async_get_or_create(
+        config_entry_id=manager_entry.entry_id,
+        identifiers={(DOMAIN, LIST_ID)},
+        name=LIST_NAME,
+    )
+    assert device.name == LIST_NAME
+
+    async_dispatcher_send(
+        hass,
+        signal_list_renamed(manager_entry.entry_id),
+        (LIST_ID, "Renamed"),
+    )
+    await hass.async_block_till_done()
+
+    assert manager[LIST_ID].list_name == "Renamed"
+    refreshed = registry.async_get_device(identifiers={(DOMAIN, LIST_ID)})
+    assert refreshed is not None
+    assert refreshed.name == "Renamed"
+    await manager.async_shutdown()
+
+
+@pytest.mark.usefixtures("mock_oauth_session", "mock_socketio")
+async def test_socket_rename_ignored_when_name_unchanged(
+    hass: HomeAssistant, manager_entry: MockConfigEntry, mock_api: MagicMock
+) -> None:
+    """A no-op rename (same value) leaves coordinator + registry alone."""
+    manager_entry.add_to_hass(hass)
+    mock_api.get_lists = AsyncMock(
+        return_value=[{"id": LIST_ID, "name": LIST_NAME}]
+    )
+    manager = PantristListManager(hass, manager_entry, mock_api)
+    await manager.async_initial_setup()
+
+    async_dispatcher_send(
+        hass,
+        signal_list_renamed(manager_entry.entry_id),
+        (LIST_ID, LIST_NAME),
+    )
+    await hass.async_block_till_done()
+    assert manager[LIST_ID].list_name == LIST_NAME
     await manager.async_shutdown()
 
 

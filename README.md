@@ -222,17 +222,20 @@ automation:
 ## Multiple lists, added live
 
 Every list visible to your Pantrist account becomes its own HA device with its own
-set of sensors / binary sensors / calendar / todo entity. The integration polls
-the account's list inventory every 5 minutes:
+set of sensors / binary sensors / calendar / todo entity. List lifecycle is
+mostly real-time, with a low-frequency poll covering the one gap:
 
-- **New list created in Pantrist** → it appears in HA on the next reconcile, no
-  re-setup required.
-- **List deleted in Pantrist** → its HA device (and every entity under it) is
-  removed automatically.
-- **List renamed in Pantrist** → the HA device name is updated.
+| Event | Latency | Mechanism |
+|---|---|---|
+| Item added / checked / deleted inside a list | ~1 s | Socket.IO `data:updated` (push) |
+| List renamed | ~1 s | Socket.IO `list:updated` (push) — device name updates live |
+| List deleted | ~1 s | Socket.IO `list:deleted` (push) — device + entities removed |
+| New list created in Pantrist | ≤15 min | `GET /list` reconcile (poll) |
 
-Real-time data within each list still arrives via Socket.IO push (~1 s latency).
-The 5-minute interval only covers list creation/deletion, which is rare.
+The reconcile poll is needed because the Pantrist backend's socket events are
+all room-scoped per list — there's no account-level event you can subscribe
+to without already knowing the list id. Once a list is known, every change to
+it arrives over the socket.
 
 ## Reconfiguration
 
