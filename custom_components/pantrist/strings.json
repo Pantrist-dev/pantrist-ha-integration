@@ -194,6 +194,10 @@
         "unit_id": {
           "name": "Unit",
           "description": "Accepted for backwards compatibility; ignored by the current backend."
+        },
+        "auto_restock": {
+          "name": "Auto-restock when below minimum",
+          "description": "Server-side: also add the item to the shopping list when the decrement crosses its minimum. On by default for HA-triggered flows; set to false for bare-decrement use cases."
         }
       }
     }

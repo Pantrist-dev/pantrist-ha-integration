@@ -5,10 +5,14 @@ blueprint:
     pasta jar, coffee tin…). Scanning the tag — with the Home Assistant
     Companion app, an ESPHome PN532, or any other HA-supported tag
     reader — decrements that item's pantry amount in Pantrist by the
-    configured step. Pair this with the
-    "Auto-add low-stock pantry items to the shopping list" blueprint
-    and an empty jar lands on the shopping list the moment you scan it
-    past zero.
+    configured step.
+
+    When **Auto-restock when below minimum** is enabled (default), the
+    Pantrist API also adds a full copy of the article (category, brand,
+    unit, image…) to the shopping list as soon as the decrement crosses
+    the configured ``minimumAmount`` — single round-trip, no chained
+    automation needed. The shopping-list entry mirrors what the mobile
+    app produces when it auto-restocks past the minimum.
 
     One blueprint instance per (tag, pantry item) pair. The pantry item
     UUID is the ``uuid`` field on whichever item you target — find it
@@ -40,6 +44,16 @@ blueprint:
           min: 0.01
           step: 0.1
           mode: box
+    auto_restock:
+      name: Auto-restock when below minimum
+      description: >
+        Add the item to the shopping list the moment the decrement crosses
+        its configured minimum. Powered server-side, so a single scan does
+        both halves. Disable if you want bare-decrement behaviour (e.g.
+        you'll chain a different blueprint).
+      default: true
+      selector:
+        boolean: {}
     list_id:
       name: List ID (optional)
       description: >
@@ -61,6 +75,7 @@ variables:
   amount: !input amount
   item_id: !input item_id
   list_id: !input list_id
+  auto_restock: !input auto_restock
 
 action:
   - choose:
@@ -71,8 +86,10 @@ action:
               item_id: "{{ item_id }}"
               change: "{{ 0 - (amount | float) }}"
               list_id: "{{ list_id }}"
+              auto_restock: "{{ auto_restock }}"
     default:
       - action: pantrist.change_pantry_item_amount
         data:
           item_id: "{{ item_id }}"
           change: "{{ 0 - (amount | float) }}"
+          auto_restock: "{{ auto_restock }}"
