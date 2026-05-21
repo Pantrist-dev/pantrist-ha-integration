@@ -36,12 +36,11 @@ from .coordinator import PantristCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
-# Reconcile interval is only used to *discover new lists*; rename and delete
-# are driven by socket events (``list:updated`` / ``list:deleted``) so they
-# land in HA in real time. New-list discovery still needs a periodic API call
-# because the Pantrist backend has no account-scoped socket event today —
-# clients only get pushed `list:*` events for rooms they've already joined.
-LIST_RECONCILE_INTERVAL = timedelta(minutes=15)
+# Slow safety-net reconcile. With ``list:added`` / ``list:removed`` /
+# ``list:updated`` / ``list:deleted`` all push-driven over the per-user
+# socket room, this is only here to recover from missed events while the
+# socket was disconnected.
+LIST_RECONCILE_INTERVAL = timedelta(hours=1)
 
 
 @callback
@@ -63,6 +62,18 @@ def signal_list_renamed(entry_id: str) -> str:
     Payload: ``(list_id, new_name)``.
     """
     return f"pantrist_list_renamed_{entry_id}"
+
+
+@callback
+def signal_pantry_items_changed(entry_id: str) -> str:
+    """Dispatcher signal fired when a list's pantry inventory shifts.
+
+    Lets the ``number`` platform reconcile per-item entities against the
+    current pantry contents.
+
+    Payload: ``list_id``.
+    """
+    return f"pantrist_pantry_items_changed_{entry_id}"
 
 
 class PantristListManager:
@@ -264,10 +275,53 @@ class PantristListManager:
 
     @callback
     def _handle_remote_delete(self, list_id: str) -> None:
-        """Coordinator heard ``list:deleted`` for ``list_id``."""
+        """Coordinator heard ``list:deleted`` or ``list:removed``."""
         if list_id not in self._coordinators:
             return
         self._hass.async_create_task(self._remove_list(list_id))
+
+    @callback
+    def handle_remote_add(self, list_obj: dict[str, Any]) -> None:
+        """Coordinator heard ``list:added`` on the per-user socket room.
+
+        Spawns a fresh coordinator + signals every platform's
+        ``async_add_entities`` callback in the same way the reconcile loop
+        would. Idempotent against retried emissions.
+        """
+        list_id = list_obj.get("id") or list_obj.get("uuid")
+        if not list_id:
+            return
+        if self._legacy_list_id and list_id != self._legacy_list_id:
+            # A legacy single-list entry must never silently pick up a
+            # second list the user didn't opt into.
+            return
+        if list_id in self._coordinators:
+            return
+        self._hass.async_create_task(self._spawn_list(list_obj))
+
+    async def _spawn_list(self, list_obj: dict[str, Any]) -> None:
+        list_id = str(list_obj.get("id") or list_obj.get("uuid"))
+        list_name = list_obj.get("name")
+        if not list_name:
+            settings = list_obj.get("settings") or {}
+            if isinstance(settings, dict):
+                list_name = settings.get("name")
+
+        coord = PantristCoordinator(
+            self._hass, self._entry, self._api, list_id, list_name
+        )
+        try:
+            await coord.async_config_entry_first_refresh()
+        except Exception:  # noqa: BLE001
+            _LOGGER.exception("Could not refresh new list %s", list_id)
+            return
+        await coord.async_start_socketio()
+        self._coordinators[list_id] = coord
+        async_dispatcher_send(
+            self._hass,
+            signal_new_list(self._entry.entry_id),
+            list_id,
+        )
 
     async def _remove_list(self, list_id: str) -> None:
         coord = self._coordinators.pop(list_id, None)

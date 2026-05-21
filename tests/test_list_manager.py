@@ -367,6 +367,148 @@ async def test_socket_rename_ignored_when_name_unchanged(
 
 
 @pytest.mark.usefixtures("mock_oauth_session", "mock_socketio")
+async def test_handle_remote_add_spawns_coordinator_and_signals(
+    hass: HomeAssistant, manager_entry: MockConfigEntry, mock_api: MagicMock
+) -> None:
+    """``list:added`` from the per-user socket spawns a coordinator + signal."""
+    from homeassistant.core import callback as hass_callback
+
+    manager_entry.add_to_hass(hass)
+    mock_api.get_lists = AsyncMock(
+        return_value=[{"id": LIST_ID, "name": LIST_NAME}]
+    )
+    manager = PantristListManager(hass, manager_entry, mock_api)
+    await manager.async_initial_setup()
+
+    received: list[str] = []
+
+    @hass_callback
+    def _capture(payload: str) -> None:
+        received.append(payload)
+
+    unsub = async_dispatcher_connect(
+        hass, signal_new_list(manager_entry.entry_id), _capture
+    )
+
+    new_list_id = "55555555-5555-4555-8555-555555555555"
+    manager.handle_remote_add(
+        {"id": new_list_id, "name": "Shared", "settings": None}
+    )
+    await hass.async_block_till_done()
+    unsub()
+
+    assert new_list_id in manager
+    assert received == [new_list_id]
+    await manager.async_shutdown()
+
+
+@pytest.mark.usefixtures("mock_oauth_session", "mock_socketio")
+async def test_handle_remote_add_idempotent(
+    hass: HomeAssistant, manager_entry: MockConfigEntry, mock_api: MagicMock
+) -> None:
+    """A duplicate ``list:added`` for a list we already own is a no-op."""
+    manager_entry.add_to_hass(hass)
+    mock_api.get_lists = AsyncMock(
+        return_value=[{"id": LIST_ID, "name": LIST_NAME}]
+    )
+    manager = PantristListManager(hass, manager_entry, mock_api)
+    await manager.async_initial_setup()
+
+    # Re-emitting the existing list must not double-spawn.
+    manager.handle_remote_add({"id": LIST_ID, "name": LIST_NAME})
+    await hass.async_block_till_done()
+    assert set(manager) == {LIST_ID}
+    await manager.async_shutdown()
+
+
+@pytest.mark.usefixtures("mock_oauth_session", "mock_socketio")
+async def test_handle_remote_add_legacy_entry_ignores_other_lists(
+    hass: HomeAssistant, config_entry: MockConfigEntry, mock_api: MagicMock
+) -> None:
+    """Legacy single-list entry must not pick up an unrelated added list."""
+    config_entry.add_to_hass(hass)
+    mock_api.get_lists = AsyncMock(
+        return_value=[{"id": LIST_ID, "name": LIST_NAME}]
+    )
+    manager = PantristListManager(hass, config_entry, mock_api)
+    await manager.async_initial_setup()
+
+    manager.handle_remote_add(
+        {"id": "66666666-6666-4666-8666-666666666666", "name": "Stray"}
+    )
+    await hass.async_block_till_done()
+    assert set(manager) == {LIST_ID}
+    await manager.async_shutdown()
+
+
+@pytest.mark.usefixtures("mock_oauth_session", "mock_socketio")
+async def test_handle_remote_add_missing_id_ignored(
+    hass: HomeAssistant, manager_entry: MockConfigEntry, mock_api: MagicMock
+) -> None:
+    """A payload without an id silently drops — no crash."""
+    manager_entry.add_to_hass(hass)
+    mock_api.get_lists = AsyncMock(
+        return_value=[{"id": LIST_ID, "name": LIST_NAME}]
+    )
+    manager = PantristListManager(hass, manager_entry, mock_api)
+    await manager.async_initial_setup()
+
+    manager.handle_remote_add({"name": "no-id"})
+    await hass.async_block_till_done()
+    assert set(manager) == {LIST_ID}
+    await manager.async_shutdown()
+
+
+@pytest.mark.usefixtures("mock_oauth_session", "mock_socketio")
+async def test_handle_remote_add_reads_name_from_settings(
+    hass: HomeAssistant, manager_entry: MockConfigEntry, mock_api: MagicMock
+) -> None:
+    """``list:added`` payloads with name only under ``settings.name`` work."""
+    manager_entry.add_to_hass(hass)
+    mock_api.get_lists = AsyncMock(
+        return_value=[{"id": LIST_ID, "name": LIST_NAME}]
+    )
+    manager = PantristListManager(hass, manager_entry, mock_api)
+    await manager.async_initial_setup()
+
+    new_id = "88888888-8888-4888-8888-888888888888"
+    manager.handle_remote_add({"id": new_id, "settings": {"name": "From Settings"}})
+    await hass.async_block_till_done()
+    assert new_id in manager
+    assert manager[new_id].list_name == "From Settings"
+    await manager.async_shutdown()
+
+
+@pytest.mark.usefixtures("mock_oauth_session", "mock_socketio")
+async def test_handle_remote_add_first_refresh_failure(
+    hass: HomeAssistant, manager_entry: MockConfigEntry, mock_api: MagicMock
+) -> None:
+    """If first_refresh raises, the coordinator is *not* added to the set."""
+    from custom_components.pantrist.coordinator import PantristCoordinator
+
+    manager_entry.add_to_hass(hass)
+    mock_api.get_lists = AsyncMock(
+        return_value=[{"id": LIST_ID, "name": LIST_NAME}]
+    )
+    manager = PantristListManager(hass, manager_entry, mock_api)
+    await manager.async_initial_setup()
+
+    async def _boom(self: PantristCoordinator) -> None:
+        raise RuntimeError("first refresh refused")
+
+    new_id = "99999999-9999-4999-8999-999999999999"
+    with patch.object(
+        PantristCoordinator,
+        "async_config_entry_first_refresh",
+        new=_boom,
+    ):
+        manager.handle_remote_add({"id": new_id, "name": "Will Fail"})
+        await hass.async_block_till_done()
+    assert new_id not in manager
+    await manager.async_shutdown()
+
+
+@pytest.mark.usefixtures("mock_oauth_session", "mock_socketio")
 async def test_initial_setup_rolls_back_on_failure(
     hass: HomeAssistant, manager_entry: MockConfigEntry, mock_api: MagicMock
 ) -> None:
