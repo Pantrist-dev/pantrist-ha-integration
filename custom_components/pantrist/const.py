@@ -7,7 +7,7 @@ from typing import Final
 DOMAIN: Final = "pantrist"
 
 # OAuth2 endpoints — must match the redirect-uri whitelist on the Pantrist API.
-OAUTH2_AUTHORIZE: Final = "https://app.pantrist.app/oauth/authorize"
+OAUTH2_AUTHORIZE: Final = "https://www.pantrist.app/oauth/authorize"
 OAUTH2_TOKEN: Final = "https://api.pantrist.app/access-token/token"
 
 # Public OAuth client identifier. PKCE-only, no client secret.
