@@ -36,6 +36,14 @@
       "shopping_cart": {
         "name": "Shopping cart"
       }
+    },
+    "todo": {
+      "shopping_list_todo": {
+        "name": "Shopping list"
+      },
+      "pantry_todo": {
+        "name": "Pantry"
+      }
     }
   },
   "services": {
