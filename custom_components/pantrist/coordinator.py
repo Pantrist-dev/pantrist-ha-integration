@@ -12,6 +12,7 @@ import socketio
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
+from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import PantristApi, PantristApiError, PantristAuthError
@@ -169,6 +170,46 @@ class PantristCoordinator(DataUpdateCoordinator[PantristData]):
                 list_id,
             )
             await self.async_request_refresh()
+
+        @sio.on("list:updated", namespace=SOCKET_NAMESPACE)
+        async def on_list_updated(data: dict[str, Any]) -> None:
+            """Forward server-side rename / settings change to the list manager."""
+            if data.get("listId") != self._list_id:
+                return
+            block = data.get("data") or {}
+            new_name = block.get("name") or (
+                block.get("settings") or {}
+            ).get("name")
+            if not new_name:
+                return
+            # Local import to keep coordinator.py importable without pulling
+            # in list_manager at module load time.
+            from .list_manager import signal_list_renamed  # noqa: PLC0415
+
+            entry = self.config_entry
+            if entry is None:
+                return
+            async_dispatcher_send(
+                self.hass,
+                signal_list_renamed(entry.entry_id),
+                (self._list_id, str(new_name)),
+            )
+
+        @sio.on("list:deleted", namespace=SOCKET_NAMESPACE)
+        async def on_list_deleted(data: dict[str, Any]) -> None:
+            """Forward server-side list deletion to the list manager."""
+            if data.get("listId") != self._list_id:
+                return
+            from .list_manager import signal_list_deleted  # noqa: PLC0415
+
+            entry = self.config_entry
+            if entry is None:
+                return
+            async_dispatcher_send(
+                self.hass,
+                signal_list_deleted(entry.entry_id),
+                self._list_id,
+            )
 
         await sio.connect(
             API_BASE,

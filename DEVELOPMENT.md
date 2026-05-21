@@ -124,14 +124,23 @@ Entries created before multi-list support are migrated in-place: the legacy
 `CONF_LIST_ID` in the entry data continues to scope the entry to a single
 list, preserving entity IDs.
 
-`PantristListManager` reconciles the live coordinator set against
-`GET /list` every five minutes. When the user creates a list in the Pantrist
-mobile app, `list_manager` emits the dispatcher signal `signal_new_list(entry_id)`
-on the next reconcile and every platform (`sensor`, `binary_sensor`, `calendar`,
-`todo`) responds by calling its captured `async_add_entities` for the new
-coordinator. When a list is deleted, the manager stops the coordinator,
-calls `device_registry.async_remove_device(...)` for `(DOMAIN, list_id)`,
-and HA cascades that down to all entities under the device.
+`PantristListManager` is the single owner of the per-list coordinator set,
+exposed via `entry.runtime_data`. Lifecycle is mostly socket-driven, with
+polling reserved for the one signal the API doesn't push.
+
+| Lifecycle event | How the manager learns | Latency |
+|---|---|---|
+| List renamed | `coordinator` listens to `list:updated` on its room and dispatches `signal_list_renamed`; manager updates `coordinator.list_name` and `device_registry.async_update_device(..., name=...)` | ~1 s |
+| List deleted | `coordinator` listens to `list:deleted` on its room and dispatches `signal_list_deleted`; manager stops the coordinator and calls `device_registry.async_remove_device(...)`, which cascades to every entity under the device | ~1 s |
+| New list created or shared in | `async_track_time_interval(LIST_RECONCILE_INTERVAL=15 min)` calls `GET /list`; new ids spawn a coordinator and dispatch `signal_new_list`; platforms add their entities | ≤15 min |
+
+Why the poll for new-list discovery: today the Pantrist API only emits
+`list:*` events into the per-list room (`emitToList(listId, ...)`), which
+requires you to be subscribed to that room. There's no `list:created` event
+and no account-level room a client can auto-join to learn about new lists.
+If the backend later adds a `user:{uid}` room with a `list:added` event, the
+manager's poll can be removed entirely — the dispatcher-signal seam is
+already in place.
 
 The seven action services accept an optional `list_id` field that routes the
 call to a specific coordinator. Single-list users can omit it; the integration

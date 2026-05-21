@@ -281,3 +281,99 @@ async def test_sio_event_callbacks_invoked(hass: HomeAssistant) -> None:
     refresh_mock.assert_awaited_once()
     await data_updated_cb({"listId": "different", "collection": "x"})
     assert refresh_mock.await_count == 1
+
+
+async def test_sio_list_lifecycle_callbacks_fire_dispatcher_signals(
+    hass: HomeAssistant,
+) -> None:
+    """The `list:updated` / `list:deleted` handlers dispatch into the manager."""
+    from homeassistant.config_entries import ConfigEntry
+    from homeassistant.helpers.dispatcher import async_dispatcher_connect
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    from custom_components.pantrist.const import DOMAIN
+    from custom_components.pantrist.list_manager import (
+        signal_list_deleted,
+        signal_list_renamed,
+    )
+
+    api = MagicMock()
+    api._session = MagicMock()
+    api._session.async_ensure_token_valid = AsyncMock()
+    api._session.token = {"access_token": "tok"}
+
+    entry = MockConfigEntry(domain=DOMAIN, unique_id=LIST_ID)
+    entry.add_to_hass(hass)
+
+    coord = PantristCoordinator(hass, entry, api, LIST_ID, LIST_NAME)
+
+    captured: dict[str, list[Callable[..., Awaitable[None]]]] = {}
+
+    def _event(**_kwargs: Any) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+        def deco(fn: Callable[..., Any]) -> Callable[..., Any]:
+            captured.setdefault("events", []).append(fn)
+            return fn
+
+        return deco
+
+    def _on(
+        event_name: str, **_kwargs: Any
+    ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+        def deco(fn: Callable[..., Any]) -> Callable[..., Any]:
+            captured.setdefault(event_name, []).append(fn)
+            return fn
+
+        return deco
+
+    fake_sio = MagicMock()
+    fake_sio.connect = AsyncMock()
+    fake_sio.wait = AsyncMock()
+    fake_sio.disconnect = AsyncMock()
+    fake_sio.connected = False
+    fake_sio.event = MagicMock(side_effect=_event)
+    fake_sio.on = MagicMock(side_effect=_on)
+    fake_sio.emit = AsyncMock()
+
+    with patch(
+        "custom_components.pantrist.coordinator.socketio.AsyncClient",
+        return_value=fake_sio,
+    ):
+        await coord._sio_connect_and_wait()
+
+    rename_payload: list[tuple[str, str]] = []
+    delete_payload: list[str] = []
+    unsub_rename = async_dispatcher_connect(
+        hass, signal_list_renamed(entry.entry_id), rename_payload.append
+    )
+    unsub_delete = async_dispatcher_connect(
+        hass, signal_list_deleted(entry.entry_id), delete_payload.append
+    )
+
+    list_updated_cb = captured["list:updated"][0]
+    list_deleted_cb = captured["list:deleted"][0]
+
+    # Wrong listId → ignored.
+    await list_updated_cb({"listId": "other", "data": {"name": "X"}})
+    await list_deleted_cb({"listId": "other"})
+    await hass.async_block_till_done()
+    assert rename_payload == []
+    assert delete_payload == []
+
+    # No-name update → ignored.
+    await list_updated_cb({"listId": LIST_ID, "data": {}})
+    await hass.async_block_till_done()
+    assert rename_payload == []
+
+    # name in top-level data.
+    await list_updated_cb({"listId": LIST_ID, "data": {"name": "Top"}})
+    # name nested in settings.
+    await list_updated_cb(
+        {"listId": LIST_ID, "data": {"settings": {"name": "Nested"}}}
+    )
+    await list_deleted_cb({"listId": LIST_ID})
+    await hass.async_block_till_done()
+
+    unsub_rename()
+    unsub_delete()
+    assert rename_payload == [(LIST_ID, "Top"), (LIST_ID, "Nested")]
+    assert delete_payload == [LIST_ID]
