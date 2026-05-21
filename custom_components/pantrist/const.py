@@ -28,7 +28,9 @@ SENSOR_SHOPPING_CART: Final = "shopping_cart"
 
 # Service identifiers.
 SERVICE_ADD_TO_SHOPPING_LIST: Final = "add_to_shopping_list"
+SERVICE_ADD_TO_SHOPPING_LIST_BY_BARCODE: Final = "add_to_shopping_list_by_barcode"
 SERVICE_CHECK_SHOPPING_LIST_ITEM: Final = "check_shopping_list_item"
 SERVICE_DELETE_SHOPPING_LIST_ITEM: Final = "delete_shopping_list_item"
+SERVICE_ADD_TO_PANTRY: Final = "add_to_pantry"
 SERVICE_DELETE_PANTRY_ITEM: Final = "delete_pantry_item"
 SERVICE_CHANGE_PANTRY_AMOUNT: Final = "change_pantry_item_amount"
