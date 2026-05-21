@@ -342,11 +342,25 @@ async def test_sio_list_lifecycle_callbacks_fire_dispatcher_signals(
 
     rename_payload: list[tuple[str, str]] = []
     delete_payload: list[str] = []
+
+    # The receivers must be @callback so HA's dispatcher runs them inline on
+    # the event loop. Bare ``list.append`` is detected as an Executor job,
+    # which runs in a worker thread and races between consecutive sends.
+    from homeassistant.core import callback as hass_callback
+
+    @hass_callback
+    def _capture_rename(payload: tuple[str, str]) -> None:
+        rename_payload.append(payload)
+
+    @hass_callback
+    def _capture_delete(payload: str) -> None:
+        delete_payload.append(payload)
+
     unsub_rename = async_dispatcher_connect(
-        hass, signal_list_renamed(entry.entry_id), rename_payload.append
+        hass, signal_list_renamed(entry.entry_id), _capture_rename
     )
     unsub_delete = async_dispatcher_connect(
-        hass, signal_list_deleted(entry.entry_id), delete_payload.append
+        hass, signal_list_deleted(entry.entry_id), _capture_delete
     )
 
     list_updated_cb = captured["list:updated"][0]

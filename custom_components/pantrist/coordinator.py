@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 import logging
 from dataclasses import dataclass, field
-from datetime import timedelta
 from typing import Any
 
 import socketio
@@ -49,8 +48,11 @@ class PantristCoordinator(DataUpdateCoordinator[PantristData]):
             _LOGGER,
             name=f"{DOMAIN}_{list_id}",
             config_entry=config_entry,
-            # Polling is a safety net; Socket.IO drives most updates.
-            update_interval=timedelta(minutes=5),
+            # No periodic polling. Socket.IO ``data:updated`` events drive
+            # every refresh; on reconnect we trigger a one-shot refresh
+            # (see :py:meth:`_sio_connect_and_wait`) to catch up on
+            # anything missed while the socket was down.
+            update_interval=None,
         )
         self._api = api
         self._list_id = list_id
@@ -154,6 +156,10 @@ class PantristCoordinator(DataUpdateCoordinator[PantristData]):
                 {"listId": self._list_id},
                 namespace=SOCKET_NAMESPACE,
             )
+            # Catch up after any disconnect window. The integration runs
+            # without a periodic poll, so this is the only safety net for
+            # events missed while the socket was down.
+            await self.async_request_refresh()
 
         @sio.event(namespace=SOCKET_NAMESPACE)
         async def disconnect() -> None:
