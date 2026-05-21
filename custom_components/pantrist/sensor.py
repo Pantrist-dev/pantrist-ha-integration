@@ -2,24 +2,27 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, time, timedelta, timezone
 import logging
 from typing import Any
 
-from homeassistant.components.sensor import SensorEntity
+from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
     DOMAIN,
     SENSOR_EXPIRING_SOON,
+    SENSOR_NEXT_EXPIRATION,
     SENSOR_PANTRY,
     SENSOR_SHOPPING_CART,
     SENSOR_SHOPPING_LIST,
 )
 from .coordinator import PantristCoordinator, PantristData
 from .entity import PantristEntity
+from .list_manager import PantristListManager, signal_new_list
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -34,19 +37,33 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Add 4 sensors per Pantrist list under this entry."""
-    coordinators: dict[str, PantristCoordinator] = entry.runtime_data
-    entities: list[SensorEntity] = []
-    for coordinator in coordinators.values():
-        entities.extend(
-            [
-                PantristShoppingListSensor(coordinator),
-                PantristPantrySensor(coordinator),
-                PantristExpiringSoonSensor(coordinator),
-                PantristShoppingCartSensor(coordinator),
-            ]
+    """Add 5 sensors per Pantrist list, now and as new lists appear."""
+    manager: PantristListManager = entry.runtime_data
+
+    @callback
+    def _build(coordinator: PantristCoordinator) -> list[SensorEntity]:
+        return [
+            PantristShoppingListSensor(coordinator),
+            PantristPantrySensor(coordinator),
+            PantristExpiringSoonSensor(coordinator),
+            PantristShoppingCartSensor(coordinator),
+            PantristNextExpirationSensor(coordinator),
+        ]
+
+    initial: list[SensorEntity] = []
+    for coordinator in manager.values():
+        initial.extend(_build(coordinator))
+    async_add_entities(initial)
+
+    @callback
+    def _on_new_list(list_id: str) -> None:
+        async_add_entities(_build(manager[list_id]))
+
+    entry.async_on_unload(
+        async_dispatcher_connect(
+            hass, signal_new_list(entry.entry_id), _on_new_list
         )
-    async_add_entities(entities)
+    )
 
 
 def _format_item(item: dict[str, Any]) -> dict[str, Any]:
@@ -211,3 +228,43 @@ class PantristShoppingCartSensor(_PantristBaseSensor):
                 for i in items
             ],
         }
+
+
+class PantristNextExpirationSensor(PantristEntity, SensorEntity):
+    """Date/time of the next-expiring pantry item — drives Lovelace countdowns."""
+
+    _attr_icon = "mdi:calendar-clock"
+    _attr_translation_key = "next_expiration"
+    _attr_device_class = SensorDeviceClass.TIMESTAMP
+
+    def __init__(self, coordinator: PantristCoordinator) -> None:
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.list_id}_{SENSOR_NEXT_EXPIRATION}"
+
+    @property
+    def native_value(self) -> datetime | None:
+        """Earliest best-before across all pantry items, as a UTC datetime.
+
+        Pantrist stores best-before as a calendar date — promote it to a
+        timezone-aware datetime so HA's timestamp sensor class accepts it.
+        Returns None if no pantry item has an earliest best-before.
+        """
+        earliest: date | None = None
+        items = (self.coordinator.data.pantry or {}).get("items", [])
+        for item in items:
+            raw = (item.get("pantrySettings") or {}).get("earliestBestBefore")
+            if not raw:
+                continue
+            try:
+                bb = datetime.strptime(raw, "%d-%m-%Y").date()
+            except (ValueError, TypeError):
+                continue
+            if earliest is None or bb < earliest:
+                earliest = bb
+        if earliest is None:
+            return None
+        return datetime.combine(earliest, time.min, tzinfo=timezone.utc)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        return {"list_id": self.coordinator.list_id}

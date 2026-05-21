@@ -19,7 +19,6 @@ import homeassistant.helpers.config_validation as cv
 
 from .api import PantristApi, PantristApiError, PantristAuthError
 from .const import (
-    CONF_LIST_ID,
     DOMAIN,
     SERVICE_ADD_TO_PANTRY,
     SERVICE_ADD_TO_SHOPPING_LIST,
@@ -30,13 +29,19 @@ from .const import (
     SERVICE_DELETE_SHOPPING_LIST_ITEM,
 )
 from .coordinator import PantristCoordinator
+from .list_manager import PantristListManager
 
-# Bronze (runtime-data): one entry holds a dict of coordinators keyed by list_id.
-type PantristConfigEntry = ConfigEntry[dict[str, PantristCoordinator]]
+# Bronze (runtime-data): the entry holds the per-list coordinator manager.
+type PantristConfigEntry = ConfigEntry[PantristListManager]
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.TODO]
+PLATFORMS: list[Platform] = [
+    Platform.BINARY_SENSOR,
+    Platform.CALENDAR,
+    Platform.SENSOR,
+    Platform.TODO,
+]
 
 # Pure YAML config is not supported — this integration is config-flow only.
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
@@ -62,8 +67,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: PantristConfigEntry) -> 
     PantristCoordinator (and therefore a separate HA Device) for each.
 
     Backward-compat: entries created before multi-list support have a
-    `CONF_LIST_ID` in their data — in that case only that one list is
-    surfaced, preserving existing entity IDs.
+    ``CONF_LIST_ID`` in their data — in that case only that one list is
+    surfaced, preserving existing entity IDs. New entries see every list
+    in the account, and new lists added in the Pantrist app appear in HA
+    automatically within ``LIST_RECONCILE_INTERVAL``.
     """
     implementation = (
         await config_entry_oauth2_flow.async_get_config_entry_implementation(
@@ -77,51 +84,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: PantristConfigEntry) -> 
         raise ConfigEntryAuthFailed("OAuth token refresh failed") from err
 
     api = PantristApi(hass, session)
-
+    manager = PantristListManager(hass, entry, api)
     try:
-        lists = await api.get_lists()
-    except PantristAuthError as err:
-        raise ConfigEntryAuthFailed("Pantrist auth failed listing lists") from err
+        await manager.async_initial_setup()
     except PantristApiError as err:
-        _LOGGER.error("Failed to enumerate Pantrist lists: %s", err)
+        _LOGGER.error("Pantrist setup failed: %s", err)
         return False
 
-    # Single-list mode for legacy entries.
-    legacy_list_id = entry.data.get(CONF_LIST_ID) or entry.data.get(
-        "token", {}
-    ).get("list_id")
-    if legacy_list_id:
-        lists = [li for li in lists if (li.get("id") or li.get("uuid")) == legacy_list_id]
-        if not lists:
-            _LOGGER.error(
-                "Configured list_id %s not visible to this account — re-add the integration",
-                legacy_list_id,
-            )
-            return False
-
-    if not lists:
-        _LOGGER.error(
-            "Pantrist account has no lists yet — create one in the Pantrist app first"
-        )
-        return False
-
-    coordinators: dict[str, PantristCoordinator] = {}
-    for list_obj in lists:
-        list_id = list_obj.get("id") or list_obj.get("uuid")
-        if not list_id:
-            continue
-        list_name = list_obj.get("name")
-        if not list_name:
-            settings = list_obj.get("settings") or {}
-            if isinstance(settings, dict):
-                list_name = settings.get("name")
-        coordinator = PantristCoordinator(hass, entry, api, list_id, list_name)
-        await coordinator.async_config_entry_first_refresh()
-        await coordinator.async_start_socketio()
-        coordinators[list_id] = coordinator
-
-    entry.runtime_data = coordinators
-
+    entry.runtime_data = manager
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
 
@@ -129,12 +99,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: PantristConfigEntry) -> 
 async def async_unload_entry(
     hass: HomeAssistant, entry: PantristConfigEntry
 ) -> bool:
-    """Unload a config entry."""
-    coordinators = entry.runtime_data if hasattr(entry, "runtime_data") else None
-    if coordinators:
-        for coordinator in coordinators.values():
-            await coordinator.async_stop_socketio()
-
+    """Unload a config entry — stops the reconcile loop and every coordinator."""
+    manager = getattr(entry, "runtime_data", None)
+    if manager is not None:
+        await manager.async_shutdown()
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
 
@@ -147,9 +115,9 @@ def _all_coordinators(hass: HomeAssistant) -> list[PantristCoordinator]:
     """Flatten every coordinator across every Pantrist config entry."""
     out: list[PantristCoordinator] = []
     for entry in hass.config_entries.async_entries(DOMAIN):
-        coords = getattr(entry, "runtime_data", None)
-        if isinstance(coords, dict):
-            out.extend(coords.values())
+        manager: PantristListManager | None = getattr(entry, "runtime_data", None)
+        if manager is not None:
+            out.extend(manager.values())
     return out
 
 

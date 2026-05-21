@@ -13,6 +13,7 @@ from custom_components.pantrist.const import DOMAIN
 from custom_components.pantrist.coordinator import PantristCoordinator, PantristData
 from custom_components.pantrist.sensor import (
     PantristExpiringSoonSensor,
+    PantristNextExpirationSensor,
     PantristPantrySensor,
     PantristShoppingCartSensor,
     PantristShoppingListSensor,
@@ -49,6 +50,12 @@ async def test_sensors_materialize(
     assert f"{LIST_ID}_pantry" in unique_ids
     assert f"{LIST_ID}_expiring_soon" in unique_ids
     assert f"{LIST_ID}_shopping_cart" in unique_ids
+    assert f"{LIST_ID}_next_expiration" in unique_ids
+    # binary sensors + calendar materialise via the same setup
+    assert f"{LIST_ID}_low_stock" in unique_ids
+    assert f"{LIST_ID}_has_expired_items" in unique_ids
+    assert f"{LIST_ID}_shopping_list_has_items" in unique_ids
+    assert f"{LIST_ID}_pantry_calendar" in unique_ids
 
 
 def _make_coordinator(hass: HomeAssistant, data: PantristData) -> PantristCoordinator:
@@ -208,3 +215,39 @@ async def test_shopping_cart_sensor(hass: HomeAssistant) -> None:
     assert items[0]["cart_uuid"] == "c1"
     assert items[0]["name"] == "Cucumber"
     assert items[1]["name"] == ""  # missing article
+
+
+async def test_next_expiration_sensor_returns_earliest(hass: HomeAssistant) -> None:
+    """The timestamp sensor picks the soonest valid best-before."""
+    from datetime import date, timedelta
+
+    today = date.today()
+    in_three = (today + timedelta(days=3)).strftime("%d-%m-%Y")
+    in_ten = (today + timedelta(days=10)).strftime("%d-%m-%Y")
+
+    coord = _make_coordinator(
+        hass,
+        PantristData(
+            pantry={
+                "items": [
+                    {"pantrySettings": {"earliestBestBefore": in_ten}},
+                    {"pantrySettings": {"earliestBestBefore": in_three}},
+                    {"pantrySettings": {"earliestBestBefore": "garbage"}},
+                    {},  # no pantrySettings
+                ]
+            }
+        ),
+    )
+    sensor = PantristNextExpirationSensor(coord)
+    value = sensor.native_value
+    assert value is not None
+    assert value.date() == today + timedelta(days=3)
+    assert sensor.unique_id == f"{LIST_ID}_next_expiration"
+    assert sensor.extra_state_attributes["list_id"] == LIST_ID
+
+
+async def test_next_expiration_sensor_returns_none_when_no_dates(
+    hass: HomeAssistant,
+) -> None:
+    coord = _make_coordinator(hass, PantristData(pantry={"items": [{}, {}]}))
+    assert PantristNextExpirationSensor(coord).native_value is None
