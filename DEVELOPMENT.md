@@ -20,7 +20,9 @@ this, the OAuth dialog aborts with `missing_configuration`.
 2. Fill in:
    - Integration: **Pantrist**
    - Client ID: `pantrist-ha`
-   - Client Secret: *(leave empty — PKCE only)*
+   - Client Secret: type any placeholder (e.g. `unused`). The Home Assistant
+     UI marks this field as required, but Pantrist uses PKCE — the integration
+     hard-codes an empty secret internally and ignores the value you enter.
    - Name: Pantrist (or anything)
 3. **Add**.
 
@@ -67,10 +69,19 @@ You should now see four sensors:
 After a code change locally:
 
 ```bash
-# Samba path:
-cp -r custom_components/pantrist /Volumes/config/custom_components/pantrist
-# Then in HA: Developer Tools → YAML → Check Configuration → Restart
+# Samba path — verify the file you care about really got copied:
+cp -r custom_components/pantrist /Volumes/config/custom_components/
+grep OAUTH2_AUTHORIZE /Volumes/config/custom_components/pantrist/const.py
 ```
+
+Then **fully restart Home Assistant**: Settings → System → **Restart Home
+Assistant** (the "Check Configuration" button only validates YAML — it does
+NOT reload Python modules under `custom_components/`. A real restart is
+required after any code change.)
+
+For faster iteration on a single file, you can also delete the integration
+entry (Settings → Devices & Services → Pantrist → ⋮ → Delete), restart,
+then re-add it — this clears any cached config_entry state.
 
 For schema/import errors, **Settings → System → Logs** shows line numbers you
 can match against your local files.
@@ -84,17 +95,82 @@ Inside `custom_components/pantrist/`:
 | `manifest.json` | Integration metadata, deps, OAuth declaration |
 | `const.py` | DOMAIN, OAuth URLs, sensor + service keys |
 | `application_credentials.py` | Provides `LocalOAuth2ImplementationWithPkce` (no client secret) |
-| `config_flow.py` | OAuth flow + reauth; stores `list_id` from token response |
-| `api.py` | Async aiohttp wrapper over the Pantrist REST API |
-| `coordinator.py` | `DataUpdateCoordinator` with REST refresh + Socket.IO push |
+| `config_flow.py` | OAuth flow + reauth; runs `test-before-configure` against `/list` and stores the chosen `list_id` |
+| `api.py` | Async wrapper over the generated OpenAPI client; translates 401 → `PantristAuthError`, other HTTP/network failures → `PantristApiError` |
+| `coordinator.py` | One `DataUpdateCoordinator` *per list*: 5-min REST poll fallback + Socket.IO push subscription with exponential reconnect backoff |
+| `entity.py` | `PantristEntity` base — sets `_attr_has_entity_name`, `device_info` (one HA device per Pantrist list) |
 | `sensor.py` | Four `SensorEntity` subclasses (shopping list, pantry, expiring, cart) |
-| `__init__.py` | `async_setup_entry` / `async_unload_entry` + service registrations |
+| `todo.py` | `PantristShoppingTodoEntity` — native HA todo entity wired to add/check/delete shopping-list API calls |
+| `diagnostics.py` | `async_get_config_entry_diagnostics` with redacted tokens |
+| `__init__.py` | `async_setup_entry` enumerates lists, builds one coordinator per list, stores them on `entry.runtime_data`; `async_unload_entry`; service registrations |
 | `services.yaml` | Service schemas for the HA UI |
 | `strings.json` + `translations/{en,de}.json` | i18n |
+| `quality_scale.yaml` | Bronze-tier checklist (every Bronze rule is `done`) |
+| `pantrist_client/` | **Auto-generated** OpenAPI client. Do not hand-edit — regenerate via `python scripts/generate_client.py` |
 
 The OAuth flow uses HA's standard `my.home-assistant.io/redirect/oauth`
 trampoline. The Pantrist API's redirect-URI whitelist accepts that host plus
 local HA hostnames (`homeassistant.local`, `*.ui.nabu.casa`, RFC1918 IPs).
+
+### Multi-list mode
+
+Each Pantrist account can hold multiple lists. The integration runs a single
+OAuth flow per account, then creates one HA device + four sensors + one todo
+entity *per list*. Entries created before multi-list support are migrated
+in-place: the legacy `CONF_LIST_ID` in the entry data continues to scope the
+entry to a single list, preserving entity IDs.
+
+The seven action services accept an optional `list_id` field that routes the
+call to a specific coordinator. Single-list users can omit it; the integration
+falls back to the only available list.
+
+### Blueprints
+
+`blueprints/automation/pantrist/` ships three pre-wired automations
+(voice add, low-stock auto-add, expiring notification). They live alongside
+the integration so users can import them straight from the GitHub URLs in the
+README. Each blueprint declares its own inputs (target todo entity, notify
+service, etc.) so users don't have to write any YAML to make them work.
+
+## Tests + type-checking
+
+The integration ships with `pytest-homeassistant-custom-component`-based
+tests and is mypy-strict across the modules we own:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-dev.txt
+
+pytest                          # full suite
+pytest --cov --cov-report=term  # with line coverage
+pytest tests/test_sensor.py     # single file
+pytest -k "todo and not auth"   # filtered
+
+mypy                            # strict on integration code (see mypy.ini)
+```
+
+The `.coveragerc` excludes the auto-generated `pantrist_client/` from coverage
+totals — we don't ship integration tests against the live API, so generated
+code lives behind the `api.py` adapter and stays out of the coverage signal.
+`mypy.ini` likewise ignores the generated client for strict checks but still
+verifies that every cross-reference into it from `api.py` resolves — that's
+how the `.asyncio` vs `.asyncio_detailed` attribute mismatch on void
+endpoints was originally caught.
+
+Current coverage: **>95% lines + branches** across `__init__.py`,
+`api.py`, `application_credentials.py`, `config_flow.py`, `const.py`,
+`coordinator.py`, `diagnostics.py`, `entity.py`, `sensor.py`, `todo.py`.
+
+### Regenerating the OpenAPI client
+
+```bash
+python scripts/generate_client.py
+```
+
+The post-process step inside that script patches two known
+`openapi-python-client` 0.28.x bugs (nullable nested `$ref`, empty-string
+enums). Re-running it is idempotent.
 
 ## Releasing
 
