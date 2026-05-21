@@ -11,9 +11,7 @@
   "loggers": ["pantrist", "socketio", "engineio"],
   "quality_scale": "bronze",
   "requirements": [
-    "python-socketio[asyncio_client]==5.11.4",
-    "httpx==0.27.2",
-    "attrs==24.2.0"
+    "python-socketio[asyncio_client]==5.11.4"
   ],
   "version": "0.1.0"
 }
