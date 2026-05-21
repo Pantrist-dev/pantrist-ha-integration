@@ -22,8 +22,8 @@ rules:
   entity-event-setup: done
   entity-unique-id: done
   has-entity-name: done
-  runtime-data: todo
-  test-before-configure: todo
+  runtime-data: done
+  test-before-configure: done
   test-before-setup: done
   unique-config-entry: done
 
@@ -33,10 +33,10 @@ rules:
   entity-unavailable: done
   reauthentication-flow: done
   test-coverage:
-    status: todo
-    comment: Bronze-level happy-path coverage is in place. Silver targets >95%.
+    status: done
+    comment: >95% line + branch coverage across the integration code (excluding the auto-generated OpenAPI client).
   integration-owner: done
-  parallel-updates: exempt
+  parallel-updates: done
   action-exceptions: done
 
   # ----- GOLD / PLATINUM (deferred) -----

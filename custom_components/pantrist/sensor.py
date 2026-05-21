@@ -23,6 +23,9 @@ from .entity import PantristEntity
 
 _LOGGER = logging.getLogger(__name__)
 
+# Coordinator-backed read-only sensors — no per-entity API traffic.
+PARALLEL_UPDATES = 0
+
 EXPIRY_WARNING_DAYS_DEFAULT = 7
 
 
@@ -32,7 +35,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Add 4 sensors per Pantrist list under this entry."""
-    coordinators: dict[str, PantristCoordinator] = hass.data[DOMAIN][entry.entry_id]
+    coordinators: dict[str, PantristCoordinator] = entry.runtime_data
     entities: list[SensorEntity] = []
     for coordinator in coordinators.values():
         entities.extend(

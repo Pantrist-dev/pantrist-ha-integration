@@ -6,10 +6,13 @@ import logging
 from collections.abc import Mapping
 from typing import Any
 
+import aiohttp
 from homeassistant.config_entries import SOURCE_REAUTH, ConfigFlowResult
 from homeassistant.helpers import aiohttp_client, config_entry_oauth2_flow
 
 from .const import API_BASE, CONF_LIST_ID, DOMAIN
+
+_PROBE_TIMEOUT = aiohttp.ClientTimeout(total=10)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -60,6 +63,12 @@ class PantristOAuth2FlowHandler(
             _LOGGER.error("Pantrist token response missing list_id")
             return self.async_abort(reason="missing_list_id")
 
+        # Bronze: test-before-configure — surface an unusable token immediately
+        # instead of leaving the entry in a broken state for the user to debug.
+        error = await self._test_credentials(token.get("access_token", ""))
+        if error:
+            return self.async_abort(reason=error)
+
         # Use list_id as the unique_id so the same list isn't connected twice.
         await self.async_set_unique_id(list_id)
 
@@ -82,6 +91,32 @@ class PantristOAuth2FlowHandler(
             data={**data, CONF_LIST_ID: list_id},
         )
 
+    async def _test_credentials(self, access_token: str) -> str | None:
+        """Probe `/list` with the freshly-minted token.
+
+        Returns:
+          - None on success.
+          - `"invalid_auth"` on 401 (token rejected by the API).
+          - `"cannot_connect"` on network errors.
+        """
+        if not access_token:
+            return "invalid_auth"
+        try:
+            session = aiohttp_client.async_get_clientsession(self.hass)
+            async with session.get(
+                f"{API_BASE}/list",
+                headers={"Authorization": f"Bearer {access_token}"},
+                timeout=_PROBE_TIMEOUT,
+            ) as resp:
+                if resp.status == 401:
+                    return "invalid_auth"
+                if resp.status >= 500:
+                    return "cannot_connect"
+        except Exception:  # noqa: BLE001
+            _LOGGER.exception("Pantrist credential probe failed")
+            return "cannot_connect"
+        return None
+
     async def _fetch_list_name(
         self, access_token: str, list_id: str
     ) -> str | None:
@@ -101,7 +136,7 @@ class PantristOAuth2FlowHandler(
             async with session.get(
                 f"{API_BASE}/list",
                 headers={"Authorization": f"Bearer {access_token}"},
-                timeout=10,
+                timeout=_PROBE_TIMEOUT,
             ) as resp:
                 if resp.status != 200:
                     return None

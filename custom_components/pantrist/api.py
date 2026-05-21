@@ -49,6 +49,7 @@ from .pantrist_client.api.shopping_list import (
 from .pantrist_client.models import (
     AddByBarcodeDto,
     AddByNameDto,
+    AddPantryByNameDto,
     ChangeAmountOfItemDto,
 )
 
@@ -148,8 +149,9 @@ class PantristApi:
 
     async def check_shopping_list_item(self, list_id: str, item_id: str) -> None:
         client = await self._client()
+        # Void endpoints only expose `asyncio_detailed` from the generator.
         await self._call(
-            shopping_list_items_controller_check_item.asyncio(
+            shopping_list_items_controller_check_item.asyncio_detailed(
                 client=client, list_id=list_id, item_id=item_id
             )
         )
@@ -157,7 +159,7 @@ class PantristApi:
     async def delete_shopping_list_item(self, list_id: str, item_id: str) -> None:
         client = await self._client()
         await self._call(
-            shopping_list_items_controller_delete_item.asyncio(
+            shopping_list_items_controller_delete_item.asyncio_detailed(
                 client=client, list_id=list_id, item_id=item_id
             )
         )
@@ -181,19 +183,9 @@ class PantristApi:
         amount: float = 1.0,
         unit_id: str = "pieces",
     ) -> dict[str, Any]:
-        """Add a pantry item by name.
-
-        amount/unit_id are accepted for backwards compat with the addon's
-        service signature; the modern endpoint accepts only `name` so the
-        extras land in `additional_properties` and are ignored server-side
-        unless the API later adopts them.
-        """
+        """Add a pantry item by name."""
         client = await self._client()
-        dto = AddByNameDto(name=name)
-        if amount is not None:
-            dto.additional_properties["amount"] = amount
-        if unit_id is not None:
-            dto.additional_properties["unitId"] = unit_id
+        dto = AddPantryByNameDto(name=name, amount=amount, unit_id=unit_id)
         result = await self._call(
             pantry_list_items_controller_add_by_name.asyncio(
                 client=client, list_id=list_id, body=dto
@@ -204,7 +196,7 @@ class PantristApi:
     async def delete_pantry_item(self, list_id: str, item_id: str) -> None:
         client = await self._client()
         await self._call(
-            pantry_list_items_controller_delete_item.asyncio(
+            pantry_list_items_controller_delete_item.asyncio_detailed(
                 client=client, list_id=list_id, item_id=item_id
             )
         )
@@ -257,4 +249,5 @@ class PantristApi:
         result = await self._call(
             barcode_controller_find_one.asyncio(client=client, barcode=barcode)
         )
-        return self._wrap(result)
+        wrapped: dict[str, Any] | None = self._wrap(result)
+        return wrapped
