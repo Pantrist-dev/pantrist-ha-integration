@@ -1,0 +1,56 @@
+blueprint:
+  name: "Pantrist: Daily notification for expiring pantry items"
+  description: >
+    Sends a notification once per day if any pantry items are within the
+    configured expiry window. Choose any notify service (mobile_app,
+    persistent_notification, tts, etc.).
+  source_url: https://github.com/Pantrist-dev/pantrist-ha-addon/blob/main/blueprints/automation/pantrist/expiring_notification.yaml
+  domain: automation
+  homeassistant:
+    min_version: 2024.10.0
+  input:
+    expiring_sensor:
+      name: Expiring-soon sensor
+      description: Usually `sensor.pantrist_expiring_soon`.
+      selector:
+        entity:
+          domain: sensor
+          integration: pantrist
+      default: sensor.pantrist_expiring_soon
+    notify_action:
+      name: Notification action
+      description: >
+        Which action should fire? Examples: `notify.mobile_app_iphone`,
+        `notify.persistent_notification`, `tts.speak`.
+      selector:
+        action: {}
+    notify_time:
+      name: Time of day
+      description: When to check (24h format).
+      selector:
+        time: {}
+      default: "18:00:00"
+
+mode: single
+
+trigger:
+  - platform: time
+    at: !input notify_time
+
+condition:
+  - condition: numeric_state
+    entity_id: !input expiring_sensor
+    above: 0
+
+variables:
+  expiring_sensor: !input expiring_sensor
+
+action:
+  - variables:
+      total: "{{ states(expiring_sensor) | int(0) }}"
+      names: >
+        {% set items = state_attr(expiring_sensor, 'expiring_items') or [] %}
+        {% set expired = state_attr(expiring_sensor, 'expired_items') or [] %}
+        {{ (items + expired) | map(attribute='name') | list | join(', ') }}
+  - choose: []
+    default: !input notify_action
