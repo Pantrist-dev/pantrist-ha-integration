@@ -230,12 +230,13 @@ mostly real-time, with a low-frequency poll covering the one gap:
 | Item added / checked / deleted inside a list | ~1 s | Socket.IO `data:updated` (push) |
 | List renamed | ~1 s | Socket.IO `list:updated` (push) — device name updates live |
 | List deleted | ~1 s | Socket.IO `list:deleted` (push) — device + entities removed |
-| New list created in Pantrist | ≤15 min | `GET /list` reconcile (poll) |
+| Socket reconnect after disconnect | ~1 s | Coordinator triggers a one-shot refresh on `connect` to catch up |
+| New list created in Pantrist | ≤15 min | `GET /list` reconcile (the only remaining poll) |
 
-The reconcile poll is needed because the Pantrist backend's socket events are
-all room-scoped per list — there's no account-level event you can subscribe
-to without already knowing the list id. Once a list is known, every change to
-it arrives over the socket.
+The new-list reconcile is needed because the Pantrist backend's socket events
+are all room-scoped per list — there's no account-level event you can
+subscribe to without already knowing the list id. Once a list is known,
+every change to it arrives over the socket.
 
 ## Reconfiguration
 

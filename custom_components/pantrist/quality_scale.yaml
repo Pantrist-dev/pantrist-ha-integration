@@ -9,7 +9,13 @@
 rules:
   # ----- BRONZE -----
   action-setup: done
-  appropriate-polling: done
+  appropriate-polling:
+    status: done
+    comment: >
+      The integration is fully push-driven via Socket.IO; no periodic
+      poll on per-list data. The only remaining time-interval call is
+      ``GET /list`` every 15 min to discover new lists added to the
+      account — the Pantrist API has no list-creation socket event.
   brands: todo
   common-modules: done
   config-flow: done

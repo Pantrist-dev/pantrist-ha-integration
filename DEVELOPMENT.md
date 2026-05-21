@@ -97,7 +97,7 @@ Inside `custom_components/pantrist/`:
 | `application_credentials.py` | Provides `LocalOAuth2ImplementationWithPkce` (no client secret) |
 | `config_flow.py` | OAuth flow + reauth + reconfigure; runs `test-before-configure` against `/list` and stores the chosen `list_id` |
 | `api.py` | Async wrapper over the generated OpenAPI client; translates 401 → `PantristAuthError`, other HTTP/network failures → `PantristApiError` |
-| `coordinator.py` | One `DataUpdateCoordinator` *per list*: 5-min REST poll fallback + Socket.IO push subscription with exponential reconnect backoff |
+| `coordinator.py` | One `DataUpdateCoordinator` *per list*. No periodic polling — Socket.IO `data:updated` events drive every refresh; on reconnect the coordinator triggers a single `async_request_refresh()` to catch up. Exponential backoff on disconnect. |
 | `list_manager.py` | Owns the per-list coordinators, schedules a 5-min reconcile against `GET /list`, dispatches `signal_new_list` for additions and removes HA devices for deletions (Gold: dynamic-devices + stale-devices) |
 | `entity.py` | `PantristEntity` base — sets `_attr_has_entity_name`, `device_info` (one HA device per Pantrist list) |
 | `sensor.py` | Five sensor classes per list (shopping list, pantry, expiring, cart counts + `next_expiration` timestamp) |

@@ -96,9 +96,16 @@ async def test_reconcile_fires_signal_on_new_list(
     await manager.async_initial_setup()
     assert set(manager) == {LIST_ID}
 
+    from homeassistant.core import callback as hass_callback
+
     received: list[str] = []
+
+    @hass_callback
+    def _capture(payload: str) -> None:
+        received.append(payload)
+
     unsub = async_dispatcher_connect(
-        hass, signal_new_list(manager_entry.entry_id), received.append
+        hass, signal_new_list(manager_entry.entry_id), _capture
     )
 
     # Second poll: a new list shows up.
