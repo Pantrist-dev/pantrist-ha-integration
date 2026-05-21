@@ -11,20 +11,16 @@ Assistant instance (typically a Raspberry Pi with HAOS, or a UTM VM on Mac).
 
 ## One-time setup
 
-### Register the OAuth client in HA
+The integration ships its own PKCE OAuth client (`pantrist-ha`) and
+registers it automatically in `async_setup`. No `Application Credentials`
+row is required before adding the integration — just go straight to
+**Settings → Devices & Services → + Add Integration → Pantrist**.
 
-Before adding the integration, register the Application Credential. Without
-this, the OAuth dialog aborts with `missing_configuration`.
-
-1. In HA: **Settings → Devices & Services → ⋮ → Application Credentials → Add Credential**.
-2. Fill in:
-   - Integration: **Pantrist**
-   - Client ID: `pantrist-ha`
-   - Client Secret: type any placeholder (e.g. `unused`). The Home Assistant
-     UI marks this field as required, but Pantrist uses PKCE — the integration
-     hard-codes an empty secret internally and ignores the value you enter.
-   - Name: Pantrist (or anything)
-3. **Add**.
+If you want to test with a custom `client_id` (e.g. a self-hosted
+Pantrist backend), you can override via the standard Application
+Credentials UI; the platform handler in `application_credentials.py`
+will produce a per-credential implementation alongside the bundled
+default.
 
 ## Install the integration files
 
@@ -260,7 +256,7 @@ enforces this format.
 | Problem | Fix |
 |---|---|
 | "Pantrist" not appearing in "Add Integration" | Restart HA — `custom_components/` is only scanned at boot. |
-| `missing_configuration` | Add the Application Credential (one-time setup above). |
+| `missing_configuration` | Shouldn't fire with the bundled default. If it does, the integration's `async_setup` hasn't run yet (HA restart needed) or the import failed (check logs). |
 | `invalid_redirect_uri` from Pantrist | The Pantrist API needs `my.home-assistant.io` in its redirect-URI whitelist. |
 | OAuth completes but sensors stay `unavailable` | Check HA logs for Socket.IO connection errors. Verify `api.pantrist.app` is reachable from the HA host. |
 | `missing_list_id` abort | The Pantrist consent page must include a list picker (Pantrist app deployment must be current). |

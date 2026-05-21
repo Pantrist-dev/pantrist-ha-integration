@@ -20,14 +20,15 @@ households get separate sensors / todo entities for each list out of a single OA
 3. Repository URL: `https://github.com/Pantrist-dev/pantrist-ha-addon`
    Category: **Integration** → **Add**.
 4. Search for **Pantrist** → **Download** → **Restart Home Assistant**.
-5. **Settings → Devices & Services → ⋮ → Application Credentials → Add Credential**:
-   - Integration: **Pantrist**
-   - Client ID: `pantrist-ha`
-   - Client Secret: type any placeholder (e.g. `unused`). Home Assistant
-     marks this field as required, but Pantrist uses PKCE — the integration
-     hard-codes an empty secret internally and ignores whatever you enter.
-6. **Settings → Devices & Services → + Add Integration** → search **Pantrist** → click.
-7. Authorize via the browser, pick a list, click **Allow**. Done.
+5. **Settings → Devices & Services → + Add Integration** → search **Pantrist** → click.
+6. Authorize via the browser, pick a list, click **Allow**. Done.
+
+> Pantrist uses PKCE (public client, no secret) and the integration
+> ships its own default OAuth implementation — you do **not** need to
+> walk through *Application Credentials* before adding the integration.
+> If you want to override the client_id with your own (e.g. for a
+> self-hosted Pantrist instance), Application Credentials still works
+> as a fallback.
 
 ## Install manually (no HACS)
 
@@ -340,7 +341,7 @@ the integration only severs the link. The list itself is untouched.
 | Problem | Fix |
 |---|---|
 | "Pantrist" doesn't appear in the Integrations list after install | Restart Home Assistant. `custom_components/` is only scanned at boot. |
-| `missing_configuration` in the OAuth dialog | Add the Application Credential first (see step 5 above). |
+| `missing_configuration` in the OAuth dialog | Shouldn't happen with stock install — the integration pre-registers its OAuth client. If it does, you've probably *manually* added an Application Credential row that's overriding the default. Delete that row and reload the integration. |
 | `invalid_auth` after OAuth | The token Pantrist returned was rejected by `/list`. Re-run the flow. |
 | `cannot_connect` after OAuth | The Pi couldn't reach `api.pantrist.app`. Check network. |
 | Browser redirect lands on a Pantrist error page | The Pantrist API needs `my.home-assistant.io` in its redirect-URI whitelist. Confirm the backend deployment is current. |
