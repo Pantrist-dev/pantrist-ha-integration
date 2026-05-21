@@ -93,7 +93,7 @@
     },
     "number": {
       "pantry_amount": {
-        "name": "{item}"
+        "name": "Pantry: {item}"
       }
     },
     "image": {

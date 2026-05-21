@@ -70,7 +70,7 @@ async def test_low_stock_ignores_unmanaged_items(hass: HomeAssistant) -> None:
 
 
 async def test_has_expired_on_when_any_in_past(hass: HomeAssistant) -> None:
-    yesterday = (date.today() - timedelta(days=1)).strftime("%d-%m-%Y")
+    yesterday = (date.today() - timedelta(days=1)).strftime("%Y-%m-%d")
     coord = _make_coordinator(
         hass,
         PantristData(
@@ -87,7 +87,7 @@ async def test_has_expired_on_when_any_in_past(hass: HomeAssistant) -> None:
 
 
 async def test_has_expired_off_when_only_future(hass: HomeAssistant) -> None:
-    tomorrow = (date.today() + timedelta(days=1)).strftime("%d-%m-%Y")
+    tomorrow = (date.today() + timedelta(days=1)).strftime("%Y-%m-%d")
     coord = _make_coordinator(
         hass,
         PantristData(

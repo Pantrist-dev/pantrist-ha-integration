@@ -95,7 +95,7 @@ class PantristPantryCalendar(PantristEntity, CalendarEntity):
             if not raw:
                 continue
             try:
-                bb = datetime.strptime(raw, "%d-%m-%Y").date()
+                bb = datetime.strptime(raw, "%Y-%m-%d").date()
             except (ValueError, TypeError):
                 continue
             summary = item.get("name") or "Pantry item"

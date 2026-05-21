@@ -54,7 +54,10 @@ async def test_native_value_reads_amount(hass: HomeAssistant) -> None:
     entity, _ = _make_entity(hass, amount=4)
     assert entity.native_value == 4.0
     assert entity.unique_id == f"{LIST_ID}_pantry_amount_{ITEM_UUID}"
-    assert entity.native_unit_of_measurement == "kg"
+    # Pantrist's ``amount`` is a package count (dimensionless), not the
+    # ``unitId`` of the article content. Don't surface a misleading unit
+    # on the Number entity — see number.py for the rationale.
+    assert entity.native_unit_of_measurement is None
     assert entity.available is True
 
 

@@ -25,9 +25,9 @@ def _make_coordinator(hass: HomeAssistant, data: PantristData) -> PantristCoordi
 
 async def test_event_returns_next_upcoming(hass: HomeAssistant) -> None:
     today = dt_util.now().date()
-    in_three = (today + timedelta(days=3)).strftime("%d-%m-%Y")
-    in_ten = (today + timedelta(days=10)).strftime("%d-%m-%Y")
-    yesterday = (today - timedelta(days=1)).strftime("%d-%m-%Y")
+    in_three = (today + timedelta(days=3)).strftime("%Y-%m-%d")
+    in_ten = (today + timedelta(days=10)).strftime("%Y-%m-%d")
+    yesterday = (today - timedelta(days=1)).strftime("%Y-%m-%d")
 
     coord = _make_coordinator(
         hass,
@@ -49,7 +49,7 @@ async def test_event_returns_next_upcoming(hass: HomeAssistant) -> None:
 
 
 async def test_event_none_when_no_future(hass: HomeAssistant) -> None:
-    yesterday = (dt_util.now().date() - timedelta(days=1)).strftime("%d-%m-%Y")
+    yesterday = (dt_util.now().date() - timedelta(days=1)).strftime("%Y-%m-%d")
     coord = _make_coordinator(
         hass,
         PantristData(
@@ -65,8 +65,8 @@ async def test_event_none_when_no_future(hass: HomeAssistant) -> None:
 
 async def test_get_events_filters_to_window(hass: HomeAssistant) -> None:
     today = dt_util.now().date()
-    in_three = (today + timedelta(days=3)).strftime("%d-%m-%Y")
-    in_thirty = (today + timedelta(days=30)).strftime("%d-%m-%Y")
+    in_three = (today + timedelta(days=3)).strftime("%Y-%m-%d")
+    in_thirty = (today + timedelta(days=30)).strftime("%Y-%m-%d")
 
     coord = _make_coordinator(
         hass,

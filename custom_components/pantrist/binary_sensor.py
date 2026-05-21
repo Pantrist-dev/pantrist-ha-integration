@@ -110,7 +110,7 @@ class PantristHasExpiredBinarySensor(_PantristBinarySensorBase):
             if not earliest:
                 continue
             try:
-                bb = datetime.strptime(earliest, "%d-%m-%Y").date()
+                bb = datetime.strptime(earliest, "%Y-%m-%d").date()
             except (ValueError, TypeError):
                 continue
             if bb < today:

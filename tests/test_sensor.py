@@ -141,9 +141,9 @@ async def test_expiring_soon_sensor_splits_expiring_and_expired(
     from datetime import date, timedelta
 
     today = date.today()
-    in_three = (today + timedelta(days=3)).strftime("%d-%m-%Y")
-    yesterday = (today - timedelta(days=1)).strftime("%d-%m-%Y")
-    far_future = (today + timedelta(days=99)).strftime("%d-%m-%Y")
+    in_three = (today + timedelta(days=3)).strftime("%Y-%m-%d")
+    yesterday = (today - timedelta(days=1)).strftime("%Y-%m-%d")
+    far_future = (today + timedelta(days=99)).strftime("%Y-%m-%d")
 
     coord = _make_coordinator(
         hass,
@@ -222,8 +222,8 @@ async def test_next_expiration_sensor_returns_earliest(hass: HomeAssistant) -> N
     from datetime import date, timedelta
 
     today = date.today()
-    in_three = (today + timedelta(days=3)).strftime("%d-%m-%Y")
-    in_ten = (today + timedelta(days=10)).strftime("%d-%m-%Y")
+    in_three = (today + timedelta(days=3)).strftime("%Y-%m-%d")
+    in_ten = (today + timedelta(days=10)).strftime("%Y-%m-%d")
 
     coord = _make_coordinator(
         hass,
