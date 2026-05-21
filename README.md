@@ -68,6 +68,11 @@ account:
   card sends the delta to Pantrist via `change_pantry_item_amount`.
 - **"Show the latest item picture on a wall display"** — bind
   `image.<list>_latest_shopping_item` to a picture-entity card.
+- **"NFC-scan the empty jar to restock it"** — stick an NFC tag on items you
+  re-buy often. Scan with the HA Companion app (or an ESPHome PN532): the
+  bundled `nfc_consume_pantry_item` blueprint decrements the pantry amount via
+  `change_pantry_item_amount`. Combined with `low_stock_auto_add`, the item
+  appears on your shopping list the moment you scan it past the minimum.
 
 ## Data update mechanism
 
@@ -255,6 +260,7 @@ and paste these URLs:
 | Voice — Add to shopping list | `https://github.com/Pantrist-dev/pantrist-ha-addon/blob/main/blueprints/automation/pantrist/voice_add_to_shopping_list.yaml` | Say "Add milk to the shopping list" (or German "Schreib Milch auf die Einkaufsliste") via HA Assist and the item lands on the list. |
 | Low-stock auto-add | `https://github.com/Pantrist-dev/pantrist-ha-addon/blob/main/blueprints/automation/pantrist/low_stock_auto_add.yaml` | Pantry items that fall at or below their configured minimum amount are automatically added to the shopping list. |
 | Expiring-soon notification | `https://github.com/Pantrist-dev/pantrist-ha-addon/blob/main/blueprints/automation/pantrist/expiring_notification.yaml` | Fires a notify action (push / TTS / persistent notification — your choice) once per day if any pantry items are within the expiry window. |
+| NFC consume pantry item | `https://github.com/Pantrist-dev/pantrist-ha-addon/blob/main/blueprints/automation/pantrist/nfc_consume_pantry_item.yaml` | Scan an NFC tag (Companion app, ESPHome PN532, …) to decrement the bound pantry item. Pair with the **Low-stock auto-add** blueprint and an empty jar lands on the shopping list the moment you scan it past zero. |
 
 After import: **Automations → + Create from blueprint** → pick one → fill in the inputs → Save.
 
