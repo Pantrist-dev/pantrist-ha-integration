@@ -119,6 +119,57 @@ async def test_stop_socketio_noop_when_inactive(hass: HomeAssistant) -> None:
     assert coord._sio_task is None
 
 
+async def test_disconnect_repair_below_threshold_is_quiet(
+    hass: HomeAssistant,
+) -> None:
+    """A short disconnect window must NOT raise a Repair issue."""
+    from datetime import timedelta
+    from homeassistant.helpers import issue_registry as ir
+    from homeassistant.util import dt as dt_util
+
+    from custom_components.pantrist.const import DOMAIN
+
+    coord = _build(hass)
+    coord._first_disconnect_at = dt_util.utcnow() - timedelta(seconds=30)
+    coord._maybe_register_disconnect_issue()
+    assert (
+        ir.async_get(hass).async_get_issue(DOMAIN, coord._disconnect_issue_id())
+        is None
+    )
+
+
+async def test_disconnect_repair_above_threshold_fires(hass: HomeAssistant) -> None:
+    """Once we've been down past the threshold a Repair is registered."""
+    from datetime import timedelta
+    from homeassistant.helpers import issue_registry as ir
+    from homeassistant.util import dt as dt_util
+
+    from custom_components.pantrist.const import DOMAIN
+
+    coord = _build(hass)
+    coord._first_disconnect_at = dt_util.utcnow() - timedelta(minutes=6)
+    coord._maybe_register_disconnect_issue()
+    issue = ir.async_get(hass).async_get_issue(
+        DOMAIN, coord._disconnect_issue_id()
+    )
+    assert issue is not None
+    assert issue.translation_key == "socket_disconnected"
+    # And clearing wipes it.
+    coord._clear_disconnect_issue()
+    assert (
+        ir.async_get(hass).async_get_issue(DOMAIN, coord._disconnect_issue_id())
+        is None
+    )
+
+
+async def test_clear_disconnect_issue_noop_when_never_set(
+    hass: HomeAssistant,
+) -> None:
+    """Clearing when no disconnect was tracked is a no-op."""
+    coord = _build(hass)
+    coord._clear_disconnect_issue()  # must not raise
+
+
 async def test_sio_loop_retries_then_exits(hass: HomeAssistant) -> None:
     """The loop catches errors, then exits cleanly once stop is signalled."""
     coord = _build(hass)
@@ -391,3 +442,164 @@ async def test_sio_list_lifecycle_callbacks_fire_dispatcher_signals(
     unsub_delete()
     assert rename_payload == [(LIST_ID, "Top"), (LIST_ID, "Nested")]
     assert delete_payload == [LIST_ID]
+
+
+async def test_sio_user_room_callbacks_fire_dispatcher_signals(
+    hass: HomeAssistant,
+) -> None:
+    """The ``list:added`` / ``list:removed`` handlers route into the manager."""
+    from homeassistant.core import callback as hass_callback
+    from homeassistant.helpers.dispatcher import async_dispatcher_connect
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    from custom_components.pantrist.const import DOMAIN
+    from custom_components.pantrist.list_manager import signal_list_deleted
+
+    api = MagicMock()
+    api._session = MagicMock()
+    api._session.async_ensure_token_valid = AsyncMock()
+    api._session.token = {"access_token": "tok"}
+
+    entry = MockConfigEntry(domain=DOMAIN, unique_id=LIST_ID)
+    entry.add_to_hass(hass)
+
+    # Drop in a stub manager so handle_remote_add is observable.
+    handled: list[dict[str, Any]] = []
+
+    class _StubManager:
+        @hass_callback
+        def handle_remote_add(self, payload: dict[str, Any]) -> None:
+            handled.append(payload)
+
+    entry.runtime_data = _StubManager()  # type: ignore[assignment]
+
+    coord = PantristCoordinator(hass, entry, api, LIST_ID, LIST_NAME)
+
+    captured: dict[str, list[Callable[..., Awaitable[None]]]] = {}
+
+    def _event(**_kwargs: Any) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+        def deco(fn: Callable[..., Any]) -> Callable[..., Any]:
+            captured.setdefault("events", []).append(fn)
+            return fn
+
+        return deco
+
+    def _on(
+        event_name: str, **_kwargs: Any
+    ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+        def deco(fn: Callable[..., Any]) -> Callable[..., Any]:
+            captured.setdefault(event_name, []).append(fn)
+            return fn
+
+        return deco
+
+    fake_sio = MagicMock()
+    fake_sio.connect = AsyncMock()
+    fake_sio.wait = AsyncMock()
+    fake_sio.disconnect = AsyncMock()
+    fake_sio.connected = False
+    fake_sio.event = MagicMock(side_effect=_event)
+    fake_sio.on = MagicMock(side_effect=_on)
+    fake_sio.emit = AsyncMock()
+
+    with patch(
+        "custom_components.pantrist.coordinator.socketio.AsyncClient",
+        return_value=fake_sio,
+    ):
+        await coord._sio_connect_and_wait()
+
+    removed: list[str] = []
+
+    @hass_callback
+    def _capture_removed(payload: str) -> None:
+        removed.append(payload)
+
+    unsub_removed = async_dispatcher_connect(
+        hass, signal_list_deleted(entry.entry_id), _capture_removed
+    )
+
+    list_added_cb = captured["list:added"][0]
+    list_removed_cb = captured["list:removed"][0]
+
+    # Payload with no id → silently dropped.
+    await list_added_cb({})
+    await list_removed_cb({})
+    await hass.async_block_till_done()
+    assert handled == []
+    assert removed == []
+
+    # Real list:added → manager.handle_remote_add called.
+    new_id = "77777777-7777-4777-8777-777777777777"
+    await list_added_cb({"listId": new_id, "data": {"id": new_id, "name": "X"}})
+    await hass.async_block_till_done()
+    assert handled[0]["id"] == new_id
+
+    # Payload variant: data is None → coordinator falls back to listId only.
+    await list_added_cb({"listId": "abc", "data": None})
+    await hass.async_block_till_done()
+    assert handled[-1]["id"] == "abc"
+
+    # list:removed dispatches signal_list_deleted with the id.
+    await list_removed_cb({"listId": new_id})
+    await hass.async_block_till_done()
+    unsub_removed()
+    assert removed == [new_id]
+
+
+async def test_sio_user_room_callbacks_ignore_missing_runtime_data(
+    hass: HomeAssistant,
+) -> None:
+    """list:added on a coordinator whose entry has no runtime_data is a no-op."""
+    from homeassistant.core import callback as hass_callback
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    from custom_components.pantrist.const import DOMAIN
+
+    api = MagicMock()
+    api._session = MagicMock()
+    api._session.async_ensure_token_valid = AsyncMock()
+    api._session.token = {"access_token": "tok"}
+
+    entry = MockConfigEntry(domain=DOMAIN, unique_id=LIST_ID)
+    entry.add_to_hass(hass)
+    # Deliberately leave entry.runtime_data unset.
+
+    coord = PantristCoordinator(hass, entry, api, LIST_ID, LIST_NAME)
+    captured: dict[str, list[Callable[..., Awaitable[None]]]] = {}
+
+    def _event(**_kwargs: Any) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+        def deco(fn: Callable[..., Any]) -> Callable[..., Any]:
+            captured.setdefault("events", []).append(fn)
+            return fn
+
+        return deco
+
+    def _on(
+        event_name: str, **_kwargs: Any
+    ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+        def deco(fn: Callable[..., Any]) -> Callable[..., Any]:
+            captured.setdefault(event_name, []).append(fn)
+            return fn
+
+        return deco
+
+    fake_sio = MagicMock()
+    fake_sio.connect = AsyncMock()
+    fake_sio.wait = AsyncMock()
+    fake_sio.disconnect = AsyncMock()
+    fake_sio.connected = False
+    fake_sio.event = MagicMock(side_effect=_event)
+    fake_sio.on = MagicMock(side_effect=_on)
+    fake_sio.emit = AsyncMock()
+
+    with patch(
+        "custom_components.pantrist.coordinator.socketio.AsyncClient",
+        return_value=fake_sio,
+    ):
+        await coord._sio_connect_and_wait()
+
+    # Should swallow silently — exercises the ``if manager is None`` guard.
+    await captured["list:added"][0](
+        {"listId": "x", "data": {"id": "x"}}
+    )
+    await hass.async_block_till_done()
