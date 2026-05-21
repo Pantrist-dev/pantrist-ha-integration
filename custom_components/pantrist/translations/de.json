@@ -36,6 +36,14 @@
       "shopping_cart": {
         "name": "Einkaufskorb"
       }
+    },
+    "todo": {
+      "shopping_list_todo": {
+        "name": "Einkaufsliste"
+      },
+      "pantry_todo": {
+        "name": "Vorratskammer"
+      }
     }
   }
 }
