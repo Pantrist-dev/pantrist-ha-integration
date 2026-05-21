@@ -132,16 +132,21 @@ class PantristPantryAmountNumber(PantristEntity, NumberEntity):
     ) -> None:
         super().__init__(coordinator)
         self._item_uuid = str(item.get("uuid") or "")
-        # Friendly entity name = item name; falls back to a UUID stub so we
-        # never end up with blank UI rows when the API gives us a half-baked
-        # payload.
+        # Friendly entity name with an explicit "Vorrat" / "Pantry" prefix
+        # so users browsing the Controls panel can tell at a glance which
+        # entities are pantry stock vs. shopping list entries. Falls back
+        # to a UUID stub if the API hands us a half-baked payload.
         item_name = item.get("name") or f"Item {self._item_uuid[:8]}…"
         self._attr_translation_placeholders = {"item": str(item_name)}
-        self._attr_name = str(item_name)
+        self._attr_name = f"Pantry: {item_name}"
         self._attr_unique_id = _amount_unique_id(
             coordinator.list_id, self._item_uuid
         )
-        self._attr_native_unit_of_measurement = item.get("unitId")
+        # ``amount`` is a package count, not a quantity of ``unitId``. Pairing
+        # the two as "3 L" is misleading — leave the entity dimensionless and
+        # let the dashboard render the content_volume separately via
+        # ``sensor.<list>_pantry.items[*]`` attributes.
+        self._attr_native_unit_of_measurement = None
 
     @property
     def _item(self) -> dict[str, Any] | None:

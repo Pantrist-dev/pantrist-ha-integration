@@ -68,17 +68,67 @@ async def async_setup_entry(
 
 
 def _format_item(item: dict[str, Any]) -> dict[str, Any]:
-    """Extract a concise ArticleDto projection for HA attributes."""
+    """Extract a concise ArticleDto projection for HA attributes.
+
+    Pantrist's data model splits an article's quantity into three pieces:
+
+      * ``amount`` — how many *packages* of the article (dimensionless).
+      * ``content_volume`` — how much *content* is in each package
+        (dimensioned by ``unit``).
+      * ``unit`` — the unit of the content, e.g. ``L`` for milk cartons.
+
+    Exposing all three lets dashboards render "3 × 1 L" rather than the
+    nonsensical "3 L" you'd get if ``amount`` and ``unit`` were paired
+    directly. The pre-composed ``display`` field is provided as a
+    convenience for ``markdown`` cards.
+    """
+    amount = item.get("amount")
+    content_volume = item.get("contentVolume")
+    unit = item.get("unitId")
     return {
         "uuid": item.get("uuid"),
         "name": item.get("name", ""),
-        "amount": item.get("amount"),
-        "unit": item.get("unitId"),
+        "amount": amount,
+        "content_volume": content_volume,
+        "unit": unit,
+        "display": _compose_display(amount, content_volume, unit),
         "brand": item.get("brand"),
         "category_uuid": item.get("categoryUuid"),
         "notes": item.get("notes"),
         "image_url": item.get("imageUrl"),
     }
+
+
+def _compose_display(
+    amount: Any, content_volume: Any, unit: str | None
+) -> str | None:
+    """Render the canonical "<n> × <v> <unit>" string for an item.
+
+    ``amount=3, content_volume=1, unit="L"`` → ``"3 × 1 L"``.
+    Falls back gracefully when content_volume or unit is missing:
+    ``amount=3, content_volume=None`` → ``"3"``;
+    ``amount=3, content_volume=1.5, unit=None`` → ``"3 × 1.5"``.
+    Returns None if no quantity info is set at all.
+    """
+    if amount is None:
+        return None
+    out = _fmt_num(amount)
+    if content_volume is not None:
+        out += f" × {_fmt_num(content_volume)}"
+        if unit:
+            out += f" {unit}"
+    return out
+
+
+def _fmt_num(value: Any) -> str:
+    """Trim trailing .0 so ``3.0`` displays as ``3`` but ``1.5`` survives."""
+    try:
+        f = float(value)
+    except (TypeError, ValueError):
+        return str(value)
+    if f.is_integer():
+        return str(int(f))
+    return ("%g" % f)
 
 
 class _PantristBaseSensor(PantristEntity, SensorEntity):
@@ -171,7 +221,7 @@ class PantristExpiringSoonSensor(_PantristBaseSensor):
             if not earliest:
                 continue
             try:
-                bb = datetime.strptime(earliest, "%d-%m-%Y").date()
+                bb = datetime.strptime(earliest, "%Y-%m-%d").date()
             except (ValueError, TypeError):
                 continue
             formatted = {**_format_item(item), "best_before": earliest}
@@ -260,7 +310,7 @@ class PantristNextExpirationSensor(PantristEntity, SensorEntity):
             if not raw:
                 continue
             try:
-                bb = datetime.strptime(raw, "%d-%m-%Y").date()
+                bb = datetime.strptime(raw, "%Y-%m-%d").date()
             except (ValueError, TypeError):
                 continue
             if earliest is None or bb < earliest:
