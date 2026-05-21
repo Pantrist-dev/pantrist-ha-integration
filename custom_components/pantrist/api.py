@@ -5,9 +5,15 @@ Each public method:
   2. Builds an AuthenticatedClient with the current bearer token.
   3. Calls the appropriate endpoint via its `.asyncio()` coroutine.
   4. Converts the typed DTO response to a plain dict for downstream sensors
-     and coordinator consumers (so they keep the addon's existing JSON shape).
+     and coordinator consumers (so they keep the original JSON shape).
 
-Auth-failure (401) raises PantristAuthError so the coordinator can request
+The generator (openapi-python-client 0.28.x) has two known bugs around
+nullable / empty-enum response fields that the Pantrist API legitimately
+produces — both are fixed by the post-process step in
+`scripts/generate_client.py`. With that patch applied at generation time,
+typed parsing here is safe.
+
+Auth-failure (401) raises PantristAuthError so the coordinator can trigger
 reauth via HA's standard `ConfigEntryAuthFailed` flow.
 """
 
@@ -78,7 +84,9 @@ class PantristApi:
         if hasattr(value, "to_dict"):
             return value.to_dict()
         if isinstance(value, list):
-            return [item.to_dict() if hasattr(item, "to_dict") else item for item in value]
+            return [
+                item.to_dict() if hasattr(item, "to_dict") else item for item in value
+            ]
         return value
 
     async def _call(self, coro: Any) -> Any:
@@ -111,7 +119,9 @@ class PantristApi:
     async def get_shopping_list(self, list_id: str) -> dict[str, Any]:
         """GET /list/{list_id}/shoppingList — items wrapped under `items` key."""
         client = await self._client()
-        items = await self._call(_shopping_get_items.asyncio(client=client, list_id=list_id))
+        items = await self._call(
+            _shopping_get_items.asyncio(client=client, list_id=list_id)
+        )
         return {"listId": list_id, "items": self._wrap(items) or []}
 
     async def add_to_shopping_list_by_name(
@@ -159,7 +169,9 @@ class PantristApi:
     async def get_pantry_list(self, list_id: str) -> dict[str, Any]:
         """GET /list/{list_id}/pantryList — items wrapped under `items` key."""
         client = await self._client()
-        items = await self._call(_pantry_get_items.asyncio(client=client, list_id=list_id))
+        items = await self._call(
+            _pantry_get_items.asyncio(client=client, list_id=list_id)
+        )
         return {"listId": list_id, "items": self._wrap(items) or []}
 
     async def add_to_pantry_by_name(
