@@ -1,0 +1,16 @@
+[run]
+branch = True
+source = custom_components/pantrist
+omit =
+    # Auto-generated OpenAPI client — exercising it requires hitting the wire
+    # against the real Pantrist backend. Excluded from coverage; api.py is
+    # what the integration owns.
+    custom_components/pantrist/pantrist_client/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    raise NotImplementedError
+    if TYPE_CHECKING:
+    if __name__ == .__main__.:
+    \.\.\.

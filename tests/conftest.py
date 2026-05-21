@@ -7,12 +7,7 @@ from collections.abc import Generator
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from homeassistant.components.application_credentials import (
-    ClientCredential,
-    async_import_client_credential,
-)
 from homeassistant.core import HomeAssistant
-from homeassistant.setup import async_setup_component
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.pantrist.const import CONF_LIST_ID, DOMAIN
@@ -22,22 +17,12 @@ LIST_ID = "00000000-0000-4000-8000-000000000001"
 LIST_NAME = "Home"
 
 
-@pytest.fixture
-def enable_custom_integrations(enable_custom_integrations):  # noqa: PT004
-    """Hand the standard custom-integrations fixture forward unchanged."""
+@pytest.fixture(autouse=True)
+def auto_enable_custom_integrations(
+    enable_custom_integrations,  # noqa: PT004
+):
+    """Enable the pantrist custom integration for every test in this suite."""
     yield
-
-
-@pytest.fixture
-async def setup_credentials(hass: HomeAssistant) -> None:
-    """Register Pantrist application credentials."""
-    assert await async_setup_component(hass, "application_credentials", {})
-    await async_import_client_credential(
-        hass,
-        DOMAIN,
-        ClientCredential(CLIENT_ID, ""),
-        "pantrist-ha",
-    )
 
 
 @pytest.fixture
@@ -66,6 +51,28 @@ def config_entry(expires_at: float) -> MockConfigEntry:
             CONF_LIST_ID: LIST_ID,
         },
     )
+
+
+@pytest.fixture
+def mock_oauth_session() -> Generator[None, None, None]:
+    """Skip the OAuth implementation lookup + token refresh in unit tests.
+
+    Both rely on the application_credentials platform being registered for
+    the integration, which is a heavy fixture chain we don't actually need
+    for the runtime-data / coordinator tests.
+    """
+    impl = MagicMock()
+    session = MagicMock()
+    session.async_ensure_token_valid = AsyncMock()
+    session.token = {"access_token": "test-access-token"}
+    with patch(
+        "custom_components.pantrist.config_entry_oauth2_flow.async_get_config_entry_implementation",
+        new=AsyncMock(return_value=impl),
+    ), patch(
+        "custom_components.pantrist.config_entry_oauth2_flow.OAuth2Session",
+        return_value=session,
+    ):
+        yield
 
 
 @pytest.fixture
@@ -99,7 +106,7 @@ def mock_api() -> Generator[MagicMock, None, None]:
 
 
 @pytest.fixture
-def mock_socketio() -> Generator[MagicMock, None, None]:
+def mock_socketio() -> Generator[None, None, None]:
     """Skip the actual Socket.IO connection in tests."""
     with patch(
         "custom_components.pantrist.coordinator.PantristCoordinator.async_start_socketio",

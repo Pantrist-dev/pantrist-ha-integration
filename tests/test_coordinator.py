@@ -1,0 +1,283 @@
+"""Coordinator unit tests."""
+
+from __future__ import annotations
+
+import asyncio
+from collections.abc import Awaitable, Callable
+from typing import Any
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryAuthFailed
+from homeassistant.helpers.update_coordinator import UpdateFailed
+
+from custom_components.pantrist.api import PantristApiError, PantristAuthError
+from custom_components.pantrist.coordinator import PantristCoordinator, PantristData
+
+from .conftest import LIST_ID, LIST_NAME
+
+
+def _build(hass: HomeAssistant, api: MagicMock | None = None) -> PantristCoordinator:
+    return PantristCoordinator(
+        hass, MagicMock(), api or MagicMock(), LIST_ID, LIST_NAME
+    )
+
+
+async def test_update_data_aggregates_three_endpoints(hass: HomeAssistant) -> None:
+    """A normal refresh pulls shopping/pantry/cart in parallel and packages the snapshot."""
+    api = MagicMock()
+    api.get_shopping_list = AsyncMock(return_value={"items": [{"uuid": "s"}]})
+    api.get_pantry_list = AsyncMock(return_value={"items": [{"uuid": "p"}]})
+    api.get_shopping_cart = AsyncMock(return_value=[{"uuid": "c"}])
+
+    coord = _build(hass, api)
+    data = await coord._async_update_data()
+    assert isinstance(data, PantristData)
+    assert data.shopping_list["items"][0]["uuid"] == "s"
+    assert data.pantry["items"][0]["uuid"] == "p"
+    assert data.shopping_cart[0]["uuid"] == "c"
+
+
+async def test_update_data_translates_auth_error(hass: HomeAssistant) -> None:
+    """A 401 surfaces as ConfigEntryAuthFailed so HA triggers reauth."""
+    api = MagicMock()
+    api.get_shopping_list = AsyncMock(side_effect=PantristAuthError("401"))
+    api.get_pantry_list = AsyncMock(return_value={"items": []})
+    api.get_shopping_cart = AsyncMock(return_value=[])
+
+    coord = _build(hass, api)
+    with pytest.raises(ConfigEntryAuthFailed):
+        await coord._async_update_data()
+
+
+async def test_update_data_translates_api_error(hass: HomeAssistant) -> None:
+    """A non-auth API error becomes UpdateFailed."""
+    api = MagicMock()
+    api.get_shopping_list = AsyncMock(side_effect=PantristApiError("503"))
+    api.get_pantry_list = AsyncMock(return_value={"items": []})
+    api.get_shopping_cart = AsyncMock(return_value=[])
+
+    coord = _build(hass, api)
+    with pytest.raises(UpdateFailed):
+        await coord._async_update_data()
+
+
+async def test_update_list_name_setter(hass: HomeAssistant) -> None:
+    coord = _build(hass)
+    coord.update_list_name("Renamed")
+    assert coord.list_name == "Renamed"
+    coord.update_list_name(None)
+    assert coord.list_name is None
+
+
+async def test_properties(hass: HomeAssistant) -> None:
+    api = MagicMock()
+    coord = _build(hass, api)
+    assert coord.list_id == LIST_ID
+    assert coord.list_name == LIST_NAME
+    assert coord.api is api
+
+
+async def test_stop_socketio_disconnects_open_client(hass: HomeAssistant) -> None:
+    """stop disconnects an active client and cancels the loop task."""
+    coord = _build(hass)
+    sio = MagicMock()
+    sio.connected = True
+    sio.disconnect = AsyncMock()
+    coord._sio = sio
+
+    async def _loop():
+        try:
+            await asyncio.sleep(99)
+        except asyncio.CancelledError:
+            raise
+
+    coord._sio_task = hass.loop.create_task(_loop())
+    await coord.async_stop_socketio()
+    sio.disconnect.assert_awaited_once()
+    assert coord._sio is None
+    assert coord._sio_task is None
+
+
+async def test_stop_socketio_swallows_disconnect_errors(hass: HomeAssistant) -> None:
+    coord = _build(hass)
+    sio = MagicMock()
+    sio.connected = True
+    sio.disconnect = AsyncMock(side_effect=RuntimeError("boom"))
+    coord._sio = sio
+    coord._sio_task = None
+    await coord.async_stop_socketio()
+    assert coord._sio is None
+
+
+async def test_stop_socketio_noop_when_inactive(hass: HomeAssistant) -> None:
+    """Stopping an unstarted coordinator is fine."""
+    coord = _build(hass)
+    await coord.async_stop_socketio()
+    assert coord._sio is None
+    assert coord._sio_task is None
+
+
+async def test_sio_loop_retries_then_exits(hass: HomeAssistant) -> None:
+    """The loop catches errors, then exits cleanly once stop is signalled."""
+    coord = _build(hass)
+    calls = 0
+
+    async def _fake_connect():
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise RuntimeError("first attempt fails")
+        coord._stop_sio.set()
+
+    with patch.object(coord, "_sio_connect_and_wait", new=_fake_connect):
+        coord._stop_sio.clear()
+        # Patch asyncio.wait_for so the reconnect backoff doesn't actually sleep.
+        async def _instant_wait_for(coro, timeout):
+            # Cancel the awaited coroutine and return immediately.
+            try:
+                coro.close()
+            except Exception:  # noqa: BLE001
+                pass
+            raise asyncio.TimeoutError
+
+        with patch("custom_components.pantrist.coordinator.asyncio.wait_for", new=_instant_wait_for):
+            await coord._sio_loop()
+    assert calls >= 2
+
+
+async def test_sio_loop_handles_cancellation(hass: HomeAssistant) -> None:
+    """A CancelledError inside the loop exits cleanly without re-raising."""
+    coord = _build(hass)
+
+    async def _raises_cancel():
+        raise asyncio.CancelledError
+
+    with patch.object(coord, "_sio_connect_and_wait", new=_raises_cancel):
+        await coord._sio_loop()  # returns without raising
+
+
+async def test_start_socketio_creates_task(hass: HomeAssistant) -> None:
+    coord = _build(hass)
+    with patch.object(coord, "_sio_loop", new=AsyncMock()):
+        await coord.async_start_socketio()
+        assert coord._sio_task is not None
+        coord._sio_task.cancel()
+        try:
+            await coord._sio_task
+        except asyncio.CancelledError:
+            pass
+
+
+async def test_sio_connect_and_wait_registers_handlers(hass: HomeAssistant) -> None:
+    """_sio_connect_and_wait builds the client, connects, then waits until disconnect."""
+    api = MagicMock()
+    api._session = MagicMock()
+    api._session.async_ensure_token_valid = AsyncMock()
+    api._session.token = {"access_token": "tok"}
+
+    coord = _build(hass, api)
+
+    fake_sio = MagicMock()
+    fake_sio.connect = AsyncMock()
+    fake_sio.wait = AsyncMock()
+    fake_sio.disconnect = AsyncMock()
+    fake_sio.connected = False
+    fake_sio.event = MagicMock(side_effect=lambda **_k: (lambda fn: fn))
+    fake_sio.on = MagicMock(side_effect=lambda *_a, **_k: (lambda fn: fn))
+    fake_sio.emit = AsyncMock()
+
+    with patch(
+        "custom_components.pantrist.coordinator.socketio.AsyncClient",
+        return_value=fake_sio,
+    ):
+        await coord._sio_connect_and_wait()
+
+    fake_sio.connect.assert_awaited_once()
+    fake_sio.wait.assert_awaited_once()
+
+
+async def test_sio_connect_disconnect_swallows_errors(hass: HomeAssistant) -> None:
+    """If `wait` returns and the client is still connected, disconnect errors are swallowed."""
+    api = MagicMock()
+    api._session = MagicMock()
+    api._session.async_ensure_token_valid = AsyncMock()
+    api._session.token = {"access_token": "tok"}
+
+    coord = _build(hass, api)
+
+    fake_sio = MagicMock()
+    fake_sio.connect = AsyncMock()
+    fake_sio.wait = AsyncMock()
+    fake_sio.disconnect = AsyncMock(side_effect=RuntimeError("boom"))
+    fake_sio.connected = True
+    fake_sio.event = MagicMock(side_effect=lambda **_k: (lambda fn: fn))
+    fake_sio.on = MagicMock(side_effect=lambda *_a, **_k: (lambda fn: fn))
+    fake_sio.emit = AsyncMock()
+
+    with patch(
+        "custom_components.pantrist.coordinator.socketio.AsyncClient",
+        return_value=fake_sio,
+    ):
+        await coord._sio_connect_and_wait()
+
+
+async def test_sio_event_callbacks_invoked(hass: HomeAssistant) -> None:
+    """Trip the registered Socket.IO callbacks to cover their bodies."""
+    api = MagicMock()
+    api._session = MagicMock()
+    api._session.async_ensure_token_valid = AsyncMock()
+    api._session.token = {"access_token": "tok"}
+
+    coord = _build(hass, api)
+
+    captured: dict[str, list[Callable[..., Awaitable[None]]]] = {}
+
+    def _event(**_kwargs: Any) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+        def deco(fn: Callable[..., Any]) -> Callable[..., Any]:
+            captured.setdefault("events", []).append(fn)
+            return fn
+
+        return deco
+
+    def _on(
+        event_name: str, **_kwargs: Any
+    ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+        def deco(fn: Callable[..., Any]) -> Callable[..., Any]:
+            captured.setdefault(event_name, []).append(fn)
+            return fn
+
+        return deco
+
+    fake_sio = MagicMock()
+    fake_sio.connect = AsyncMock()
+    fake_sio.wait = AsyncMock()
+    fake_sio.disconnect = AsyncMock()
+    fake_sio.connected = False
+    fake_sio.event = MagicMock(side_effect=_event)
+    fake_sio.on = MagicMock(side_effect=_on)
+    fake_sio.emit = AsyncMock()
+
+    with patch(
+        "custom_components.pantrist.coordinator.socketio.AsyncClient",
+        return_value=fake_sio,
+    ):
+        await coord._sio_connect_and_wait()
+
+    # Trigger the two @sio.event handlers: connect (calls emit) + disconnect.
+    connect_cb, disconnect_cb = captured["events"]
+    await connect_cb()
+    fake_sio.emit.assert_awaited_with(
+        "joinList", {"listId": LIST_ID}, namespace="/lists"
+    )
+    await disconnect_cb()
+
+    # Trigger data:updated with a matching listId (refresh) + mismatched (ignored).
+    data_updated_cb = captured["data:updated"][0]
+    refresh_mock = AsyncMock()
+    coord.async_request_refresh = refresh_mock  # type: ignore[method-assign]
+    await data_updated_cb({"listId": LIST_ID, "collection": "shoppingList"})
+    refresh_mock.assert_awaited_once()
+    await data_updated_cb({"listId": "different", "collection": "x"})
+    assert refresh_mock.await_count == 1
