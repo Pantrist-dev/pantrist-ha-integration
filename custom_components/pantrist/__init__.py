@@ -222,6 +222,7 @@ def _register_services(hass: HomeAssistant) -> None:
             item_id=call.data["item_id"],
             change=float(call.data["change"]),
             unit_id=call.data.get("unit_id"),
+            auto_restock=bool(call.data.get("auto_restock", True)),
         )
 
     # Annotated as dict[vol.Marker, Any] so mypy doesn't infer the narrower
@@ -280,6 +281,12 @@ def _register_services(hass: HomeAssistant) -> None:
                 vol.Required("item_id"): cv.string,
                 vol.Required("change"): vol.Coerce(float),
                 vol.Optional("unit_id"): cv.string,
+                # Defaults to True here even though the underlying API
+                # defaults to False — the HA service is the automation
+                # surface; a "consume + auto-reorder" round-trip is the
+                # whole point. Callers who want bare decrement (e.g.
+                # inventory-mode dashboards) pass ``auto_restock: false``.
+                vol.Optional("auto_restock", default=True): cv.boolean,
             }
         ),
     )

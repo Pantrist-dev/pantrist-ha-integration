@@ -209,12 +209,20 @@ class PantristApi:
         unit_id: str | None = None,  # accepted but unused by the modern endpoint
         product_group_index: float | None = None,
         pantry_id: str | None = None,
+        auto_restock: bool = False,
     ) -> dict[str, Any]:
         """Change a pantry item's amount.
 
-        The modern endpoint takes `amount_change` (delta) plus optional
-        `product_group_index`/`pantry_id` for multi-group items. `unit_id`
-        from the legacy signature is accepted but ignored.
+        The modern endpoint takes ``amount_change`` (delta) plus optional
+        ``product_group_index`` / ``pantry_id`` for multi-group items.
+        ``unit_id`` from the legacy signature is accepted but ignored.
+
+        ``auto_restock`` opts into server-side
+        "consume + add-to-shopping-list" behaviour: when set and the
+        decrement crosses the item's ``minimumAmount``, the Pantrist API
+        also adds a fully-populated copy of the article (category, brand,
+        unit, image, …) to the shopping list. Use it for HA-driven flows
+        like the NFC blueprint.
         """
         client = await self._client()
         kwargs: dict[str, Any] = {"amount_change": change}
@@ -223,6 +231,12 @@ class PantristApi:
         if pantry_id is not None:
             kwargs["pantry_id"] = pantry_id
         body = ChangeAmountOfItemDto(**kwargs)
+        if auto_restock:
+            # The generated client lags the backend by one DTO field; tunnel
+            # the flag through ``additional_properties`` so it lands in the
+            # JSON body without forcing a client regeneration on every API
+            # bump.
+            body.additional_properties["autoRestock"] = True
         result = await self._call(
             pantry_list_items_controller_change_amount.asyncio(
                 client=client, list_id=list_id, item_id=item_id, body=body

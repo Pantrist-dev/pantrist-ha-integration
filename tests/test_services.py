@@ -124,8 +124,22 @@ async def test_change_pantry_amount_service(
         {"item_id": "p1", "change": -1.5},
         blocking=True,
     )
+    # auto_restock defaults to True on the HA service so NFC / voice
+    # automations get "consume + reorder" out of the box.
     mock_api.change_pantry_item_amount.assert_awaited_with(
-        LIST_ID, item_id="p1", change=-1.5, unit_id=None
+        LIST_ID, item_id="p1", change=-1.5, unit_id=None, auto_restock=True
+    )
+
+    # Auto-restock can be turned off explicitly.
+    mock_api.change_pantry_item_amount.reset_mock()
+    await hass.services.async_call(
+        DOMAIN,
+        SERVICE_CHANGE_PANTRY_AMOUNT,
+        {"item_id": "p1", "change": -1.5, "auto_restock": False},
+        blocking=True,
+    )
+    mock_api.change_pantry_item_amount.assert_awaited_with(
+        LIST_ID, item_id="p1", change=-1.5, unit_id=None, auto_restock=False
     )
 
 

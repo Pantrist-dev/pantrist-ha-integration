@@ -109,3 +109,16 @@ change_pantry_item_amount:
       required: false
       selector:
         text:
+    auto_restock:
+      name: Auto-restock when below minimum
+      description: >
+        When enabled (the HA default), and the resulting pantry amount lands
+        at or below the item's configured minimum, the Pantrist API also
+        adds a full copy of the article (category, brand, unit, image, …) to
+        the shopping list. Designed for HA-triggered flows (NFC scan, voice
+        consume, …) where you want "consume + auto-reorder" in one
+        round-trip. Set to ``false`` for bare-decrement use cases.
+      required: false
+      default: true
+      selector:
+        boolean:
