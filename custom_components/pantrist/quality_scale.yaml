@@ -22,7 +22,13 @@ rules:
   common-modules: done
   config-flow: done
   config-flow-test-coverage: done
-  dependency-transparency: done
+  dependency-transparency:
+    status: done
+    comment: >
+      Only ``python-socketio`` is listed as a requirement — ``httpx`` and
+      ``attrs`` (used by the generated OpenAPI client) are guaranteed by
+      HA Core itself and must not be re-pinned, otherwise pip refuses to
+      install when Core's pinned versions disagree.
   docs-actions: done
   docs-high-level-description: done
   docs-installation-instructions: done
