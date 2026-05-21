@@ -1,0 +1,14 @@
+{
+  "domain": "pantrist",
+  "name": "Pantrist",
+  "codeowners": ["@nlueg"],
+  "config_flow": true,
+  "dependencies": ["application_credentials"],
+  "documentation": "https://github.com/Pantrist-dev/pantrist-ha-addon",
+  "integration_type": "service",
+  "iot_class": "cloud_push",
+  "issue_tracker": "https://github.com/Pantrist-dev/pantrist-ha-addon/issues",
+  "loggers": ["pantrist", "socketio", "engineio"],
+  "requirements": ["python-socketio[asyncio_client]==5.11.4"],
+  "version": "0.1.0"
+}
