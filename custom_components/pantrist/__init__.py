@@ -17,7 +17,9 @@ from .api import PantristApi, PantristAuthError
 from .const import (
     CONF_LIST_ID,
     DOMAIN,
+    SERVICE_ADD_TO_PANTRY,
     SERVICE_ADD_TO_SHOPPING_LIST,
+    SERVICE_ADD_TO_SHOPPING_LIST_BY_BARCODE,
     SERVICE_CHANGE_PANTRY_AMOUNT,
     SERVICE_CHECK_SHOPPING_LIST_ITEM,
     SERVICE_DELETE_PANTRY_ITEM,
@@ -108,6 +110,13 @@ def _register_services(hass: HomeAssistant) -> None:
     async def add_to_shopping_list(call: ServiceCall) -> None:
         await _call_api(call, "add_to_shopping_list_by_name", name=call.data["name"])
 
+    async def add_to_shopping_list_by_barcode(call: ServiceCall) -> None:
+        await _call_api(
+            call,
+            "add_to_shopping_list_by_barcode",
+            barcode=call.data["barcode"],
+        )
+
     async def check_shopping_list_item(call: ServiceCall) -> None:
         await _call_api(
             call, "check_shopping_list_item", item_id=call.data["item_id"]
@@ -118,6 +127,15 @@ def _register_services(hass: HomeAssistant) -> None:
             call,
             "delete_shopping_list_item",
             item_id=call.data["item_id"],
+        )
+
+    async def add_to_pantry(call: ServiceCall) -> None:
+        await _call_api(
+            call,
+            "add_to_pantry_by_name",
+            name=call.data["name"],
+            amount=float(call.data.get("amount", 1)),
+            unit_id=call.data.get("unit_id", "pieces"),
         )
 
     async def delete_pantry_item(call: ServiceCall) -> None:
@@ -131,7 +149,7 @@ def _register_services(hass: HomeAssistant) -> None:
             "change_pantry_item_amount",
             item_id=call.data["item_id"],
             change=float(call.data["change"]),
-            unit_id=call.data["unit_id"],
+            unit_id=call.data.get("unit_id"),
         )
 
     hass.services.async_register(
@@ -139,6 +157,12 @@ def _register_services(hass: HomeAssistant) -> None:
         SERVICE_ADD_TO_SHOPPING_LIST,
         add_to_shopping_list,
         schema=vol.Schema({vol.Required("name"): cv.string}),
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_ADD_TO_SHOPPING_LIST_BY_BARCODE,
+        add_to_shopping_list_by_barcode,
+        schema=vol.Schema({vol.Required("barcode"): cv.string}),
     )
     hass.services.async_register(
         DOMAIN,
@@ -154,6 +178,18 @@ def _register_services(hass: HomeAssistant) -> None:
     )
     hass.services.async_register(
         DOMAIN,
+        SERVICE_ADD_TO_PANTRY,
+        add_to_pantry,
+        schema=vol.Schema(
+            {
+                vol.Required("name"): cv.string,
+                vol.Optional("amount", default=1): vol.Coerce(float),
+                vol.Optional("unit_id", default="pieces"): cv.string,
+            }
+        ),
+    )
+    hass.services.async_register(
+        DOMAIN,
         SERVICE_DELETE_PANTRY_ITEM,
         delete_pantry_item,
         schema=vol.Schema({vol.Required("item_id"): cv.string}),
@@ -166,7 +202,7 @@ def _register_services(hass: HomeAssistant) -> None:
             {
                 vol.Required("item_id"): cv.string,
                 vol.Required("change"): vol.Coerce(float),
-                vol.Required("unit_id"): cv.string,
+                vol.Optional("unit_id"): cv.string,
             }
         ),
     )

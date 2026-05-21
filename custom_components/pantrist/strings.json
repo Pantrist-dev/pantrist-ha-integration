@@ -49,6 +49,16 @@
         }
       }
     },
+    "add_to_shopping_list_by_barcode": {
+      "name": "Add to shopping list by barcode",
+      "description": "Look up a product by barcode and add it to the shopping list.",
+      "fields": {
+        "barcode": {
+          "name": "Barcode",
+          "description": "The product barcode (EAN-13, UPC-A, etc.)."
+        }
+      }
+    },
     "check_shopping_list_item": {
       "name": "Check shopping-list item",
       "description": "Mark an item on the shopping list as bought.",
@@ -66,6 +76,24 @@
         "item_id": {
           "name": "Item UUID",
           "description": "The uuid attribute of the item."
+        }
+      }
+    },
+    "add_to_pantry": {
+      "name": "Add to pantry",
+      "description": "Add an item by name to the connected Pantrist pantry.",
+      "fields": {
+        "name": {
+          "name": "Item name",
+          "description": "Free-text item name."
+        },
+        "amount": {
+          "name": "Amount",
+          "description": "Quantity to add (defaults to 1)."
+        },
+        "unit_id": {
+          "name": "Unit",
+          "description": "Unit identifier (defaults to pieces)."
         }
       }
     },
@@ -93,7 +121,7 @@
         },
         "unit_id": {
           "name": "Unit",
-          "description": "Unit identifier (e.g., pieces, grams)."
+          "description": "Accepted for backwards compatibility; ignored by the current backend."
         }
       }
     }
