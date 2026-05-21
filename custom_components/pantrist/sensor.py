@@ -10,6 +10,7 @@ from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
@@ -236,6 +237,9 @@ class PantristNextExpirationSensor(PantristEntity, SensorEntity):
     _attr_icon = "mdi:calendar-clock"
     _attr_translation_key = "next_expiration"
     _attr_device_class = SensorDeviceClass.TIMESTAMP
+    # Derived metadata about the pantry — not an independent thing the user
+    # interacts with, so park it under the diagnostic section of the device.
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
 
     def __init__(self, coordinator: PantristCoordinator) -> None:
         super().__init__(coordinator)

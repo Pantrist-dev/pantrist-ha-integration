@@ -25,6 +25,38 @@
       "default": "Erfolgreich mit Pantrist verbunden."
     }
   },
+  "issues": {
+    "socket_disconnected": {
+      "title": "Pantrist Echtzeit-Updates unterbrochen",
+      "description": "Die Pantrist-Socket.IO-Verbindung für Liste {list_name} ist seit ~{minutes} min unterbrochen. Sobald die Verbindung wiederhergestellt ist, aktualisiert sich der Listeninhalt automatisch — sofern das nicht von selbst geschieht, prüfe Settings → System → Logs auf ``custom_components.pantrist``-Fehler."
+    }
+  },
+  "exceptions": {
+    "not_configured": {
+      "message": "Die Pantrist-Integration ist nicht eingerichtet. Bitte zuerst hinzufügen."
+    },
+    "unknown_list_id": {
+      "message": "Kein Pantrist-Koordinator für list_id={list_id}. Verfügbar: {available}."
+    },
+    "api_request_failed": {
+      "message": "Pantrist-API-Aufruf fehlgeschlagen: {error}"
+    },
+    "todo_missing_summary": {
+      "message": "Eintrag der Einkaufsliste braucht einen Namen."
+    },
+    "todo_add_failed": {
+      "message": "Eintrag konnte nicht zur Einkaufsliste hinzugefügt werden: {error}"
+    },
+    "todo_check_failed": {
+      "message": "Eintrag der Einkaufsliste konnte nicht abgehakt werden: {error}"
+    },
+    "todo_delete_failed": {
+      "message": "Eintrag {uid} konnte nicht aus der Einkaufsliste entfernt werden: {error}"
+    },
+    "number_set_failed": {
+      "message": "Vorratsmenge für {name} konnte nicht geändert werden: {error}"
+    }
+  },
   "entity": {
     "sensor": {
       "shopping_list": {
@@ -57,6 +89,16 @@
     "calendar": {
       "pantry_calendar": {
         "name": "Vorrats-Ablaufdaten"
+      }
+    },
+    "number": {
+      "pantry_amount": {
+        "name": "{item}"
+      }
+    },
+    "image": {
+      "latest_shopping_item": {
+        "name": "Letzter Einkaufslisten-Eintrag"
       }
     },
     "todo": {
