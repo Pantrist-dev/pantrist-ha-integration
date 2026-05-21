@@ -39,5 +39,8 @@ rules:
   parallel-updates: done
   action-exceptions: done
 
-  # ----- GOLD / PLATINUM (deferred) -----
+  # ----- GOLD / PLATINUM (partially in place) -----
   diagnostics: done
+  reconfiguration-flow: done
+  dynamic-devices: done
+  stale-devices: done

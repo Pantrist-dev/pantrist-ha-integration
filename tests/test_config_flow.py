@@ -6,7 +6,11 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from aiohttp import ClientError
-from homeassistant.config_entries import SOURCE_REAUTH, SOURCE_USER
+from homeassistant.config_entries import (
+    SOURCE_REAUTH,
+    SOURCE_RECONFIGURE,
+    SOURCE_USER,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 from pytest_homeassistant_custom_component.common import MockConfigEntry
@@ -164,6 +168,67 @@ async def test_reauth_dispatches_to_confirm(hass: HomeAssistant) -> None:
     result = await flow.async_step_reauth({})
     assert result["type"] == FlowResultType.FORM
     assert result["step_id"] == "reauth_confirm"
+
+
+async def test_reconfigure_step_runs_user_flow(hass: HomeAssistant) -> None:
+    """Reconfigure dispatches into the OAuth user step so the user can re-pick."""
+    flow = _make_flow(hass, source=SOURCE_RECONFIGURE)
+    with patch.object(
+        PantristOAuth2FlowHandler,
+        "async_step_user",
+        new=AsyncMock(return_value={"type": FlowResultType.EXTERNAL_STEP, "step_id": "auth"}),
+    ):
+        result = await flow.async_step_reconfigure()
+    assert result["step_id"] == "auth"
+
+
+async def test_reconfigure_updates_entry_on_same_list(hass: HomeAssistant) -> None:
+    """Reconfigure with a matching list_id updates and reloads the existing entry."""
+    existing = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id=LIST_ID,
+        data={CONF_LIST_ID: LIST_ID, "token": {"list_id": LIST_ID}},
+    )
+    existing.add_to_hass(hass)
+
+    flow = _make_flow(hass, source=SOURCE_RECONFIGURE)
+    flow.context["entry_id"] = existing.entry_id
+
+    with patch.object(
+        PantristOAuth2FlowHandler, "_test_credentials",
+        new=AsyncMock(return_value=None),
+    ):
+        result = await flow.async_oauth_create_entry(
+            {"token": {"access_token": "fresh", "list_id": LIST_ID}}
+        )
+    assert result["type"] == FlowResultType.ABORT
+    assert result["reason"] == "reconfigure_successful"
+
+
+async def test_reconfigure_rejects_different_list(hass: HomeAssistant) -> None:
+    """Reconfigure with a different list_id aborts with wrong_account."""
+    from homeassistant.data_entry_flow import AbortFlow
+
+    existing = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id=LIST_ID,
+        data={CONF_LIST_ID: LIST_ID, "token": {"list_id": LIST_ID}},
+    )
+    existing.add_to_hass(hass)
+
+    flow = _make_flow(hass, source=SOURCE_RECONFIGURE)
+    flow.context["entry_id"] = existing.entry_id
+
+    other_list = "11111111-1111-4111-8111-111111111111"
+    with patch.object(
+        PantristOAuth2FlowHandler, "_test_credentials",
+        new=AsyncMock(return_value=None),
+    ):
+        with pytest.raises(AbortFlow) as excinfo:
+            await flow.async_oauth_create_entry(
+                {"token": {"access_token": "fresh", "list_id": other_list}}
+            )
+    assert excinfo.value.reason == "wrong_account"
 
 
 async def test_fetch_list_name_uses_name_field(hass: HomeAssistant) -> None:
