@@ -6,29 +6,43 @@ from typing import Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-T = TypeVar("T", bound="ArticleDtoSupermarketId")
+T = TypeVar("T", bound="AddByBarcodeDto")
 
 
 @_attrs_define
-class ArticleDtoSupermarketId:
-    """ """
+class AddByBarcodeDto:
+    """
+    Attributes:
+        barcode (str):
+    """
 
+    barcode: str
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        barcode = self.barcode
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
+        field_dict.update(
+            {
+                "barcode": barcode,
+            }
+        )
 
         return field_dict
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
-        article_dto_supermarket_id = cls()
+        barcode = d.pop("barcode")
 
-        article_dto_supermarket_id.additional_properties = d
-        return article_dto_supermarket_id
+        add_by_barcode_dto = cls(
+            barcode=barcode,
+        )
+
+        add_by_barcode_dto.additional_properties = d
+        return add_by_barcode_dto
 
     @property
     def additional_keys(self) -> list[str]:

@@ -26,7 +26,7 @@ class CreateBarcodeDto:
         name (str):
         category_uuid (str):
         content_volume (float):
-        volume_unit (VolumeUnit): Unit of the content. Besides the enum it's possible that custom IDs are used here
+        volume_unit (VolumeUnit):
         brand (str | Unset):
         language_specific (CreateBarcodeDtoLanguageSpecific | Unset):
         author (str | Unset):

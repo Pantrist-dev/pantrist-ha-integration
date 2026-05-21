@@ -37,7 +37,19 @@ def make_service_app(api_provider: APIProvider) -> web.Application:
 
     async def add_to_shopping_list_by_barcode(request: web.Request) -> web.Response:
         body = await request.json()
-        result = _require_api().add_to_shopping_list_by_barcode(body["barcode"])
+        result = _require_api().add_to_shopping_list_by_barcode(
+            body["list_id"], body["barcode"]
+        )
+        return web.json_response(result if result else {"success": True})
+
+    async def add_to_pantry_by_barcode(request: web.Request) -> web.Response:
+        body = await request.json()
+        result = _require_api().add_to_pantry_by_barcode(
+            body["list_id"],
+            body["barcode"],
+            float(body.get("amount", 1)),
+            body.get("unit_id", "pieces"),
+        )
         return web.json_response(result if result else {"success": True})
 
     async def add_to_pantry(request: web.Request) -> web.Response:
@@ -80,6 +92,9 @@ def make_service_app(api_provider: APIProvider) -> web.Application:
     app.router.add_post("/services/add_to_shopping_list", add_to_shopping_list)
     app.router.add_post(
         "/services/add_to_shopping_list_by_barcode", add_to_shopping_list_by_barcode
+    )
+    app.router.add_post(
+        "/services/add_to_pantry_by_barcode", add_to_pantry_by_barcode
     )
     app.router.add_post("/services/add_to_pantry", add_to_pantry)
     app.router.add_post("/services/check_shopping_list_item", check_shopping_list_item)

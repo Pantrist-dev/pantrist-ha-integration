@@ -1611,6 +1611,41 @@ paths:
       summary: Add an item to the shopping list by name
       tags:
         - Shopping List
+  /list/{listId}/shoppingList/add-by-barcode:
+    post:
+      description: >-
+        Looks up the barcode in the Pantrist catalog and adds the resolved
+        product to the shopping list. Returns 404 if the barcode is unknown.
+      operationId: ShoppingListItemsController_addByBarcode
+      parameters:
+        - name: listId
+          required: true
+          in: path
+          schema:
+            type: string
+        - name: x-socket-id
+          required: false
+          in: header
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddByBarcodeDto'
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleDto'
+      security:
+        - bearer: []
+      summary: Add an item to the shopping list by barcode
+      tags:
+        - Shopping List
   /list/{listId}/shoppingList/{itemId}/check:
     post:
       description: >-
@@ -2011,6 +2046,42 @@ paths:
       security:
         - bearer: []
       summary: Add an item to the pantry list by name
+      tags:
+        - Pantry List
+  /list/{listId}/pantryList/add-by-barcode:
+    post:
+      description: >-
+        Looks up the barcode in the Pantrist catalog and adds the resolved
+        product to the pantry. amount defaults to 1, unitId defaults to
+        "pieces". Returns 404 if the barcode is unknown.
+      operationId: PantryListItemsController_addByBarcode
+      parameters:
+        - name: listId
+          required: true
+          in: path
+          schema:
+            type: string
+        - name: x-socket-id
+          required: false
+          in: header
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddPantryByBarcodeDto'
+      responses:
+        '201':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArticleDto'
+      security:
+        - bearer: []
+      summary: Add an item to the pantry list by barcode
       tags:
         - Pantry List
   /list/{listId}/pantryList/{itemId}:
@@ -3967,6 +4038,27 @@ components:
           type: string
       required:
         - name
+    AddByBarcodeDto:
+      type: object
+      properties:
+        barcode:
+          type: string
+      required:
+        - barcode
+    PaginationResponseDto:
+      type: object
+      properties:
+        data:
+          nullable: false
+          type: array
+          items:
+            type: string
+        count:
+          type: number
+          description: The total count of items
+      required:
+        - data
+        - count
     VolumeUnit:
       type: string
       enum:
@@ -3983,336 +4075,6 @@ components:
         - oz
         - fl-oz
         - gal
-      description: >-
-        Unit of the content. Besides the enum it's possible that custom IDs are
-        used here
-    ArticleProductGroup:
-      type: object
-      properties:
-        index:
-          type: number
-          description: Index of the group inside the product group list
-        count:
-          type: number
-          description: Products inside the product group
-        bestBefore:
-          type: string
-          description: Best before date in that group
-        pantryId:
-          type: string
-          description: ID of the location
-        articleIsOpen:
-          type: boolean
-          description: Indicates whether the product group contains an opened product
-        remainingAmount:
-          type: number
-          description: Remaining amount in the opened product
-      required:
-        - index
-        - count
-        - pantryId
-        - articleIsOpen
-    UpdateItemDto:
-      type: object
-      properties:
-        name:
-          type: string
-          description: Name of the item
-        brand:
-          type: string
-          description: Brand of the item
-        contentVolume:
-          type: number
-          description: Content of a single item
-        unitId:
-          description: >-
-            Unit of the content. Besides the enum it's possible that custom IDs
-            are used here
-          allOf:
-            - $ref: '#/components/schemas/VolumeUnit'
-        barcode:
-          description: Barcode(s) of the product
-          type: array
-          items:
-            type: string
-        productGroups:
-          description: >-
-            Product groups contain all relevant information about everything
-            related to storage.
-          type: array
-          items:
-            $ref: '#/components/schemas/ArticleProductGroup'
-    ItemDto:
-      type: object
-      properties:
-        id:
-          type: string
-          description: ID of the item
-        name:
-          type: string
-          description: Name of the item
-        brand:
-          type: string
-          description: Brand of the item
-        amount:
-          type: number
-          description: Amount of the item
-        contentVolume:
-          type: number
-          description: Content of a single item
-        unitId:
-          description: >-
-            Unit of the content. Besides the enum it's possible that custom IDs
-            are used here
-          allOf:
-            - $ref: '#/components/schemas/VolumeUnit'
-        barcode:
-          description: Barcode(s) of the product
-          type: array
-          items:
-            type: string
-        productGroups:
-          description: >-
-            Product groups contain all relevant information about everything
-            related to storage.
-          type: array
-          items:
-            $ref: '#/components/schemas/ArticleProductGroup'
-      required:
-        - id
-        - name
-        - amount
-        - contentVolume
-        - unitId
-        - barcode
-        - productGroups
-    ChangeAmountOfItemDto:
-      type: object
-      properties:
-        amountChange:
-          type: number
-          description: New amount of the item
-        productGroupIndex:
-          type: number
-          description: Index of the product group to change the amount of
-        pantryId:
-          type: string
-          description: >-
-            Pantry id of the product group you want to change the amount of. If
-            no group is found, a new one will be created
-      required:
-        - amountChange
-    AddPantryByNameDto:
-      type: object
-      properties:
-        name:
-          type: string
-        amount:
-          type: number
-          default: 1
-        unitId:
-          type: string
-          default: pieces
-      required:
-        - name
-    StorageLocationDto:
-      type: object
-      properties:
-        id:
-          type: string
-          description: ID of the location
-        name:
-          type: string
-          description: Name of the location
-        isFavourite:
-          type: boolean
-          description: Indicates whether the location is marked as your favourite
-        locationType:
-          description: Type of the location
-          allOf:
-            - $ref: '#/components/schemas/LocationType'
-        icon:
-          type: string
-          description: Icon for the location
-          nullable: true
-      required:
-        - id
-        - name
-        - isFavourite
-        - locationType
-        - icon
-    CreateUserDto:
-      type: object
-      properties:
-        uid:
-          type: string
-        email:
-          type: string
-        displayName:
-          type: string
-        profileImage:
-          type: string
-        currentList:
-          type: string
-        language:
-          type: string
-      required:
-        - uid
-        - email
-        - displayName
-    UserSubscriptionDto:
-      type: object
-      properties:
-        status:
-          type: string
-          enum:
-            - active
-            - cancelled
-            - expired
-        productId:
-          type: string
-        expiresAt:
-          type: string
-        store:
-          type: string
-          enum:
-            - APP_STORE
-            - PLAY_STORE
-            - STRIPE
-      required:
-        - status
-        - productId
-        - expiresAt
-    UserPermissionsDto:
-      type: object
-      properties:
-        isNotAllowedToAddRecipes:
-          type: boolean
-        isNotAllowedToReportRecipes:
-          type: boolean
-        isNotAllowedToChangeBarcodeData:
-          type: boolean
-    PremiumInvitationBaseDataDto:
-      type: object
-      properties:
-        inviterUid:
-          type: string
-        inviterName:
-          type: string
-        invitationId:
-          type: string
-      required:
-        - inviterUid
-        - inviterName
-        - invitationId
-    PremiumInvitationDataDto:
-      type: object
-      properties:
-        inviterSubscriptionValid:
-          type: boolean
-        invitation:
-          $ref: '#/components/schemas/PremiumInvitationBaseDataDto'
-        unacceptedInvitations:
-          type: array
-          items:
-            $ref: '#/components/schemas/PremiumInvitationBaseDataDto'
-    NotificationSettingsDto:
-      type: object
-      properties:
-        notificationTime:
-          type: string
-        thirtyDays:
-          type: boolean
-        sevenDays:
-          type: boolean
-        atExpiryDate:
-          type: boolean
-    UserDto:
-      type: object
-      properties:
-        uid:
-          type: string
-        displayName:
-          type: string
-        forcedPremiumTariff:
-          type: string
-          enum:
-            - single
-            - twoUsers
-            - fiveUsers
-        email:
-          type: string
-        language:
-          type: string
-        isTestUser:
-          type: boolean
-        profileImage:
-          type: string
-        providerId:
-          type: string
-        providerUuid:
-          type: string
-        subscription:
-          $ref: '#/components/schemas/UserSubscriptionDto'
-        stripe_customer_id:
-          type: string
-        stripe_subscription_id:
-          type: string
-        currentList:
-          type: string
-        permissions:
-          $ref: '#/components/schemas/UserPermissionsDto'
-        userCountry:
-          type: string
-        userCountrySource:
-          type: string
-          enum:
-            - ip
-            - geolocation
-            - manually-set
-        premiumInvitation:
-          $ref: '#/components/schemas/PremiumInvitationDataDto'
-        notificationSettings:
-          $ref: '#/components/schemas/NotificationSettingsDto'
-      required:
-        - uid
-        - displayName
-        - email
-    SubscriptionValidationResponseDto:
-      type: object
-      properties:
-        productId:
-          type: string
-          example: pantrist_premium_five
-    UpdateUserDto:
-      type: object
-      properties:
-        uid:
-          type: string
-        email:
-          type: string
-        displayName:
-          type: string
-        profileImage:
-          type: string
-        currentList:
-          type: string
-        language:
-          type: string
-    PaginationResponseDto:
-      type: object
-      properties:
-        data:
-          nullable: false
-          type: array
-          items:
-            type: string
-        count:
-          type: number
-          description: The total count of items
-      required:
-        - data
-        - count
     BarcodeAffiliateProductDto:
       type: object
       properties:
@@ -4539,6 +4301,332 @@ components:
         - categoryUuid
         - contentVolume
         - volumeUnit
+    ArticleProductGroup:
+      type: object
+      properties:
+        index:
+          type: number
+          description: Index of the group inside the product group list
+        count:
+          type: number
+          description: Products inside the product group
+        bestBefore:
+          type: string
+          description: Best before date in that group
+        pantryId:
+          type: string
+          description: ID of the location
+        articleIsOpen:
+          type: boolean
+          description: Indicates whether the product group contains an opened product
+        remainingAmount:
+          type: number
+          description: Remaining amount in the opened product
+      required:
+        - index
+        - count
+        - pantryId
+        - articleIsOpen
+    UpdateItemDto:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the item
+        brand:
+          type: string
+          description: Brand of the item
+        contentVolume:
+          type: number
+          description: Content of a single item
+        unitId:
+          description: >-
+            Unit of the content. Besides the enum it's possible that custom IDs
+            are used here
+          allOf:
+            - $ref: '#/components/schemas/VolumeUnit'
+        barcode:
+          description: Barcode(s) of the product
+          type: array
+          items:
+            type: string
+        productGroups:
+          description: >-
+            Product groups contain all relevant information about everything
+            related to storage.
+          type: array
+          items:
+            $ref: '#/components/schemas/ArticleProductGroup'
+    ItemDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID of the item
+        name:
+          type: string
+          description: Name of the item
+        brand:
+          type: string
+          description: Brand of the item
+        amount:
+          type: number
+          description: Amount of the item
+        contentVolume:
+          type: number
+          description: Content of a single item
+        unitId:
+          description: >-
+            Unit of the content. Besides the enum it's possible that custom IDs
+            are used here
+          allOf:
+            - $ref: '#/components/schemas/VolumeUnit'
+        barcode:
+          description: Barcode(s) of the product
+          type: array
+          items:
+            type: string
+        productGroups:
+          description: >-
+            Product groups contain all relevant information about everything
+            related to storage.
+          type: array
+          items:
+            $ref: '#/components/schemas/ArticleProductGroup'
+      required:
+        - id
+        - name
+        - amount
+        - contentVolume
+        - unitId
+        - barcode
+        - productGroups
+    ChangeAmountOfItemDto:
+      type: object
+      properties:
+        amountChange:
+          type: number
+          description: New amount of the item
+        productGroupIndex:
+          type: number
+          description: Index of the product group to change the amount of
+        pantryId:
+          type: string
+          description: >-
+            Pantry id of the product group you want to change the amount of. If
+            no group is found, a new one will be created
+      required:
+        - amountChange
+    AddPantryByNameDto:
+      type: object
+      properties:
+        name:
+          type: string
+        amount:
+          type: number
+          default: 1
+        unitId:
+          type: string
+          default: pieces
+      required:
+        - name
+    AddPantryByBarcodeDto:
+      type: object
+      properties:
+        barcode:
+          type: string
+        amount:
+          type: number
+          default: 1
+        unitId:
+          type: string
+          default: pieces
+      required:
+        - barcode
+    StorageLocationDto:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID of the location
+        name:
+          type: string
+          description: Name of the location
+        isFavourite:
+          type: boolean
+          description: Indicates whether the location is marked as your favourite
+        locationType:
+          description: Type of the location
+          allOf:
+            - $ref: '#/components/schemas/LocationType'
+        icon:
+          type: string
+          description: Icon for the location
+          nullable: true
+      required:
+        - id
+        - name
+        - isFavourite
+        - locationType
+        - icon
+    CreateUserDto:
+      type: object
+      properties:
+        uid:
+          type: string
+        email:
+          type: string
+        displayName:
+          type: string
+        profileImage:
+          type: string
+        currentList:
+          type: string
+        language:
+          type: string
+      required:
+        - uid
+        - email
+        - displayName
+    UserSubscriptionDto:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - active
+            - cancelled
+            - expired
+        productId:
+          type: string
+        expiresAt:
+          type: string
+        store:
+          type: string
+          enum:
+            - APP_STORE
+            - PLAY_STORE
+            - STRIPE
+      required:
+        - status
+        - productId
+        - expiresAt
+    UserPermissionsDto:
+      type: object
+      properties:
+        isNotAllowedToAddRecipes:
+          type: boolean
+        isNotAllowedToReportRecipes:
+          type: boolean
+        isNotAllowedToChangeBarcodeData:
+          type: boolean
+    PremiumInvitationBaseDataDto:
+      type: object
+      properties:
+        inviterUid:
+          type: string
+        inviterName:
+          type: string
+        invitationId:
+          type: string
+      required:
+        - inviterUid
+        - inviterName
+        - invitationId
+    PremiumInvitationDataDto:
+      type: object
+      properties:
+        inviterSubscriptionValid:
+          type: boolean
+        invitation:
+          $ref: '#/components/schemas/PremiumInvitationBaseDataDto'
+        unacceptedInvitations:
+          type: array
+          items:
+            $ref: '#/components/schemas/PremiumInvitationBaseDataDto'
+    NotificationSettingsDto:
+      type: object
+      properties:
+        notificationTime:
+          type: string
+        thirtyDays:
+          type: boolean
+        sevenDays:
+          type: boolean
+        atExpiryDate:
+          type: boolean
+    UserDto:
+      type: object
+      properties:
+        uid:
+          type: string
+        displayName:
+          type: string
+        forcedPremiumTariff:
+          type: string
+          enum:
+            - single
+            - twoUsers
+            - fiveUsers
+        email:
+          type: string
+        language:
+          type: string
+        isTestUser:
+          type: boolean
+        profileImage:
+          type: string
+        providerId:
+          type: string
+        providerUuid:
+          type: string
+        subscription:
+          $ref: '#/components/schemas/UserSubscriptionDto'
+        stripe_customer_id:
+          type: string
+        stripe_subscription_id:
+          type: string
+        currentList:
+          type: string
+        permissions:
+          $ref: '#/components/schemas/UserPermissionsDto'
+        userCountry:
+          type: string
+        userCountrySource:
+          type: string
+          enum:
+            - ip
+            - geolocation
+            - manually-set
+        premiumInvitation:
+          $ref: '#/components/schemas/PremiumInvitationDataDto'
+        notificationSettings:
+          $ref: '#/components/schemas/NotificationSettingsDto'
+      required:
+        - uid
+        - displayName
+        - email
+    SubscriptionValidationResponseDto:
+      type: object
+      properties:
+        productId:
+          type: string
+          example: pantrist_premium_five
+    UpdateUserDto:
+      type: object
+      properties:
+        uid:
+          type: string
+        email:
+          type: string
+        displayName:
+          type: string
+        profileImage:
+          type: string
+        currentList:
+          type: string
+        language:
+          type: string
     GetRecipeCollectionsWithImagesDto:
       type: object
       properties:

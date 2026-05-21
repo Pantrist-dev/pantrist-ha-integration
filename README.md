@@ -100,7 +100,13 @@ rest_command:
     url: "http://localhost:8099/services/add_to_shopping_list_by_barcode"
     method: POST
     content_type: "application/json"
-    payload: '{"barcode": "{{ barcode }}"}'
+    payload: '{"list_id": "{{ list_id }}", "barcode": "{{ barcode }}"}'
+
+  pantrist_add_to_pantry_by_barcode:
+    url: "http://localhost:8099/services/add_to_pantry_by_barcode"
+    method: POST
+    content_type: "application/json"
+    payload: '{"list_id": "{{ list_id }}", "barcode": "{{ barcode }}"}'
 
   pantrist_add_to_pantry:
     url: "http://localhost:8099/services/add_to_pantry"

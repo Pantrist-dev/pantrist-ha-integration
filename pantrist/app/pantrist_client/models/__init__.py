@@ -1,6 +1,8 @@
 """Contains all the data models used in inputs/outputs"""
 
+from .add_by_barcode_dto import AddByBarcodeDto
 from .add_by_name_dto import AddByNameDto
+from .add_pantry_by_barcode_dto import AddPantryByBarcodeDto
 from .add_pantry_by_name_dto import AddPantryByNameDto
 from .add_recipe_collection import AddRecipeCollection
 from .add_user_to_list_dto import AddUserToListDto
@@ -152,7 +154,9 @@ from .week_plan_receipt_dto import WeekPlanReceiptDto
 from .week_plan_receipt_dto_type import WeekPlanReceiptDtoType
 
 __all__ = (
+    "AddByBarcodeDto",
     "AddByNameDto",
+    "AddPantryByBarcodeDto",
     "AddPantryByNameDto",
     "AddRecipeCollection",
     "AddUserToListDto",

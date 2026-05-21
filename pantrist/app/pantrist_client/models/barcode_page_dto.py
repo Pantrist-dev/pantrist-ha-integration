@@ -41,8 +41,7 @@ class BarcodePageDto:
         image (str | Unset):
         images (list[str] | Unset): Additional product images if available.
         content_volume (float | Unset):
-        volume_unit (VolumeUnit | Unset): Unit of the content. Besides the enum it's possible that custom IDs are used
-            here
+        volume_unit (VolumeUnit | Unset):
         nutriments (ArticleNutrimentsDto | Unset):
         complex_best_before_data (ArticleCatalogBestBeforeDatesDto | Unset):
         tags (list[str] | Unset):

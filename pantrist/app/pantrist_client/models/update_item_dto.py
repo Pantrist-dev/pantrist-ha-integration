@@ -23,7 +23,7 @@ class UpdateItemDto:
         name (str | Unset): Name of the item
         brand (str | Unset): Brand of the item
         content_volume (float | Unset): Content of a single item
-        unit_id (VolumeUnit | Unset): Unit of the content. Besides the enum it's possible that custom IDs are used here
+        unit_id (VolumeUnit | Unset):
         barcode (list[str] | Unset): Barcode(s) of the product
         product_groups (list[ArticleProductGroup] | Unset): Product groups contain all relevant information about
             everything related to storage.

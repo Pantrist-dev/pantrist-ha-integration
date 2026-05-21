@@ -24,7 +24,7 @@ class ItemDto:
         name (str): Name of the item
         amount (float): Amount of the item
         content_volume (float): Content of a single item
-        unit_id (VolumeUnit): Unit of the content. Besides the enum it's possible that custom IDs are used here
+        unit_id (VolumeUnit):
         barcode (list[str]): Barcode(s) of the product
         product_groups (list[ArticleProductGroup]): Product groups contain all relevant information about everything
             related to storage.

@@ -28,7 +28,7 @@ class BarcodeDto:
         slug (str):
         category_uuid (str):
         content_volume (float):
-        volume_unit (VolumeUnit): Unit of the content. Besides the enum it's possible that custom IDs are used here
+        volume_unit (VolumeUnit):
         offers (list[BarcodeAffiliateProductDto]):
         indexable (bool): False when the page should render <meta name="robots" content="noindex">. Computed from name
             length, brand, category, image, and offer presence.

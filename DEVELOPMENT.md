@@ -58,6 +58,12 @@ pantrist-ha-addon/
    python scripts/generate_client.py
    ```
 
+   The script targets `swagger-ui-yaml` (the public spec). Endpoints tagged
+   with `APP_SPECIFIC_ENDPOINT_KEY` in `pantrist-api` are hidden from this
+   spec. If you need a new endpoint exposed to the addon, drop that tag from
+   the controller in `pantrist-api` rather than switching to a different spec
+   URL.
+
 4. Commit `pantrist/app/pantrist_client/`.
 
 ## Testing locally (without a real HA)

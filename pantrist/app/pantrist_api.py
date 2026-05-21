@@ -22,6 +22,7 @@ from pantrist_client.api.pantry_list import (
     pantry_list_controller_get_items as pantry_get_current,
     pantry_list_controller_get_locations_by_list_id as pantry_get_by_id,
     pantry_list_controller_reduce_amount_of_item,
+    pantry_list_items_controller_add_by_barcode,
     pantry_list_items_controller_add_by_name,
 )
 from pantrist_client.api.shopping_cart import shopping_cart_items_controller_get_items
@@ -31,8 +32,15 @@ from pantrist_client.api.shopping_list import (
     shopping_list_controller_delete_item_of_list,
     shopping_list_controller_get_items as shopping_get_current,
     shopping_list_controller_get_locations_by_list_id as shopping_get_by_id,
+    shopping_list_items_controller_add_by_barcode,
 )
-from pantrist_client.models import AddByNameDto, AddPantryByNameDto, ChangeAmountOfItemDto
+from pantrist_client.models import (
+    AddByBarcodeDto,
+    AddByNameDto,
+    AddPantryByBarcodeDto,
+    AddPantryByNameDto,
+    ChangeAmountOfItemDto,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -120,9 +128,21 @@ class PantristAPI:
 
     # --- Barcodes ---
 
-    def add_to_shopping_list_by_barcode(self, barcode: str) -> Any:
-        # Barcode lookup endpoint was removed from the API.
-        raise PantristAPIError("Barcode lookup is not supported by the current API")
+    def add_to_shopping_list_by_barcode(self, list_id: str, barcode: str) -> Any:
+        return shopping_list_items_controller_add_by_barcode.sync(
+            list_id=list_id,
+            body=AddByBarcodeDto(barcode=barcode),
+            client=self._client,
+        )
+
+    def add_to_pantry_by_barcode(
+        self, list_id: str, barcode: str, amount: float = 1, unit_id: str = "pieces"
+    ) -> Any:
+        return pantry_list_items_controller_add_by_barcode.sync(
+            list_id=list_id,
+            body=AddPantryByBarcodeDto(barcode=barcode, amount=amount, unit_id=unit_id),
+            client=self._client,
+        )
 
     def close(self) -> None:
         # AuthenticatedClient manages its own httpx session; nothing to close explicitly.
