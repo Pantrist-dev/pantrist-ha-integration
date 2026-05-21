@@ -10,7 +10,6 @@ from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
     DOMAIN,
@@ -20,6 +19,7 @@ from .const import (
     SENSOR_SHOPPING_LIST,
 )
 from .coordinator import PantristCoordinator, PantristData
+from .entity import PantristEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -31,16 +31,19 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Add all Pantrist sensors for the configured list."""
-    coordinator: PantristCoordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities(
-        [
-            PantristShoppingListSensor(coordinator),
-            PantristPantrySensor(coordinator),
-            PantristExpiringSoonSensor(coordinator),
-            PantristShoppingCartSensor(coordinator),
-        ]
-    )
+    """Add 4 sensors per Pantrist list under this entry."""
+    coordinators: dict[str, PantristCoordinator] = hass.data[DOMAIN][entry.entry_id]
+    entities: list[SensorEntity] = []
+    for coordinator in coordinators.values():
+        entities.extend(
+            [
+                PantristShoppingListSensor(coordinator),
+                PantristPantrySensor(coordinator),
+                PantristExpiringSoonSensor(coordinator),
+                PantristShoppingCartSensor(coordinator),
+            ]
+        )
+    async_add_entities(entities)
 
 
 def _format_item(item: dict[str, Any]) -> dict[str, Any]:
@@ -57,10 +60,9 @@ def _format_item(item: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-class _PantristBaseSensor(CoordinatorEntity[PantristCoordinator], SensorEntity):
+class _PantristBaseSensor(PantristEntity, SensorEntity):
     """Common base for Pantrist sensors tied to one list."""
 
-    _attr_has_entity_name = True
     _attr_native_unit_of_measurement = "items"
 
     def __init__(self, coordinator: PantristCoordinator, key: str) -> None:
