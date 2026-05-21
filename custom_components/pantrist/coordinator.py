@@ -41,6 +41,7 @@ class PantristCoordinator(DataUpdateCoordinator[PantristData]):
         config_entry: ConfigEntry,
         api: PantristApi,
         list_id: str,
+        list_name: str | None = None,
     ) -> None:
         super().__init__(
             hass,
@@ -52,6 +53,7 @@ class PantristCoordinator(DataUpdateCoordinator[PantristData]):
         )
         self._api = api
         self._list_id = list_id
+        self._list_name = list_name
         self._sio: socketio.AsyncClient | None = None
         self._sio_task: asyncio.Task | None = None
         self._stop_sio = asyncio.Event()
@@ -59,6 +61,15 @@ class PantristCoordinator(DataUpdateCoordinator[PantristData]):
     @property
     def list_id(self) -> str:
         return self._list_id
+
+    @property
+    def list_name(self) -> str | None:
+        """Human-readable list name, e.g. 'Home'. May be None if unknown."""
+        return self._list_name
+
+    def update_list_name(self, name: str | None) -> None:
+        """Refresh the cached list name (callable when the list is renamed)."""
+        self._list_name = name
 
     @property
     def api(self) -> PantristApi:
