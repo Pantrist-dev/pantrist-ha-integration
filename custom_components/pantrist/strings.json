@@ -16,7 +16,9 @@
       "missing_list_id": "Pantrist did not return a list ID — please try again and pick a list during the consent step.",
       "already_configured": "This Pantrist list is already connected.",
       "wrong_account": "Re-authentication picked a different list than the original. Remove this entry and add a new one instead.",
-      "reauth_successful": "Successfully reconnected to Pantrist."
+      "reauth_successful": "Successfully reconnected to Pantrist.",
+      "invalid_auth": "The Pantrist API rejected the access token. Please try again.",
+      "cannot_connect": "Could not reach the Pantrist API. Please check your connection and try again."
     },
     "create_entry": {
       "default": "Successfully connected to Pantrist."

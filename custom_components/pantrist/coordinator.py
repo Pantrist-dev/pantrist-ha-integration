@@ -146,7 +146,7 @@ class PantristCoordinator(DataUpdateCoordinator[PantristData]):
         self._sio = sio
 
         @sio.event(namespace=SOCKET_NAMESPACE)
-        async def connect():  # noqa: ANN202
+        async def connect() -> None:
             _LOGGER.info("Socket.IO connected to %s%s", API_BASE, SOCKET_NAMESPACE)
             await sio.emit(
                 "joinList",
@@ -155,7 +155,7 @@ class PantristCoordinator(DataUpdateCoordinator[PantristData]):
             )
 
         @sio.event(namespace=SOCKET_NAMESPACE)
-        async def disconnect():  # noqa: ANN202
+        async def disconnect() -> None:
             _LOGGER.info("Socket.IO disconnected")
 
         @sio.on("data:updated", namespace=SOCKET_NAMESPACE)

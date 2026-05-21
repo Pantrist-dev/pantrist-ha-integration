@@ -9,8 +9,12 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, ServiceCall
-from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
+from homeassistant.exceptions import (
+    ConfigEntryAuthFailed,
+    HomeAssistantError,
+)
 from homeassistant.helpers import config_entry_oauth2_flow
+from homeassistant.helpers.typing import ConfigType
 import homeassistant.helpers.config_validation as cv
 
 from .api import PantristApi, PantristApiError, PantristAuthError
@@ -27,12 +31,30 @@ from .const import (
 )
 from .coordinator import PantristCoordinator
 
+# Bronze (runtime-data): one entry holds a dict of coordinators keyed by list_id.
+type PantristConfigEntry = ConfigEntry[dict[str, PantristCoordinator]]
+
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.TODO]
 
+# Pure YAML config is not supported — this integration is config-flow only.
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Register Pantrist services once at startup.
+
+    Bronze (action-setup): services live in `async_setup` so YAML automations
+    can reference them even before the user finishes the OAuth flow. The
+    handlers themselves raise `HomeAssistantError` when no entry is
+    configured yet, so calling them prematurely fails cleanly.
+    """
+    _register_services(hass)
+    return True
+
+
+async def async_setup_entry(hass: HomeAssistant, entry: PantristConfigEntry) -> bool:
     """Set up Pantrist from a config entry.
 
     One config entry corresponds to one Pantrist user account. After OAuth
@@ -98,27 +120,22 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await coordinator.async_start_socketio()
         coordinators[list_id] = coordinator
 
-    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinators
+    entry.runtime_data = coordinators
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-
-    _register_services(hass)
     return True
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_unload_entry(
+    hass: HomeAssistant, entry: PantristConfigEntry
+) -> bool:
     """Unload a config entry."""
-    coordinators: dict[str, PantristCoordinator] | None = hass.data.get(
-        DOMAIN, {}
-    ).get(entry.entry_id)
+    coordinators = entry.runtime_data if hasattr(entry, "runtime_data") else None
     if coordinators:
         for coordinator in coordinators.values():
             await coordinator.async_stop_socketio()
 
-    unloaded = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-    if unloaded:
-        hass.data[DOMAIN].pop(entry.entry_id, None)
-    return unloaded
+    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
 
 # ---------------------------------------------------------------------------
@@ -127,11 +144,12 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 
 def _all_coordinators(hass: HomeAssistant) -> list[PantristCoordinator]:
-    """Flatten every coordinator across every config entry."""
+    """Flatten every coordinator across every Pantrist config entry."""
     out: list[PantristCoordinator] = []
-    for entry_coords in hass.data.get(DOMAIN, {}).values():
-        if isinstance(entry_coords, dict):
-            out.extend(entry_coords.values())
+    for entry in hass.config_entries.async_entries(DOMAIN):
+        coords = getattr(entry, "runtime_data", None)
+        if isinstance(coords, dict):
+            out.extend(coords.values())
     return out
 
 
@@ -171,9 +189,15 @@ def _register_services(hass: HomeAssistant) -> None:
         fn = getattr(coordinator.api, fn_name)
         try:
             await fn(coordinator.list_id, **field_overrides)
-            await coordinator.async_request_refresh()
         except PantristAuthError as err:
             raise ConfigEntryAuthFailed("Pantrist auth failed") from err
+        except PantristApiError as err:
+            # Bronze (action-exceptions): never leak the integration-internal
+            # exception type. Wrap it so callers see a HomeAssistantError.
+            raise HomeAssistantError(
+                f"Pantrist API request failed: {err}"
+            ) from err
+        await coordinator.async_request_refresh()
 
     async def add_to_shopping_list(call: ServiceCall) -> None:
         await _call_api(call, "add_to_shopping_list_by_name", name=call.data["name"])
@@ -220,7 +244,9 @@ def _register_services(hass: HomeAssistant) -> None:
             unit_id=call.data.get("unit_id"),
         )
 
-    common = {vol.Optional("list_id"): cv.string}
+    # Annotated as dict[vol.Marker, Any] so mypy doesn't infer the narrower
+    # marker subtype from the literal and reject the **spread below.
+    common: dict[Any, Any] = {vol.Optional("list_id"): cv.string}
     hass.services.async_register(
         DOMAIN,
         SERVICE_ADD_TO_SHOPPING_LIST,

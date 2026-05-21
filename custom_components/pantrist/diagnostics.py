@@ -33,8 +33,8 @@ async def async_get_config_entry_diagnostics(
 ) -> dict[str, Any]:
     """Return the diagnostics payload for one Pantrist entry."""
 
-    coordinators: dict[str, PantristCoordinator] = hass.data.get(DOMAIN, {}).get(
-        entry.entry_id, {}
+    coordinators: dict[str, PantristCoordinator] = (
+        getattr(entry, "runtime_data", None) or {}
     )
 
     return {

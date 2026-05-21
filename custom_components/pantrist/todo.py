@@ -27,12 +27,16 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .api import PantristAuthError
+from .api import PantristApiError, PantristAuthError
 from .const import DOMAIN
 from .coordinator import PantristCoordinator
 from .entity import PantristEntity
 
 _LOGGER = logging.getLogger(__name__)
+
+# Pantrist's REST endpoints serialize per-list writes; serialise per-entity
+# here too to avoid the Lovelace todo card racing add/check/delete calls.
+PARALLEL_UPDATES = 1
 
 
 async def async_setup_entry(
@@ -41,7 +45,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Create one shopping-list todo entity per Pantrist list."""
-    coordinators: dict[str, PantristCoordinator] = hass.data[DOMAIN][entry.entry_id]
+    coordinators: dict[str, PantristCoordinator] = entry.runtime_data
     async_add_entities(
         PantristShoppingTodoEntity(coordinator)
         for coordinator in coordinators.values()
@@ -98,6 +102,10 @@ class PantristShoppingTodoEntity(PantristEntity, TodoListEntity):
             )
         except PantristAuthError as err:
             raise ConfigEntryAuthFailed("Pantrist auth failed") from err
+        except PantristApiError as err:
+            raise HomeAssistantError(
+                f"Could not add shopping-list item: {err}"
+            ) from err
         await self.coordinator.async_request_refresh()
 
     async def async_update_todo_item(self, item: TodoItem) -> None:
@@ -116,6 +124,10 @@ class PantristShoppingTodoEntity(PantristEntity, TodoListEntity):
             )
         except PantristAuthError as err:
             raise ConfigEntryAuthFailed("Pantrist auth failed") from err
+        except PantristApiError as err:
+            raise HomeAssistantError(
+                f"Could not check shopping-list item: {err}"
+            ) from err
         await self.coordinator.async_request_refresh()
 
     async def async_delete_todo_items(self, uids: list[str]) -> None:
@@ -126,6 +138,10 @@ class PantristShoppingTodoEntity(PantristEntity, TodoListEntity):
                 )
             except PantristAuthError as err:
                 raise ConfigEntryAuthFailed("Pantrist auth failed") from err
+            except PantristApiError as err:
+                raise HomeAssistantError(
+                    f"Could not delete shopping-list item {uid}: {err}"
+                ) from err
         await self.coordinator.async_request_refresh()
 
 
