@@ -19,7 +19,9 @@ checking, and removing items from automations.
 5. **Settings → Devices & Services → ⋮ → Application Credentials → Add Credential**:
    - Integration: **Pantrist**
    - Client ID: `pantrist-ha`
-   - Client Secret: *(leave blank — we use PKCE)*
+   - Client Secret: type any placeholder (e.g. `unused`). Home Assistant
+     marks this field as required, but Pantrist uses PKCE — the integration
+     hard-codes an empty secret internally and ignores whatever you enter.
 6. **Settings → Devices & Services → + Add Integration** → search **Pantrist** → click.
 7. Authorize via the browser, pick a list, click **Allow**. Done.
 
@@ -62,24 +64,81 @@ The integration maintains a Socket.IO subscription to Pantrist's `/lists` namesp
 Item additions/changes/deletions made from the mobile app or web UI appear in
 Home Assistant within ~1 second — no polling.
 
-## Example automations
+## Dashboard card (copy-paste)
+
+By default the entity tiles only show the item count. Drop this into your
+Lovelace dashboard YAML to see the actual items inline — no extra HACS
+plugins required, just core `markdown` + `glance` cards.
+
+```yaml
+type: vertical-stack
+cards:
+  - type: glance
+    title: Pantrist
+    entities:
+      - entity: sensor.pantrist_shopping_list
+        name: Einkauf
+      - entity: sensor.pantrist_pantry
+        name: Vorrat
+      - entity: sensor.pantrist_expiring_soon
+        name: Läuft ab
+      - entity: sensor.pantrist_shopping_cart
+        name: Korb
+
+  - type: markdown
+    content: |
+      ## 🛒 Einkaufsliste
+      {% set items = state_attr('sensor.pantrist_shopping_list', 'items') or [] %}
+      {% if items %}
+      {% for item in items %}
+      - **{{ item.name }}**{% if item.amount %} · {{ item.amount }}{% if item.unit %} {{ item.unit }}{% endif %}{% endif %}
+      {% endfor %}
+      {% else %}
+      _Liste ist leer._
+      {% endif %}
+
+  - type: markdown
+    content: |
+      ## ⚠️ Bald ablaufend
+      {% set expiring = state_attr('sensor.pantrist_expiring_soon', 'expiring_items') or [] %}
+      {% set expired = state_attr('sensor.pantrist_expiring_soon', 'expired_items') or [] %}
+      {% if expired %}
+      **Abgelaufen:**
+      {% for item in expired %}
+      - {{ item.name }} (war: {{ item.best_before }})
+      {% endfor %}
+      {% endif %}
+      {% if expiring %}
+      **Bald ablaufend:**
+      {% for item in expiring %}
+      - {{ item.name }} (bis: {{ item.best_before }})
+      {% endfor %}
+      {% endif %}
+      {% if not (expiring or expired) %}
+      _Nichts läuft bald ab. 🎉_
+      {% endif %}
+```
+
+## Blueprints (Ein-Klick-Automationen)
+
+Die Integration liefert drei Blueprints mit. Importieren über HA:
+
+**Einstellungen → Automatisierungen → Blueprints → Blueprint importieren**
+
+und diese URLs einfügen:
+
+| Blueprint | URL | Was es macht |
+|---|---|---|
+| Voice — Add to shopping list | `https://github.com/Pantrist-dev/pantrist-ha-addon/blob/main/blueprints/automation/pantrist/voice_add_to_shopping_list.yaml` | „Schreib Milch auf die Einkaufsliste" / „Add bananas to the shopping list" via HA Assist |
+| Low-stock auto-add | `https://github.com/Pantrist-dev/pantrist-ha-addon/blob/main/blueprints/automation/pantrist/low_stock_auto_add.yaml` | Pantry-Items mit Mindestmenge unterschritten landen automatisch auf der Einkaufsliste |
+| Expiring-soon notification | `https://github.com/Pantrist-dev/pantrist-ha-addon/blob/main/blueprints/automation/pantrist/expiring_notification.yaml` | Tägliche Benachrichtigung (Push / TTS / persistent) wenn Items bald ablaufen |
+
+Nach dem Import: **Automatisierungen → + Erstellen aus Blueprint** → einer der drei → Felder ausfüllen → Speichern.
+
+## Example automations (manual)
 
 ```yaml
 automation:
-  - alias: "Announce low-stock pantry items"
-    trigger:
-      - platform: state
-        entity_id: sensor.pantrist_pantry
-    condition:
-      - condition: template
-        value_template: "{{ state_attr('sensor.pantrist_pantry', 'low_stock_count') | int > 0 }}"
-    action:
-      - service: tts.speak
-        data:
-          message: >
-            You have {{ state_attr('sensor.pantrist_pantry', 'low_stock_count') }}
-            items running low in your pantry.
-
   - alias: "Auto-add low stock to shopping list"
     trigger:
       - platform: state

@@ -1,0 +1,51 @@
+blueprint:
+  name: "Pantrist: Voice — Add to shopping list"
+  description: >
+    Listen for sentences like "Add milk to the shopping list" or "Schreib
+    Milch auf die Einkaufsliste" via Home Assistant Assist, and forward
+    the recognised item name to Pantrist's `add_to_shopping_list` service.
+
+    Customise the sentence list if you want different trigger phrases.
+    Use `{item}` exactly once per sentence as the slot for the item name.
+  source_url: https://github.com/Pantrist-dev/pantrist-ha-addon/blob/main/blueprints/automation/pantrist/voice_add_to_shopping_list.yaml
+  domain: automation
+  homeassistant:
+    min_version: 2024.10.0
+  input:
+    sentences:
+      name: Sentences
+      description: >
+        Sentence patterns recognised by Assist. `{item}` is the wildcard
+        captured as the item name.
+      selector:
+        text:
+          multiple: true
+      default:
+        - "add {item} to [the ]shopping list"
+        - "put {item} on [the ]shopping list"
+        - "i need {item}"
+        - "schreib {item} auf die einkaufsliste"
+        - "(setz|setze) {item} auf die einkaufsliste"
+        - "[bitte ]füge {item} (auf|zur) [die ]einkaufsliste [hinzu]"
+        - "ich brauche {item}"
+    confirmation:
+      name: Spoken confirmation
+      description: >
+        Optional spoken response after adding. `{{ item }}` is the captured item.
+      selector:
+        text:
+      default: "{{ item }} ist auf der Einkaufsliste."
+
+mode: parallel
+
+trigger:
+  - platform: conversation
+    command: !input sentences
+
+action:
+  - variables:
+      item: "{{ trigger.slots.item | trim }}"
+  - action: pantrist.add_to_shopping_list
+    data:
+      name: "{{ item }}"
+  - set_conversation_response: !input confirmation
