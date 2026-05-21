@@ -95,14 +95,17 @@ Inside `custom_components/pantrist/`:
 | `manifest.json` | Integration metadata, deps, OAuth declaration |
 | `const.py` | DOMAIN, OAuth URLs, sensor + service keys |
 | `application_credentials.py` | Provides `LocalOAuth2ImplementationWithPkce` (no client secret) |
-| `config_flow.py` | OAuth flow + reauth; runs `test-before-configure` against `/list` and stores the chosen `list_id` |
+| `config_flow.py` | OAuth flow + reauth + reconfigure; runs `test-before-configure` against `/list` and stores the chosen `list_id` |
 | `api.py` | Async wrapper over the generated OpenAPI client; translates 401 → `PantristAuthError`, other HTTP/network failures → `PantristApiError` |
 | `coordinator.py` | One `DataUpdateCoordinator` *per list*: 5-min REST poll fallback + Socket.IO push subscription with exponential reconnect backoff |
+| `list_manager.py` | Owns the per-list coordinators, schedules a 5-min reconcile against `GET /list`, dispatches `signal_new_list` for additions and removes HA devices for deletions (Gold: dynamic-devices + stale-devices) |
 | `entity.py` | `PantristEntity` base — sets `_attr_has_entity_name`, `device_info` (one HA device per Pantrist list) |
-| `sensor.py` | Four `SensorEntity` subclasses (shopping list, pantry, expiring, cart) |
+| `sensor.py` | Five sensor classes per list (shopping list, pantry, expiring, cart counts + `next_expiration` timestamp) |
+| `binary_sensor.py` | Three binary sensors per list (low_stock, has_expired_items, shopping_list_has_items) |
+| `calendar.py` | `PantristPantryCalendar` — pantry items as all-day events on their best-before date |
 | `todo.py` | `PantristShoppingTodoEntity` — native HA todo entity wired to add/check/delete shopping-list API calls |
 | `diagnostics.py` | `async_get_config_entry_diagnostics` with redacted tokens |
-| `__init__.py` | `async_setup_entry` enumerates lists, builds one coordinator per list, stores them on `entry.runtime_data`; `async_unload_entry`; service registrations |
+| `__init__.py` | `async_setup` (services, available pre-entry) + `async_setup_entry` (builds the list manager) + `async_unload_entry` |
 | `services.yaml` | Service schemas for the HA UI |
 | `strings.json` + `translations/{en,de}.json` | i18n |
 | `quality_scale.yaml` | Bronze-tier checklist (every Bronze rule is `done`) |
@@ -112,13 +115,23 @@ The OAuth flow uses HA's standard `my.home-assistant.io/redirect/oauth`
 trampoline. The Pantrist API's redirect-URI whitelist accepts that host plus
 local HA hostnames (`homeassistant.local`, `*.ui.nabu.casa`, RFC1918 IPs).
 
-### Multi-list mode
+### Multi-list mode + dynamic devices
 
 Each Pantrist account can hold multiple lists. The integration runs a single
-OAuth flow per account, then creates one HA device + four sensors + one todo
-entity *per list*. Entries created before multi-list support are migrated
-in-place: the legacy `CONF_LIST_ID` in the entry data continues to scope the
-entry to a single list, preserving entity IDs.
+OAuth flow per account, then creates one HA device *per list* — with five
+sensors, three binary sensors, a calendar entity and a todo entity each.
+Entries created before multi-list support are migrated in-place: the legacy
+`CONF_LIST_ID` in the entry data continues to scope the entry to a single
+list, preserving entity IDs.
+
+`PantristListManager` reconciles the live coordinator set against
+`GET /list` every five minutes. When the user creates a list in the Pantrist
+mobile app, `list_manager` emits the dispatcher signal `signal_new_list(entry_id)`
+on the next reconcile and every platform (`sensor`, `binary_sensor`, `calendar`,
+`todo`) responds by calling its captured `async_add_entities` for the new
+coordinator. When a list is deleted, the manager stops the coordinator,
+calls `device_registry.async_remove_device(...)` for `(DOMAIN, list_id)`,
+and HA cascades that down to all entities under the device.
 
 The seven action services accept an optional `list_id` field that routes the
 call to a specific coordinator. Single-list users can omit it; the integration

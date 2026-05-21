@@ -52,12 +52,27 @@ Restart Home Assistant, then continue from step 5 above.
 | `sensor.<list>_pantry` | Pantry item count + low-stock attributes |
 | `sensor.<list>_expiring_soon` | Items expiring within a 7-day window |
 | `sensor.<list>_shopping_cart` | Items in the intermediate cart |
+| `sensor.<list>_next_expiration` | Timestamp sensor — soonest best-before date across the pantry (drives Lovelace countdowns and the calendar card) |
 
-All sensors carry an `items` attribute with the full per-item payload (uuid, name,
-amount, unit, brand, category, image URL, notes). The pantry sensor additionally
-exposes `low_stock_count` + `low_stock_items` for items at or below the configured
-minimum; the expiring-soon sensor splits its payload into `expiring_items` and
-`expired_items` with a `best_before` field per entry.
+All count sensors carry an `items` attribute with the full per-item payload (uuid,
+name, amount, unit, brand, category, image URL, notes). The pantry sensor
+additionally exposes `low_stock_count` + `low_stock_items` for items at or below
+the configured minimum; the expiring-soon sensor splits its payload into
+`expiring_items` and `expired_items` with a `best_before` field per entry.
+
+### Binary sensors (per list)
+
+| Entity | Description |
+|---|---|
+| `binary_sensor.<list>_low_stock` | ON when any pantry item is at or below its minimum (device class: problem) |
+| `binary_sensor.<list>_has_expired_items` | ON when any pantry item is past its earliest best-before (device class: problem) |
+| `binary_sensor.<list>_shopping_list_has_items` | ON whenever the shopping list is non-empty — handy for "notify on new item" automations |
+
+### Calendar (per list)
+
+| Entity | Description |
+|---|---|
+| `calendar.<list>_pantry_expirations` | One all-day calendar event per pantry item with an `earliestBestBefore`. Drops straight into the standard Lovelace calendar card. |
 
 ### Todo entity (per list)
 
@@ -203,6 +218,29 @@ automation:
               data:
                 name: "{{ repeat.item.name }}"
 ```
+
+## Multiple lists, added live
+
+Every list visible to your Pantrist account becomes its own HA device with its own
+set of sensors / binary sensors / calendar / todo entity. The integration polls
+the account's list inventory every 5 minutes:
+
+- **New list created in Pantrist** → it appears in HA on the next reconcile, no
+  re-setup required.
+- **List deleted in Pantrist** → its HA device (and every entity under it) is
+  removed automatically.
+- **List renamed in Pantrist** → the HA device name is updated.
+
+Real-time data within each list still arrives via Socket.IO push (~1 s latency).
+The 5-minute interval only covers list creation/deletion, which is rare.
+
+## Reconfiguration
+
+**Settings → Devices & Services → Pantrist → ⋮ → Reconfigure** lets you re-run
+the OAuth flow against the same account without removing the existing entry
+(and without losing the automations wired to its entities). Picking a list that
+belongs to a different Pantrist account aborts with `wrong_account` — use
+*Delete* + *Add Integration* in that case.
 
 ## Reauthentication
 
