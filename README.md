@@ -44,6 +44,66 @@ Restart Home Assistant, then continue from step 5 above.
 > every entity with the list name (e.g. `sensor.kitchen_shopping_list`,
 > `sensor.weekend_pantry`, …). Every entity sits under its own HA device per list.
 
+## Use cases
+
+A few of the automations this integration unlocks once you've connected your Pantrist
+account:
+
+- **"Tell me when the shopping list grows past 10 items"** — automation triggers on
+  `sensor.<list>_shopping_list` state change, sends a mobile notification listing the
+  current items.
+- **"Auto-add items I'm running low on"** — when `binary_sensor.<list>_low_stock` turns
+  on, walk `state_attr('sensor.<list>_pantry', 'low_stock_items')` and call
+  `pantrist.add_to_shopping_list` for each. The bundled blueprint
+  (`blueprints/automation/pantrist/low_stock_auto_add.yaml`) does this.
+- **"Don't let stuff in the fridge expire"** — daily-at-08:00 trigger reads
+  `sensor.<list>_expiring_soon` attributes and pushes a notification listing items
+  due within 7 days. Or place `calendar.<list>_pantry_expirations` on a Lovelace
+  calendar card for a quiet always-on view.
+- **"Add what I just said to the list"** — HA Assist understands `todo.add_item` against
+  `todo.<list>_shopping_list` natively, so *"Add milk to the shopping list"* works
+  out of the box.
+- **"Adjust pantry stock from the dashboard"** — every pantry item is exposed as a
+  Number entity (`number.<list>_<item>_amount`); editing the value from a Lovelace
+  card sends the delta to Pantrist via `change_pantry_item_amount`.
+- **"Show the latest item picture on a wall display"** — bind
+  `image.<list>_latest_shopping_item` to a picture-entity card.
+
+## Data update mechanism
+
+Everything except brand-new list discovery is push-driven. Item add / check / delete
+inside a list, list rename, and list deletion all arrive via Socket.IO
+(`/lists` namespace) within ~1 s. The integration runs *without* a per-list REST
+poll — when the socket reconnects after a disconnect window it triggers a one-shot
+`async_request_refresh()` to catch up on anything missed. The single remaining
+periodic check is `GET /list` every 15 min to discover lists that have been newly
+created or shared into the account, because the Pantrist backend has no
+account-scoped socket event for list creation.
+
+If the Socket.IO connection has been down for more than ~5 minutes, the integration
+registers a Home Assistant **Repair** issue (Settings → System → Repairs) so users
+who depend on real-time updates aren't left guessing. The issue resolves itself
+automatically when the connection is restored.
+
+## Known limitations
+
+- **Account scope is fixed at OAuth time.** Switching to a different Pantrist account
+  requires deleting the entry and re-adding it. The "Reconfigure" button only
+  refreshes tokens for the *same* account.
+- **List creation lag.** New lists created in the Pantrist app take up to 15 minutes
+  to appear as HA devices. Item changes, rename, and deletion of existing lists are
+  real-time. (Closing this gap requires a Pantrist API change — there's no
+  account-level socket event today.)
+- **Pantry-item write entities are item-scoped.** The Number entities are keyed by
+  Pantrist item UUID, so they survive renames but disappear if the underlying item is
+  deleted in the Pantrist app. Automations that target them should guard against
+  unavailable state.
+- **Voice-add is the shopping list only.** HA Assist's `todo.add_item` targets
+  `todo.<list>_shopping_list`. Adding to the pantry by voice still requires a
+  custom intent (see the `voice_add_to_shopping_list` blueprint).
+- **No legacy data import.** This integration starts from the live Pantrist account
+  state; it doesn't backfill historical receipts or purchases into HA stats.
+
 ### Sensors (per list)
 
 | Entity | Description |
