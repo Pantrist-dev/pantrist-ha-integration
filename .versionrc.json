@@ -1,0 +1,24 @@
+{
+  "header": "# Changelog\n\nAll notable changes to the Pantrist HA Integration are recorded here.\nGenerated from Conventional Commits by [standard-version](https://github.com/conventional-changelog/standard-version).\n\n",
+  "bumpFiles": [
+    { "filename": "package.json", "type": "json" },
+    {
+      "filename": "custom_components/pantrist/manifest.json",
+      "type": "json"
+    }
+  ],
+  "packageFiles": [
+    { "filename": "package.json", "type": "json" }
+  ],
+  "types": [
+    { "type": "feat", "section": "Features" },
+    { "type": "fix", "section": "Bug Fixes" },
+    { "type": "perf", "section": "Performance" },
+    { "type": "refactor", "section": "Refactoring" },
+    { "type": "docs", "section": "Documentation" },
+    { "type": "test", "section": "Tests", "hidden": true },
+    { "type": "chore", "section": "Chores", "hidden": true },
+    { "type": "ci", "section": "CI", "hidden": true },
+    { "type": "build", "section": "Build", "hidden": true }
+  ]
+}
