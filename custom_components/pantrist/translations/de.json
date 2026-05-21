@@ -17,6 +17,7 @@
       "already_configured": "Diese Pantrist-Liste ist bereits verbunden.",
       "wrong_account": "Die erneute Authentifizierung hat eine andere Liste ausgewählt als ursprünglich. Bitte den Eintrag löschen und neu hinzufügen.",
       "reauth_successful": "Pantrist erfolgreich erneut verbunden.",
+      "reconfigure_successful": "Pantrist erfolgreich neu konfiguriert.",
       "invalid_auth": "Pantrist hat das Access-Token abgelehnt. Bitte erneut versuchen.",
       "cannot_connect": "Pantrist-API ist nicht erreichbar. Bitte Verbindung prüfen und erneut versuchen."
     },
@@ -37,6 +38,25 @@
       },
       "shopping_cart": {
         "name": "Einkaufskorb"
+      },
+      "next_expiration": {
+        "name": "Nächstes Ablaufdatum"
+      }
+    },
+    "binary_sensor": {
+      "low_stock": {
+        "name": "Niedriger Bestand"
+      },
+      "has_expired_items": {
+        "name": "Abgelaufene Artikel vorhanden"
+      },
+      "shopping_list_has_items": {
+        "name": "Einkaufsliste hat Einträge"
+      }
+    },
+    "calendar": {
+      "pantry_calendar": {
+        "name": "Vorrats-Ablaufdaten"
       }
     },
     "todo": {

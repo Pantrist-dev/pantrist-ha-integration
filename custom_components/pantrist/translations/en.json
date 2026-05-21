@@ -17,6 +17,7 @@
       "already_configured": "This Pantrist list is already connected.",
       "wrong_account": "Re-authentication picked a different list than the original. Remove this entry and add a new one instead.",
       "reauth_successful": "Successfully reconnected to Pantrist.",
+      "reconfigure_successful": "Pantrist successfully reconfigured.",
       "invalid_auth": "The Pantrist API rejected the access token. Please try again.",
       "cannot_connect": "Could not reach the Pantrist API. Please check your connection and try again."
     },
@@ -37,6 +38,25 @@
       },
       "shopping_cart": {
         "name": "Shopping cart"
+      },
+      "next_expiration": {
+        "name": "Next expiration"
+      }
+    },
+    "binary_sensor": {
+      "low_stock": {
+        "name": "Low stock"
+      },
+      "has_expired_items": {
+        "name": "Has expired items"
+      },
+      "shopping_list_has_items": {
+        "name": "Shopping list has items"
+      }
+    },
+    "calendar": {
+      "pantry_calendar": {
+        "name": "Pantry expirations"
       }
     },
     "todo": {

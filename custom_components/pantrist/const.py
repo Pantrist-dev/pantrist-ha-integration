@@ -25,6 +25,7 @@ SENSOR_SHOPPING_LIST: Final = "shopping_list"
 SENSOR_PANTRY: Final = "pantry"
 SENSOR_EXPIRING_SOON: Final = "expiring_soon"
 SENSOR_SHOPPING_CART: Final = "shopping_cart"
+SENSOR_NEXT_EXPIRATION: Final = "next_expiration"
 
 # Service identifiers.
 SERVICE_ADD_TO_SHOPPING_LIST: Final = "add_to_shopping_list"
