@@ -7,9 +7,9 @@ from collections.abc import Mapping
 from typing import Any
 
 from homeassistant.config_entries import SOURCE_REAUTH, ConfigFlowResult
-from homeassistant.helpers import config_entry_oauth2_flow
+from homeassistant.helpers import aiohttp_client, config_entry_oauth2_flow
 
-from .const import CONF_LIST_ID, DOMAIN
+from .const import API_BASE, CONF_LIST_ID, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -72,7 +72,56 @@ class PantristOAuth2FlowHandler(
 
         self._abort_if_unique_id_configured()
 
+        list_name = await self._fetch_list_name(
+            token.get("access_token", ""), list_id
+        )
+        title = list_name or f"Pantrist (list {list_id[:8]}…)"
+
         return self.async_create_entry(
-            title=f"Pantrist (list {list_id[:8]}…)",
+            title=title,
             data={**data, CONF_LIST_ID: list_id},
         )
+
+    async def _fetch_list_name(
+        self, access_token: str, list_id: str
+    ) -> str | None:
+        """Look up the human-readable name for the chosen list.
+
+        The Pantrist API's `/access-token/token` response only carries the
+        list UUID — the friendly name comes from `GET /list`. We fetch it
+        once here to use as the config entry title.
+
+        Best-effort: a network failure falls back to the UUID-truncated
+        default title rather than aborting the flow.
+        """
+        if not access_token:
+            return None
+        try:
+            session = aiohttp_client.async_get_clientsession(self.hass)
+            async with session.get(
+                f"{API_BASE}/list",
+                headers={"Authorization": f"Bearer {access_token}"},
+                timeout=10,
+            ) as resp:
+                if resp.status != 200:
+                    return None
+                lists = await resp.json()
+        except Exception:  # noqa: BLE001
+            _LOGGER.exception("Could not fetch list name for entry title")
+            return None
+        if not isinstance(lists, list):
+            return None
+        for entry in lists:
+            if not isinstance(entry, dict):
+                continue
+            entry_id = entry.get("id") or entry.get("uuid")
+            if entry_id != list_id:
+                continue
+            name = entry.get("name")
+            if not name:
+                settings = entry.get("settings") or {}
+                if isinstance(settings, dict):
+                    name = settings.get("name")
+            if name:
+                return str(name)
+        return None
