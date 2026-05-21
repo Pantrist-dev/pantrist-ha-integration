@@ -1,0 +1,215 @@
+"""Per-list coordinator owner with periodic add/remove reconciliation.
+
+One ``PantristListManager`` per config entry. Stored on
+``entry.runtime_data`` and exposed as a read-only mapping
+(``manager[list_id]``, ``manager.values()`` …) so platforms iterate it
+the same way they iterated the old dict.
+
+On top of that the manager schedules a periodic API check that:
+
+* spawns a fresh ``PantristCoordinator`` + signals platforms whenever a
+  new list appears in the Pantrist account (Gold: dynamic-devices), and
+* stops the coordinator and removes the HA device whenever a list
+  disappears (Gold: stale-devices).
+"""
+
+from __future__ import annotations
+
+from collections.abc import Iterator, KeysView, ValuesView
+from datetime import datetime, timedelta
+import logging
+from typing import Any
+
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.exceptions import ConfigEntryAuthFailed
+from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers.dispatcher import async_dispatcher_send
+from homeassistant.helpers.event import async_track_time_interval
+
+from .api import PantristApi, PantristApiError, PantristAuthError
+from .const import CONF_LIST_ID, DOMAIN
+from .coordinator import PantristCoordinator
+
+_LOGGER = logging.getLogger(__name__)
+
+LIST_RECONCILE_INTERVAL = timedelta(minutes=5)
+
+
+@callback
+def signal_new_list(entry_id: str) -> str:
+    """Dispatcher signal fired when a previously-unseen list shows up."""
+    return f"pantrist_new_list_{entry_id}"
+
+
+class PantristListManager:
+    """Per-entry owner of the live coordinator set + reconcile loop."""
+
+    def __init__(
+        self, hass: HomeAssistant, entry: ConfigEntry, api: PantristApi
+    ) -> None:
+        self._hass = hass
+        self._entry = entry
+        self._api = api
+        self._coordinators: dict[str, PantristCoordinator] = {}
+        self._unsub_interval: Any | None = None
+        # Old entries pin themselves to a single list — preserve that
+        # behaviour so a legacy single-list user doesn't suddenly see every
+        # list in their account materialise.
+        self._legacy_list_id: str | None = (
+            entry.data.get(CONF_LIST_ID)
+            or (entry.data.get("token") or {}).get("list_id")
+        )
+
+    # ------------------------------------------------------------------
+    # Mapping interface — drop-in for the old dict[str, PantristCoordinator]
+    # ------------------------------------------------------------------
+
+    def __getitem__(self, key: str) -> PantristCoordinator:
+        return self._coordinators[key]
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self._coordinators)
+
+    def __contains__(self, key: object) -> bool:
+        return key in self._coordinators
+
+    def __len__(self) -> int:
+        return len(self._coordinators)
+
+    def values(self) -> ValuesView[PantristCoordinator]:
+        return self._coordinators.values()
+
+    def keys(self) -> KeysView[str]:
+        return self._coordinators.keys()
+
+    def items(self) -> Any:
+        return self._coordinators.items()
+
+    @property
+    def api(self) -> PantristApi:
+        return self._api
+
+    @property
+    def coordinators(self) -> dict[str, PantristCoordinator]:
+        return self._coordinators
+
+    # ------------------------------------------------------------------
+    # Lifecycle
+    # ------------------------------------------------------------------
+
+    async def async_initial_setup(self) -> None:
+        """Enumerate lists, build coordinators, start the reconcile loop.
+
+        Raises:
+            ConfigEntryAuthFailed: on 401 — HA will trigger the reauth flow.
+            PantristApiError: on any other API failure during the initial
+                fetch. The caller turns that into a setup-retry.
+        """
+        try:
+            lists = await self._api.get_lists()
+        except PantristAuthError as err:
+            raise ConfigEntryAuthFailed(
+                "Pantrist auth failed listing lists"
+            ) from err
+
+        try:
+            await self._apply(lists, fire_signals=False)
+        except Exception:
+            # Partial setup leaks coordinators / Socket.IO tasks; clean up.
+            await self.async_shutdown()
+            raise
+
+        if not self._coordinators:
+            raise PantristApiError(
+                "Pantrist account has no usable lists yet"
+            )
+
+        self._unsub_interval = async_track_time_interval(
+            self._hass, self._on_interval, LIST_RECONCILE_INTERVAL
+        )
+
+    async def async_shutdown(self) -> None:
+        """Stop the reconcile loop and tear down every coordinator."""
+        if self._unsub_interval is not None:
+            self._unsub_interval()
+            self._unsub_interval = None
+        for coord in list(self._coordinators.values()):
+            await coord.async_stop_socketio()
+        self._coordinators.clear()
+
+    async def _on_interval(self, _now: datetime) -> None:
+        await self.async_reconcile()
+
+    async def async_reconcile(self) -> None:
+        """Pull the current list inventory and apply add/remove diffs.
+
+        Network / auth errors are *swallowed* here — the coordinator's
+        own poll surfaces backend availability through entity state; we
+        don't want a transient reconcile failure to bubble up as a
+        config-entry error and tear everything down.
+        """
+        try:
+            lists = await self._api.get_lists()
+        except (PantristApiError, PantristAuthError) as err:
+            _LOGGER.debug("Skipping list reconcile: %s", err)
+            return
+        await self._apply(lists, fire_signals=True)
+
+    async def _apply(
+        self, lists: list[dict[str, Any]], fire_signals: bool
+    ) -> None:
+        """Materialise ``lists`` against the current coordinator set."""
+        if self._legacy_list_id:
+            lists = [
+                li
+                for li in lists
+                if (li.get("id") or li.get("uuid")) == self._legacy_list_id
+            ]
+
+        seen_ids: set[str] = set()
+        new_ids: list[str] = []
+
+        for list_obj in lists:
+            list_id = list_obj.get("id") or list_obj.get("uuid")
+            if not list_id:
+                continue
+            seen_ids.add(list_id)
+            list_name = list_obj.get("name")
+            if not list_name:
+                settings = list_obj.get("settings") or {}
+                if isinstance(settings, dict):
+                    list_name = settings.get("name")
+
+            if list_id in self._coordinators:
+                self._coordinators[list_id].update_list_name(list_name)
+                continue
+
+            coord = PantristCoordinator(
+                self._hass, self._entry, self._api, list_id, list_name
+            )
+            await coord.async_config_entry_first_refresh()
+            await coord.async_start_socketio()
+            self._coordinators[list_id] = coord
+            new_ids.append(list_id)
+
+        gone = [lid for lid in self._coordinators if lid not in seen_ids]
+        for list_id in gone:
+            coord = self._coordinators.pop(list_id)
+            await coord.async_stop_socketio()
+            self._remove_device(list_id)
+
+        if fire_signals:
+            for list_id in new_ids:
+                async_dispatcher_send(
+                    self._hass,
+                    signal_new_list(self._entry.entry_id),
+                    list_id,
+                )
+
+    def _remove_device(self, list_id: str) -> None:
+        """Drop the HA device for a vanished list — cascades to entities."""
+        registry = dr.async_get(self._hass)
+        device = registry.async_get_device(identifiers={(DOMAIN, list_id)})
+        if device is not None:
+            registry.async_remove_device(device.id)

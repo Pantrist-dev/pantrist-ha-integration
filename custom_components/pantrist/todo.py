@@ -23,14 +23,16 @@ from homeassistant.components.todo import (
     TodoListEntityFeature,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .api import PantristApiError, PantristAuthError
 from .const import DOMAIN
 from .coordinator import PantristCoordinator
 from .entity import PantristEntity
+from .list_manager import PantristListManager, signal_new_list
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -44,11 +46,21 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Create one shopping-list todo entity per Pantrist list."""
-    coordinators: dict[str, PantristCoordinator] = entry.runtime_data
+    """Create one shopping-list todo entity per Pantrist list (dynamic)."""
+    manager: PantristListManager = entry.runtime_data
+
     async_add_entities(
-        PantristShoppingTodoEntity(coordinator)
-        for coordinator in coordinators.values()
+        PantristShoppingTodoEntity(coordinator) for coordinator in manager.values()
+    )
+
+    @callback
+    def _on_new_list(list_id: str) -> None:
+        async_add_entities([PantristShoppingTodoEntity(manager[list_id])])
+
+    entry.async_on_unload(
+        async_dispatcher_connect(
+            hass, signal_new_list(entry.entry_id), _on_new_list
+        )
     )
 
 
