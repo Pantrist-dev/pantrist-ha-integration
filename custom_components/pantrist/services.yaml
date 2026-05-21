@@ -1,0 +1,70 @@
+add_to_shopping_list:
+  name: Add to shopping list
+  description: Add an item by name to the connected Pantrist shopping list.
+  fields:
+    name:
+      name: Item name
+      description: Free-text item name (e.g., "Milk", "Bananas").
+      required: true
+      example: "Milk"
+      selector:
+        text:
+
+check_shopping_list_item:
+  name: Check shopping-list item
+  description: Mark an item on the shopping list as bought.
+  fields:
+    item_id:
+      name: Item UUID
+      description: The uuid attribute of the item (visible on sensor.pantrist_shopping_list).
+      required: true
+      selector:
+        text:
+
+delete_shopping_list_item:
+  name: Delete shopping-list item
+  description: Remove an item from the shopping list.
+  fields:
+    item_id:
+      name: Item UUID
+      description: The uuid attribute of the item.
+      required: true
+      selector:
+        text:
+
+delete_pantry_item:
+  name: Delete pantry item
+  description: Remove an item from the pantry.
+  fields:
+    item_id:
+      name: Item UUID
+      description: The uuid attribute of the item.
+      required: true
+      selector:
+        text:
+
+change_pantry_item_amount:
+  name: Change pantry item amount
+  description: Adjust the amount of a pantry item by a delta.
+  fields:
+    item_id:
+      name: Item UUID
+      description: The uuid attribute of the item.
+      required: true
+      selector:
+        text:
+    change:
+      name: Change
+      description: Positive to add, negative to consume.
+      required: true
+      selector:
+        number:
+          step: 0.1
+          mode: box
+    unit_id:
+      name: Unit
+      description: Unit identifier (e.g., "pieces", "grams").
+      required: true
+      example: "pieces"
+      selector:
+        text:

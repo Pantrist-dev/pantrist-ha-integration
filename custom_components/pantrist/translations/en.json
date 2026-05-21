@@ -1,0 +1,41 @@
+{
+  "config": {
+    "step": {
+      "pick_implementation": {
+        "title": "Connect your Pantrist account",
+        "description": "Authorize Home Assistant to access your Pantrist data."
+      },
+      "reauth_confirm": {
+        "title": "Reconnect your Pantrist account",
+        "description": "Your Pantrist refresh token is no longer valid. Re-authorize to continue receiving updates."
+      }
+    },
+    "abort": {
+      "authorize_url_timeout": "Timeout generating authorize URL.",
+      "missing_configuration": "Pantrist Application Credentials are not set up.",
+      "missing_list_id": "Pantrist did not return a list ID — please try again and pick a list during the consent step.",
+      "already_configured": "This Pantrist list is already connected.",
+      "wrong_account": "Re-authentication picked a different list than the original. Remove this entry and add a new one instead.",
+      "reauth_successful": "Successfully reconnected to Pantrist."
+    },
+    "create_entry": {
+      "default": "Successfully connected to Pantrist."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "shopping_list": {
+        "name": "Shopping list"
+      },
+      "pantry": {
+        "name": "Pantry"
+      },
+      "expiring_soon": {
+        "name": "Expiring soon"
+      },
+      "shopping_cart": {
+        "name": "Shopping cart"
+      }
+    }
+  }
+}

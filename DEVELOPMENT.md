@@ -1,89 +1,120 @@
-# Development Guide
+# Pantrist Integration — Development
 
-## Repository structure
+Local development of the Pantrist Custom Integration against a running Home
+Assistant instance (typically a Raspberry Pi with HAOS, or a UTM VM on Mac).
 
-```
-pantrist-ha-addon/
-├── repository.yaml          # HA addon repository metadata
-├── README.md                # User-facing docs
-├── DEVELOPMENT.md           # This file
-└── pantrist/                # The addon itself
-    ├── config.yaml          # Addon metadata (version, arch, options schema)
-    ├── build.yaml           # Base images per architecture
-    ├── Dockerfile
-    ├── DOCS.md              # Shown in HA addon store
-    ├── CHANGELOG.md
-    ├── logo.png             # 512×512 store banner
-    ├── icon.png             # 128×128 tile icon
-    ├── requirements.txt
-    └── app/
-        ├── main.py          # Entrypoint — starts ingress UI + service server
-        ├── ingress_server.py
-        ├── service_server.py
-        ├── pantrist_session.py
-        ├── pantrist_api.py  # Thin wrapper around the generated client
-        ├── pantrist_client/ # Generated — do not edit by hand (see below)
-        ├── oauth_flow.py
-        ├── token_manager.py
-        ├── ha_integration.py
-        ├── credentials.py
-        └── templates/
-            └── status.html
-```
+## Prerequisites
 
-## Generated API client
+- A Home Assistant instance reachable at `http://homeassistant.local:8123` (or your custom hostname).
+- The **Samba share** add-on installed in HA, with a password set — used to mount `/config/` on your Mac.
+- Pantrist API + App deployments containing the OAuth flow changes (`pantrist-ha` client, `my.home-assistant.io` redirect-URI whitelist, `/oauth/authorize` page).
 
-`app/pantrist_client/` is generated from the Pantrist OpenAPI spec using
-[openapi-python-client](https://github.com/openapi-generators/openapi-python-client).
-**Do not edit it by hand.**
+## One-time setup
 
-### Regenerating
+### Register the OAuth client in HA
 
-1. Make sure a Pantrist API server is running locally on port 3002 (`pnpm start:dev` in `pantrist-api/`), or that `openapi-watch.yaml` in the repo root is up to date.
+Before adding the integration, register the Application Credential. Without
+this, the OAuth dialog aborts with `missing_configuration`.
 
-2. Install the generator (one-time):
-   ```bash
-   pip install openapi-python-client
-   ```
+1. In HA: **Settings → Devices & Services → ⋮ → Application Credentials → Add Credential**.
+2. Fill in:
+   - Integration: **Pantrist**
+   - Client ID: `pantrist-ha`
+   - Client Secret: *(leave empty — PKCE only)*
+   - Name: Pantrist (or anything)
+3. **Add**.
 
-3. From the root of this repo, run:
-   ```bash
-   # From cached spec (fastest — requires openapi-watch.yaml to exist):
-   python scripts/generate_client.py --skip-download
+## Install the integration files
 
-   # Or fetch a fresh spec from the local API (pantrist-api must be running on :3002):
-   python scripts/generate_client.py --url http://localhost:3002/swagger-ui-yaml
-
-   # Or fetch from production:
-   python scripts/generate_client.py
-   ```
-
-   The script targets `swagger-ui-yaml` (the public spec). Endpoints tagged
-   with `APP_SPECIFIC_ENDPOINT_KEY` in `pantrist-api` are hidden from this
-   spec. If you need a new endpoint exposed to the addon, drop that tag from
-   the controller in `pantrist-api` rather than switching to a different spec
-   URL.
-
-4. Commit `pantrist/app/pantrist_client/`.
-
-## Testing locally (without a real HA)
-
-Run the addon directly in Python to verify startup and imports:
+### Via Samba (recommended for iteration)
 
 ```bash
-cd pantrist-ha-addon/pantrist
-pip install -r requirements.txt
-# Create a minimal options file
-mkdir -p /data && echo '{"socket_url":"https://api.pantrist.app","expiry_warning_days":7,"custom_ha_url":""}' > /data/options.json
-python app/main.py
-# Ingress UI available at http://localhost:8100
-# Service API available at http://localhost:8099
+# 1. Mount the HA config share (Finder: Cmd+K → smb://homeassistant.local → log in → mount `config`)
+open "smb://homeassistant.local"
+
+# 2. Copy the integration
+mkdir -p /Volumes/config/custom_components
+cp -r custom_components/pantrist /Volumes/config/custom_components/pantrist
+
+# 3. Restart HA: Settings → System → Restart
 ```
 
-## Releasing a new version
+### Via SSH/rsync (if you have the SSH add-on)
 
-1. Bump `version` in `pantrist/config.yaml`.
-2. Add an entry to `pantrist/CHANGELOG.md` matching the new version.
-3. Regenerate the API client if the API changed (see above).
-4. Commit and push to `main`.
-5. In Home Assistant, go to **Settings → Add-ons → Add-on Store → ⋮ → Check for updates**, then reinstall.
+```bash
+rsync -avz --delete custom_components/pantrist/ \
+  root@homeassistant.local:/config/custom_components/pantrist/
+ssh root@homeassistant.local "ha core restart"
+```
+
+## Add the integration
+
+1. **Settings → Devices & Services → + Add Integration**.
+2. Search "Pantrist" → click.
+3. Browser opens at Pantrist's `/oauth/authorize` page.
+4. Log in if needed, pick the list to expose, click **Allow**.
+5. Browser returns to HA; entry is created.
+
+You should now see four sensors:
+
+- `sensor.pantrist_shopping_list`
+- `sensor.pantrist_pantry`
+- `sensor.pantrist_expiring_soon`
+- `sensor.pantrist_shopping_cart`
+
+## Iterate
+
+After a code change locally:
+
+```bash
+# Samba path:
+cp -r custom_components/pantrist /Volumes/config/custom_components/pantrist
+# Then in HA: Developer Tools → YAML → Check Configuration → Restart
+```
+
+For schema/import errors, **Settings → System → Logs** shows line numbers you
+can match against your local files.
+
+## Architecture
+
+Inside `custom_components/pantrist/`:
+
+| Module | Responsibility |
+|---|---|
+| `manifest.json` | Integration metadata, deps, OAuth declaration |
+| `const.py` | DOMAIN, OAuth URLs, sensor + service keys |
+| `application_credentials.py` | Provides `LocalOAuth2ImplementationWithPkce` (no client secret) |
+| `config_flow.py` | OAuth flow + reauth; stores `list_id` from token response |
+| `api.py` | Async aiohttp wrapper over the Pantrist REST API |
+| `coordinator.py` | `DataUpdateCoordinator` with REST refresh + Socket.IO push |
+| `sensor.py` | Four `SensorEntity` subclasses (shopping list, pantry, expiring, cart) |
+| `__init__.py` | `async_setup_entry` / `async_unload_entry` + service registrations |
+| `services.yaml` | Service schemas for the HA UI |
+| `strings.json` + `translations/{en,de}.json` | i18n |
+
+The OAuth flow uses HA's standard `my.home-assistant.io/redirect/oauth`
+trampoline. The Pantrist API's redirect-URI whitelist accepts that host plus
+local HA hostnames (`homeassistant.local`, `*.ui.nabu.casa`, RFC1918 IPs).
+
+## Releasing
+
+HACS picks up new versions from GitHub releases.
+
+```bash
+# After merging the integration changes to main:
+git checkout main
+git pull
+gh release create v0.1.1 --title "v0.1.1" --notes "..."
+```
+
+Users with HACS will see the update within a few minutes.
+
+## Common issues
+
+| Problem | Fix |
+|---|---|
+| "Pantrist" not appearing in "Add Integration" | Restart HA — `custom_components/` is only scanned at boot. |
+| `missing_configuration` | Add the Application Credential (one-time setup above). |
+| `invalid_redirect_uri` from Pantrist | The Pantrist API needs `my.home-assistant.io` in its redirect-URI whitelist. |
+| OAuth completes but sensors stay `unavailable` | Check HA logs for Socket.IO connection errors. Verify `api.pantrist.app` is reachable from the HA host. |
+| `missing_list_id` abort | The Pantrist consent page must include a list picker (Pantrist app deployment must be current). |

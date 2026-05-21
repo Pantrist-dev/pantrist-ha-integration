@@ -1,0 +1,41 @@
+{
+  "config": {
+    "step": {
+      "pick_implementation": {
+        "title": "Pantrist-Konto verbinden",
+        "description": "Erlaube Home Assistant den Zugriff auf deine Pantrist-Daten."
+      },
+      "reauth_confirm": {
+        "title": "Pantrist-Konto erneut verbinden",
+        "description": "Dein Pantrist-Refresh-Token ist nicht mehr gültig. Bitte erneut autorisieren, um weiter Updates zu erhalten."
+      }
+    },
+    "abort": {
+      "authorize_url_timeout": "Zeitüberschreitung beim Erzeugen der Authorize-URL.",
+      "missing_configuration": "Pantrist Application Credentials sind nicht eingerichtet.",
+      "missing_list_id": "Pantrist hat keine Listen-ID zurückgegeben — bitte noch einmal versuchen und im Consent-Dialog eine Liste auswählen.",
+      "already_configured": "Diese Pantrist-Liste ist bereits verbunden.",
+      "wrong_account": "Die erneute Authentifizierung hat eine andere Liste ausgewählt als ursprünglich. Bitte den Eintrag löschen und neu hinzufügen.",
+      "reauth_successful": "Pantrist erfolgreich erneut verbunden."
+    },
+    "create_entry": {
+      "default": "Erfolgreich mit Pantrist verbunden."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "shopping_list": {
+        "name": "Einkaufsliste"
+      },
+      "pantry": {
+        "name": "Vorratskammer"
+      },
+      "expiring_soon": {
+        "name": "Bald ablaufend"
+      },
+      "shopping_cart": {
+        "name": "Einkaufskorb"
+      }
+    }
+  }
+}

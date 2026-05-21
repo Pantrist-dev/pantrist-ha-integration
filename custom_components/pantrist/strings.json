@@ -1,0 +1,101 @@
+{
+  "config": {
+    "step": {
+      "pick_implementation": {
+        "title": "Connect your Pantrist account",
+        "description": "Authorize Home Assistant to access your Pantrist data."
+      },
+      "reauth_confirm": {
+        "title": "Reconnect your Pantrist account",
+        "description": "Your Pantrist refresh token is no longer valid. Re-authorize to continue receiving updates."
+      }
+    },
+    "abort": {
+      "authorize_url_timeout": "Timeout generating authorize URL.",
+      "missing_configuration": "Pantrist Application Credentials are not set up.",
+      "missing_list_id": "Pantrist did not return a list ID — please try again and pick a list during the consent step.",
+      "already_configured": "This Pantrist list is already connected.",
+      "wrong_account": "Re-authentication picked a different list than the original. Remove this entry and add a new one instead.",
+      "reauth_successful": "Successfully reconnected to Pantrist."
+    },
+    "create_entry": {
+      "default": "Successfully connected to Pantrist."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "shopping_list": {
+        "name": "Shopping list"
+      },
+      "pantry": {
+        "name": "Pantry"
+      },
+      "expiring_soon": {
+        "name": "Expiring soon"
+      },
+      "shopping_cart": {
+        "name": "Shopping cart"
+      }
+    }
+  },
+  "services": {
+    "add_to_shopping_list": {
+      "name": "Add to shopping list",
+      "description": "Add an item by name to the connected Pantrist shopping list.",
+      "fields": {
+        "name": {
+          "name": "Item name",
+          "description": "Free-text item name."
+        }
+      }
+    },
+    "check_shopping_list_item": {
+      "name": "Check shopping-list item",
+      "description": "Mark an item on the shopping list as bought.",
+      "fields": {
+        "item_id": {
+          "name": "Item UUID",
+          "description": "The uuid attribute of the item."
+        }
+      }
+    },
+    "delete_shopping_list_item": {
+      "name": "Delete shopping-list item",
+      "description": "Remove an item from the shopping list.",
+      "fields": {
+        "item_id": {
+          "name": "Item UUID",
+          "description": "The uuid attribute of the item."
+        }
+      }
+    },
+    "delete_pantry_item": {
+      "name": "Delete pantry item",
+      "description": "Remove an item from the pantry.",
+      "fields": {
+        "item_id": {
+          "name": "Item UUID",
+          "description": "The uuid attribute of the item."
+        }
+      }
+    },
+    "change_pantry_item_amount": {
+      "name": "Change pantry item amount",
+      "description": "Adjust the amount of a pantry item by a delta.",
+      "fields": {
+        "item_id": {
+          "name": "Item UUID",
+          "description": "The uuid attribute of the item."
+        },
+        "change": {
+          "name": "Change",
+          "description": "Positive to add, negative to consume."
+        },
+        "unit_id": {
+          "name": "Unit",
+          "description": "Unit identifier (e.g., pieces, grams)."
+        }
+      }
+    }
+  }
+}
