@@ -1,0 +1,43 @@
+# Integration Quality Scale — Bronze tier compliance.
+# https://developers.home-assistant.io/docs/core/integration-quality-scale/
+#
+# Status values:
+#   done    — rule satisfied
+#   todo    — known gap, planned
+#   exempt  — does not apply to this integration
+
+rules:
+  # ----- BRONZE -----
+  action-setup: done
+  appropriate-polling: done
+  brands: todo
+  common-modules: done
+  config-flow: done
+  config-flow-test-coverage: done
+  dependency-transparency: done
+  docs-actions: done
+  docs-high-level-description: done
+  docs-installation-instructions: done
+  docs-removal-instructions: done
+  entity-event-setup: done
+  entity-unique-id: done
+  has-entity-name: done
+  runtime-data: todo
+  test-before-configure: todo
+  test-before-setup: done
+  unique-config-entry: done
+
+  # ----- SILVER (not yet targeting) -----
+  config-entry-unloading: done
+  log-when-unavailable: done
+  entity-unavailable: done
+  reauthentication-flow: done
+  test-coverage:
+    status: todo
+    comment: Bronze-level happy-path coverage is in place. Silver targets >95%.
+  integration-owner: done
+  parallel-updates: exempt
+  action-exceptions: done
+
+  # ----- GOLD / PLATINUM (deferred) -----
+  diagnostics: done
