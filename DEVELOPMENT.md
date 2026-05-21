@@ -98,16 +98,64 @@ local HA hostnames (`homeassistant.local`, `*.ui.nabu.casa`, RFC1918 IPs).
 
 ## Releasing
 
-HACS picks up new versions from GitHub releases.
+The repo uses [`standard-version`](https://github.com/conventional-changelog/standard-version) to bump versions, generate `CHANGELOG.md`, and tag releases from Conventional Commits. HACS picks up new versions from the resulting GitHub release tags.
+
+### One-time setup (per machine)
 
 ```bash
-# After merging the integration changes to main:
-git checkout main
-git pull
-gh release create v0.1.1 --title "v0.1.1" --notes "..."
+npm install
 ```
 
-Users with HACS will see the update within a few minutes.
+This installs `standard-version` + `@commitlint/config-conventional` into `node_modules/` (gitignored).
+
+### Cut a release
+
+```bash
+git checkout main
+git pull
+
+# Inspect what would change without writing anything:
+npm run release:dry
+
+# Cut the release: bumps version in package.json + custom_components/pantrist/manifest.json,
+# regenerates CHANGELOG.md from Conventional Commits, creates an annotated tag.
+npm run release
+
+# Push commits + tag together. HACS sees the new tag and offers the update to users.
+git push --follow-tags origin main
+```
+
+For the very first release (no previous tag), pass `--first-release` so the
+version is committed without auto-incrementing:
+
+```bash
+npm run release:first
+git push --follow-tags origin main
+```
+
+### Optional: create a GitHub Release page from the tag
+
+Tags are enough for HACS, but the GitHub Releases UI gives you nicer release
+notes. After pushing the tag:
+
+```bash
+gh release create v$(node -p "require('./package.json').version") \
+  --title "v$(node -p "require('./package.json').version")" \
+  --notes-from-tag
+```
+
+### Conventional Commits cheat sheet
+
+| Prefix | When | Bumps |
+|---|---|---|
+| `feat:` | new feature | minor (0.1.0 → 0.2.0) |
+| `fix:` | bug fix | patch (0.1.0 → 0.1.1) |
+| `perf:`/`refactor:`/`docs:` | non-feature changes | patch |
+| `feat!:` or footer `BREAKING CHANGE:` | breaking API change | major (0.1.0 → 1.0.0) |
+| `chore:`/`test:`/`ci:`/`build:` | tooling, no release impact | hidden from changelog |
+
+Commitlint runs at commit time (after installing `husky` if/when added) and
+enforces this format.
 
 ## Common issues
 
