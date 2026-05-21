@@ -57,7 +57,7 @@ class PublicUserDto:
 
         _forced_premium_tariff = d.pop("forcedPremiumTariff", UNSET)
         forced_premium_tariff: PublicUserDtoForcedPremiumTariff | Unset
-        if isinstance(_forced_premium_tariff, Unset):
+        if isinstance(_forced_premium_tariff, Unset) or _forced_premium_tariff is None or _forced_premium_tariff == "":
             forced_premium_tariff = UNSET
         else:
             forced_premium_tariff = PublicUserDtoForcedPremiumTariff(_forced_premium_tariff)

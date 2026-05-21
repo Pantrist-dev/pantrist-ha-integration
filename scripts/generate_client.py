@@ -16,6 +16,7 @@ Usage:
 """
 
 import argparse
+import re
 import shutil
 import subprocess
 import sys
@@ -101,7 +102,105 @@ def generate(spec: Path) -> None:
             shutil.rmtree(OUTPUT_DIR)
         shutil.copytree(generated, OUTPUT_DIR)
 
+    patched = patch_nullable_handling(OUTPUT_DIR / "models")
+    print(f"  Patched {patched} DTO file(s) for nullable/enum-empty handling.")
     print(f"  Done. Commit {OUTPUT_DIR.relative_to(REPO_ROOT)}/.")
+
+
+# ---------------------------------------------------------------------------
+# Post-process: patch generator output for two known bugs
+# ---------------------------------------------------------------------------
+#
+# The upstream openapi-python-client (0.28.x) silently mis-parses two
+# response patterns that the Pantrist API legitimately produces:
+#
+#   1. `nullable: true` on a nested $ref property — the generator emits
+#      `Nested.from_dict(_value)` without checking for None, so a JSON
+#      `null` blows up with `TypeError: 'NoneType' object is not iterable`.
+#
+#   2. Enum fields where the API returns an empty string `""` — the
+#      generator emits `EnumName(_value)` which raises ValueError because
+#      `""` is not in the enum's allowed values.
+#
+# Both patterns appear inside `from_dict` blocks that look like:
+#
+#       _X = d.pop("...", UNSET)
+#       Y: SomeType | Unset
+#       if isinstance(_X, Unset):
+#           Y = UNSET
+#       else:
+#           Y = SomeType.from_dict(_X)        # nested $ref
+#       # or
+#           Y = SomeEnumName(_X)              # enum
+#
+# The patch broadens the `isinstance(_X, Unset)` guard to also accept
+# `None`, and for the enum case to also accept the empty string. After
+# the patch, both pieces of malformed JSON normalise to UNSET — which
+# the caller already treats as "field absent".
+
+
+# Captures the four-line block:
+#   <indent>if isinstance(_VAR, Unset):
+#   <indent>    Y = UNSET
+#   <indent>else:
+#   <indent>    Y = EXPR(_VAR)               <- either Type.from_dict or Enum
+_PARSE_BLOCK_RE = re.compile(
+    r"""
+    (?P<indent>[ \t]+)
+    if\ isinstance\((?P<var>_[A-Za-z_][A-Za-z0-9_]*),\ Unset\):\n
+    (?P<unset_line>(?P=indent)[ \t]+[A-Za-z_][A-Za-z0-9_]*\ =\ UNSET\n)
+    (?P=indent)else:\n
+    (?P=indent)[ \t]+(?P<dst>[A-Za-z_][A-Za-z0-9_]*)\ =\ (?P<call>
+        [A-Za-z_][A-Za-z0-9_]*\.from_dict\((?P=var)\)
+      | [A-Za-z_][A-Za-z0-9_]*\((?P=var)\)
+    )\n
+    """,
+    re.VERBOSE,
+)
+
+
+def _patch_text(source: str) -> tuple[str, int]:
+    """Return (patched_source, replacement_count)."""
+
+    count = 0
+
+    def repl(m: re.Match[str]) -> str:
+        nonlocal count
+        count += 1
+        indent = m["indent"]
+        var = m["var"]
+        call = m["call"]
+        is_enum = ".from_dict(" not in call
+        # Universal: also treat JSON null as absent.
+        extra = f" or {var} is None"
+        if is_enum:
+            # Enums also choke on the empty string the API sometimes emits.
+            extra += f' or {var} == ""'
+        return (
+            f"{indent}if isinstance({var}, Unset){extra}:\n"
+            f"{m['unset_line']}"
+            f"{indent}else:\n"
+            f"{indent}    {m['dst']} = {call}\n"
+        )
+
+    return _PARSE_BLOCK_RE.sub(repl, source), count
+
+
+def patch_nullable_handling(models_dir: Path) -> int:
+    """Apply the from_dict / enum-empty patch to every generated DTO file.
+
+    Returns the number of files that received at least one replacement.
+    """
+    if not models_dir.exists():
+        return 0
+    files_changed = 0
+    for path in sorted(models_dir.rglob("*.py")):
+        original = path.read_text()
+        patched, count = _patch_text(original)
+        if count and patched != original:
+            path.write_text(patched)
+            files_changed += 1
+    return files_changed
 
 
 def main() -> None:

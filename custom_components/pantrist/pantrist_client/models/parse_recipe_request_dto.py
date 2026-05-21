@@ -51,7 +51,7 @@ class ParseRecipeRequestDto:
 
         _type_ = d.pop("type", UNSET)
         type_: ParseRecipeRequestDtoType | Unset
-        if isinstance(_type_, Unset):
+        if isinstance(_type_, Unset) or _type_ is None or _type_ == "":
             type_ = UNSET
         else:
             type_ = ParseRecipeRequestDtoType(_type_)

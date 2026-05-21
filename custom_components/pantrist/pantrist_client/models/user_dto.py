@@ -171,7 +171,7 @@ class UserDto:
 
         _forced_premium_tariff = d.pop("forcedPremiumTariff", UNSET)
         forced_premium_tariff: UserDtoForcedPremiumTariff | Unset
-        if isinstance(_forced_premium_tariff, Unset):
+        if isinstance(_forced_premium_tariff, Unset) or _forced_premium_tariff is None or _forced_premium_tariff == "":
             forced_premium_tariff = UNSET
         else:
             forced_premium_tariff = UserDtoForcedPremiumTariff(_forced_premium_tariff)
@@ -188,7 +188,7 @@ class UserDto:
 
         _subscription = d.pop("subscription", UNSET)
         subscription: UserSubscriptionDto | Unset
-        if isinstance(_subscription, Unset):
+        if isinstance(_subscription, Unset) or _subscription is None:
             subscription = UNSET
         else:
             subscription = UserSubscriptionDto.from_dict(_subscription)
@@ -201,7 +201,7 @@ class UserDto:
 
         _permissions = d.pop("permissions", UNSET)
         permissions: UserPermissionsDto | Unset
-        if isinstance(_permissions, Unset):
+        if isinstance(_permissions, Unset) or _permissions is None:
             permissions = UNSET
         else:
             permissions = UserPermissionsDto.from_dict(_permissions)
@@ -210,21 +210,21 @@ class UserDto:
 
         _user_country_source = d.pop("userCountrySource", UNSET)
         user_country_source: UserDtoUserCountrySource | Unset
-        if isinstance(_user_country_source, Unset):
+        if isinstance(_user_country_source, Unset) or _user_country_source is None or _user_country_source == "":
             user_country_source = UNSET
         else:
             user_country_source = UserDtoUserCountrySource(_user_country_source)
 
         _premium_invitation = d.pop("premiumInvitation", UNSET)
         premium_invitation: PremiumInvitationDataDto | Unset
-        if isinstance(_premium_invitation, Unset):
+        if isinstance(_premium_invitation, Unset) or _premium_invitation is None:
             premium_invitation = UNSET
         else:
             premium_invitation = PremiumInvitationDataDto.from_dict(_premium_invitation)
 
         _notification_settings = d.pop("notificationSettings", UNSET)
         notification_settings: NotificationSettingsDto | Unset
-        if isinstance(_notification_settings, Unset):
+        if isinstance(_notification_settings, Unset) or _notification_settings is None:
             notification_settings = UNSET
         else:
             notification_settings = NotificationSettingsDto.from_dict(_notification_settings)

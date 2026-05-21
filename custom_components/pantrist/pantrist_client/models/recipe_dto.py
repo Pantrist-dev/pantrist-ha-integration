@@ -272,7 +272,7 @@ class RecipeDto:
 
         _nutriments = d.pop("nutriments", UNSET)
         nutriments: ArticleNutrimentsDto | Unset
-        if isinstance(_nutriments, Unset):
+        if isinstance(_nutriments, Unset) or _nutriments is None:
             nutriments = UNSET
         else:
             nutriments = ArticleNutrimentsDto.from_dict(_nutriments)

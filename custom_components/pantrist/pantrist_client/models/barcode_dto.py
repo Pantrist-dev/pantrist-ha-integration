@@ -164,7 +164,7 @@ class BarcodeDto:
 
         _language_specific = d.pop("languageSpecific", UNSET)
         language_specific: BarcodeDtoLanguageSpecific | Unset
-        if isinstance(_language_specific, Unset):
+        if isinstance(_language_specific, Unset) or _language_specific is None:
             language_specific = UNSET
         else:
             language_specific = BarcodeDtoLanguageSpecific.from_dict(_language_specific)
@@ -177,14 +177,14 @@ class BarcodeDto:
 
         _nutriments = d.pop("nutriments", UNSET)
         nutriments: ArticleNutrimentsDto | Unset
-        if isinstance(_nutriments, Unset):
+        if isinstance(_nutriments, Unset) or _nutriments is None:
             nutriments = UNSET
         else:
             nutriments = ArticleNutrimentsDto.from_dict(_nutriments)
 
         _complex_best_before_data = d.pop("complexBestBeforeData", UNSET)
         complex_best_before_data: ArticleCatalogBestBeforeDatesDto | Unset
-        if isinstance(_complex_best_before_data, Unset):
+        if isinstance(_complex_best_before_data, Unset) or _complex_best_before_data is None:
             complex_best_before_data = UNSET
         else:
             complex_best_before_data = ArticleCatalogBestBeforeDatesDto.from_dict(_complex_best_before_data)

@@ -65,7 +65,7 @@ class UserSubscriptionDto:
 
         _store = d.pop("store", UNSET)
         store: UserSubscriptionDtoStore | Unset
-        if isinstance(_store, Unset):
+        if isinstance(_store, Unset) or _store is None or _store == "":
             store = UNSET
         else:
             store = UserSubscriptionDtoStore(_store)

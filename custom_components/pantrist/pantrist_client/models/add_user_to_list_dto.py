@@ -50,7 +50,7 @@ class AddUserToListDto:
 
         _role = d.pop("role", UNSET)
         role: Role | Unset
-        if isinstance(_role, Unset):
+        if isinstance(_role, Unset) or _role is None or _role == "":
             role = UNSET
         else:
             role = Role(_role)

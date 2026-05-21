@@ -146,7 +146,7 @@ class ApiFilterDto:
 
         _sort_by = d.pop("sortBy", UNSET)
         sort_by: ApiFilterDtoSortBy | Unset
-        if isinstance(_sort_by, Unset):
+        if isinstance(_sort_by, Unset) or _sort_by is None or _sort_by == "":
             sort_by = UNSET
         else:
             sort_by = ApiFilterDtoSortBy(_sort_by)
@@ -157,7 +157,7 @@ class ApiFilterDto:
 
         _language = d.pop("language", UNSET)
         language: ApiFilterDtoLanguage | Unset
-        if isinstance(_language, Unset):
+        if isinstance(_language, Unset) or _language is None or _language == "":
             language = UNSET
         else:
             language = ApiFilterDtoLanguage(_language)
@@ -192,21 +192,21 @@ class ApiFilterDto:
 
         _favorites_range = d.pop("favoritesRange", UNSET)
         favorites_range: OptionalRangeDto | Unset
-        if isinstance(_favorites_range, Unset):
+        if isinstance(_favorites_range, Unset) or _favorites_range is None:
             favorites_range = UNSET
         else:
             favorites_range = OptionalRangeDto.from_dict(_favorites_range)
 
         _total_time_range = d.pop("totalTimeRange", UNSET)
         total_time_range: OptionalRangeDto | Unset
-        if isinstance(_total_time_range, Unset):
+        if isinstance(_total_time_range, Unset) or _total_time_range is None:
             total_time_range = UNSET
         else:
             total_time_range = OptionalRangeDto.from_dict(_total_time_range)
 
         _preparation_time_range = d.pop("preparationTimeRange", UNSET)
         preparation_time_range: OptionalRangeDto | Unset
-        if isinstance(_preparation_time_range, Unset):
+        if isinstance(_preparation_time_range, Unset) or _preparation_time_range is None:
             preparation_time_range = UNSET
         else:
             preparation_time_range = OptionalRangeDto.from_dict(_preparation_time_range)

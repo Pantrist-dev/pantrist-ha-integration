@@ -51,7 +51,7 @@ class UpdateListDto:
         d = dict(src_dict)
         _settings = d.pop("settings", UNSET)
         settings: BlockSettingsDto | Unset
-        if isinstance(_settings, Unset):
+        if isinstance(_settings, Unset) or _settings is None:
             settings = UNSET
         else:
             settings = BlockSettingsDto.from_dict(_settings)

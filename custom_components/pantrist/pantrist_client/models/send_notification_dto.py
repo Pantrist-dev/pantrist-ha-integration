@@ -64,7 +64,7 @@ class SendNotificationDto:
 
         _data = d.pop("data", UNSET)
         data: SendNotificationDtoData | Unset
-        if isinstance(_data, Unset):
+        if isinstance(_data, Unset) or _data is None:
             data = UNSET
         else:
             data = SendNotificationDtoData.from_dict(_data)

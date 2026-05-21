@@ -95,7 +95,7 @@ class AnalysisPantrySettingsDto:
 
         _emergency_supply = d.pop("emergencySupply", UNSET)
         emergency_supply: AnalysisEmergencySupplySettingsDto | Unset
-        if isinstance(_emergency_supply, Unset):
+        if isinstance(_emergency_supply, Unset) or _emergency_supply is None:
             emergency_supply = UNSET
         else:
             emergency_supply = AnalysisEmergencySupplySettingsDto.from_dict(_emergency_supply)
