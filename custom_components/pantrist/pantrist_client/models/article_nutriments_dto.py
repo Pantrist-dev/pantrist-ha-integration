@@ -118,70 +118,70 @@ class ArticleNutrimentsDto:
         d = dict(src_dict)
         _energy_kcal = d.pop("energy_kcal", UNSET)
         energy_kcal: GeneralNutrimentsDto | Unset
-        if isinstance(_energy_kcal, Unset):
+        if isinstance(_energy_kcal, Unset) or _energy_kcal is None:
             energy_kcal = UNSET
         else:
             energy_kcal = GeneralNutrimentsDto.from_dict(_energy_kcal)
 
         _energy_kj = d.pop("energy_kj", UNSET)
         energy_kj: GeneralNutrimentsDto | Unset
-        if isinstance(_energy_kj, Unset):
+        if isinstance(_energy_kj, Unset) or _energy_kj is None:
             energy_kj = UNSET
         else:
             energy_kj = GeneralNutrimentsDto.from_dict(_energy_kj)
 
         _fat = d.pop("fat", UNSET)
         fat: GeneralNutrimentsDto | Unset
-        if isinstance(_fat, Unset):
+        if isinstance(_fat, Unset) or _fat is None:
             fat = UNSET
         else:
             fat = GeneralNutrimentsDto.from_dict(_fat)
 
         _saturated_fat = d.pop("saturatedFat", UNSET)
         saturated_fat: GeneralNutrimentsDto | Unset
-        if isinstance(_saturated_fat, Unset):
+        if isinstance(_saturated_fat, Unset) or _saturated_fat is None:
             saturated_fat = UNSET
         else:
             saturated_fat = GeneralNutrimentsDto.from_dict(_saturated_fat)
 
         _carbohydrates = d.pop("carbohydrates", UNSET)
         carbohydrates: GeneralNutrimentsDto | Unset
-        if isinstance(_carbohydrates, Unset):
+        if isinstance(_carbohydrates, Unset) or _carbohydrates is None:
             carbohydrates = UNSET
         else:
             carbohydrates = GeneralNutrimentsDto.from_dict(_carbohydrates)
 
         _sugar = d.pop("sugar", UNSET)
         sugar: GeneralNutrimentsDto | Unset
-        if isinstance(_sugar, Unset):
+        if isinstance(_sugar, Unset) or _sugar is None:
             sugar = UNSET
         else:
             sugar = GeneralNutrimentsDto.from_dict(_sugar)
 
         _fiber = d.pop("fiber", UNSET)
         fiber: GeneralNutrimentsDto | Unset
-        if isinstance(_fiber, Unset):
+        if isinstance(_fiber, Unset) or _fiber is None:
             fiber = UNSET
         else:
             fiber = GeneralNutrimentsDto.from_dict(_fiber)
 
         _proteins = d.pop("proteins", UNSET)
         proteins: GeneralNutrimentsDto | Unset
-        if isinstance(_proteins, Unset):
+        if isinstance(_proteins, Unset) or _proteins is None:
             proteins = UNSET
         else:
             proteins = GeneralNutrimentsDto.from_dict(_proteins)
 
         _salt = d.pop("salt", UNSET)
         salt: GeneralNutrimentsDto | Unset
-        if isinstance(_salt, Unset):
+        if isinstance(_salt, Unset) or _salt is None:
             salt = UNSET
         else:
             salt = GeneralNutrimentsDto.from_dict(_salt)
 
         _nutri_score = d.pop("nutriScore", UNSET)
         nutri_score: NutriScore | Unset
-        if isinstance(_nutri_score, Unset):
+        if isinstance(_nutri_score, Unset) or _nutri_score is None or _nutri_score == "":
             nutri_score = UNSET
         else:
             nutri_score = NutriScore(_nutri_score)

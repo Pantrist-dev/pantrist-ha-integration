@@ -147,21 +147,21 @@ class ListItemHistoryDto:
 
         _actor = d.pop("actor", UNSET)
         actor: PublicUserDto | Unset
-        if isinstance(_actor, Unset):
+        if isinstance(_actor, Unset) or _actor is None:
             actor = UNSET
         else:
             actor = PublicUserDto.from_dict(_actor)
 
         _before = d.pop("before", UNSET)
         before: ArticleDto | Unset
-        if isinstance(_before, Unset):
+        if isinstance(_before, Unset) or _before is None:
             before = UNSET
         else:
             before = ArticleDto.from_dict(_before)
 
         _after = d.pop("after", UNSET)
         after: ArticleDto | Unset
-        if isinstance(_after, Unset):
+        if isinstance(_after, Unset) or _after is None:
             after = UNSET
         else:
             after = ArticleDto.from_dict(_after)

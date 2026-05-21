@@ -90,7 +90,7 @@ class UpdateItemDto:
 
         _unit_id = d.pop("unitId", UNSET)
         unit_id: VolumeUnit | Unset
-        if isinstance(_unit_id, Unset):
+        if isinstance(_unit_id, Unset) or _unit_id is None or _unit_id == "":
             unit_id = UNSET
         else:
             unit_id = VolumeUnit(_unit_id)

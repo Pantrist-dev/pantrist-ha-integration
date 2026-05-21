@@ -411,7 +411,7 @@ class ArticleCatalogDto:
 
         _price = d.pop("price", UNSET)
         price: PriceWithDateDto | Unset
-        if isinstance(_price, Unset):
+        if isinstance(_price, Unset) or _price is None:
             price = UNSET
         else:
             price = PriceWithDateDto.from_dict(_price)
@@ -435,14 +435,14 @@ class ArticleCatalogDto:
 
         _nutriments = d.pop("nutriments", UNSET)
         nutriments: ArticleNutrimentsDto | Unset
-        if isinstance(_nutriments, Unset):
+        if isinstance(_nutriments, Unset) or _nutriments is None:
             nutriments = UNSET
         else:
             nutriments = ArticleNutrimentsDto.from_dict(_nutriments)
 
         _complex_best_before_data = d.pop("complexBestBeforeData", UNSET)
         complex_best_before_data: ArticleCatalogBestBeforeDatesDto | Unset
-        if isinstance(_complex_best_before_data, Unset):
+        if isinstance(_complex_best_before_data, Unset) or _complex_best_before_data is None:
             complex_best_before_data = UNSET
         else:
             complex_best_before_data = ArticleCatalogBestBeforeDatesDto.from_dict(_complex_best_before_data)

@@ -62,14 +62,14 @@ class ValueWithMetricAndOpeningDto:
 
         _metric = d.pop("metric", UNSET)
         metric: ValueWithMetricAndOpeningDtoMetric | Unset
-        if isinstance(_metric, Unset):
+        if isinstance(_metric, Unset) or _metric is None or _metric == "":
             metric = UNSET
         else:
             metric = ValueWithMetricAndOpeningDtoMetric(_metric)
 
         _after_opening = d.pop("afterOpening", UNSET)
         after_opening: ValueWithMetricDto | Unset
-        if isinstance(_after_opening, Unset):
+        if isinstance(_after_opening, Unset) or _after_opening is None:
             after_opening = UNSET
         else:
             after_opening = ValueWithMetricDto.from_dict(_after_opening)

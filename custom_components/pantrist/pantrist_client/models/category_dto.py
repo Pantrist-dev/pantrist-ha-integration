@@ -108,7 +108,7 @@ class CategoryDto:
 
         _complex_best_before_data = d.pop("complexBestBeforeData", UNSET)
         complex_best_before_data: ArticleCatalogBestBeforeDatesDto | Unset
-        if isinstance(_complex_best_before_data, Unset):
+        if isinstance(_complex_best_before_data, Unset) or _complex_best_before_data is None:
             complex_best_before_data = UNSET
         else:
             complex_best_before_data = ArticleCatalogBestBeforeDatesDto.from_dict(_complex_best_before_data)

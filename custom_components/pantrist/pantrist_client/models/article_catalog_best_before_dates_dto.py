@@ -61,21 +61,21 @@ class ArticleCatalogBestBeforeDatesDto:
         d = dict(src_dict)
         _pantry = d.pop("pantry", UNSET)
         pantry: ValueWithMetricAndOpeningDto | Unset
-        if isinstance(_pantry, Unset):
+        if isinstance(_pantry, Unset) or _pantry is None:
             pantry = UNSET
         else:
             pantry = ValueWithMetricAndOpeningDto.from_dict(_pantry)
 
         _refrigerate = d.pop("refrigerate", UNSET)
         refrigerate: ValueWithMetricAndOpeningDto | Unset
-        if isinstance(_refrigerate, Unset):
+        if isinstance(_refrigerate, Unset) or _refrigerate is None:
             refrigerate = UNSET
         else:
             refrigerate = ValueWithMetricAndOpeningDto.from_dict(_refrigerate)
 
         _freeze = d.pop("freeze", UNSET)
         freeze: ValueWithMetricAndOpeningDto | Unset
-        if isinstance(_freeze, Unset):
+        if isinstance(_freeze, Unset) or _freeze is None:
             freeze = UNSET
         else:
             freeze = ValueWithMetricAndOpeningDto.from_dict(_freeze)

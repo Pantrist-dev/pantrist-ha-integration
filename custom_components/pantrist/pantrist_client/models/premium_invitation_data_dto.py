@@ -64,7 +64,7 @@ class PremiumInvitationDataDto:
 
         _invitation = d.pop("invitation", UNSET)
         invitation: PremiumInvitationBaseDataDto | Unset
-        if isinstance(_invitation, Unset):
+        if isinstance(_invitation, Unset) or _invitation is None:
             invitation = UNSET
         else:
             invitation = PremiumInvitationBaseDataDto.from_dict(_invitation)

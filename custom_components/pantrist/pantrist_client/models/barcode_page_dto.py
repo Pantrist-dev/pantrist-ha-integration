@@ -196,7 +196,7 @@ class BarcodePageDto:
 
         _name_by_language = d.pop("nameByLanguage", UNSET)
         name_by_language: BarcodePageDtoNameByLanguage | Unset
-        if isinstance(_name_by_language, Unset):
+        if isinstance(_name_by_language, Unset) or _name_by_language is None:
             name_by_language = UNSET
         else:
             name_by_language = BarcodePageDtoNameByLanguage.from_dict(_name_by_language)
@@ -213,21 +213,21 @@ class BarcodePageDto:
 
         _volume_unit = d.pop("volumeUnit", UNSET)
         volume_unit: VolumeUnit | Unset
-        if isinstance(_volume_unit, Unset):
+        if isinstance(_volume_unit, Unset) or _volume_unit is None or _volume_unit == "":
             volume_unit = UNSET
         else:
             volume_unit = VolumeUnit(_volume_unit)
 
         _nutriments = d.pop("nutriments", UNSET)
         nutriments: ArticleNutrimentsDto | Unset
-        if isinstance(_nutriments, Unset):
+        if isinstance(_nutriments, Unset) or _nutriments is None:
             nutriments = UNSET
         else:
             nutriments = ArticleNutrimentsDto.from_dict(_nutriments)
 
         _complex_best_before_data = d.pop("complexBestBeforeData", UNSET)
         complex_best_before_data: ArticleCatalogBestBeforeDatesDto | Unset
-        if isinstance(_complex_best_before_data, Unset):
+        if isinstance(_complex_best_before_data, Unset) or _complex_best_before_data is None:
             complex_best_before_data = UNSET
         else:
             complex_best_before_data = ArticleCatalogBestBeforeDatesDto.from_dict(_complex_best_before_data)

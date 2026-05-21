@@ -48,7 +48,7 @@ class ValueWithMetricDto:
 
         _metric = d.pop("metric", UNSET)
         metric: ValueWithMetricDtoMetric | Unset
-        if isinstance(_metric, Unset):
+        if isinstance(_metric, Unset) or _metric is None or _metric == "":
             metric = UNSET
         else:
             metric = ValueWithMetricDtoMetric(_metric)

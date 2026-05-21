@@ -111,7 +111,7 @@ class ClientLogEntryDto:
 
         _data = d.pop("data", UNSET)
         data: ClientLogEntryDtoData | Unset
-        if isinstance(_data, Unset):
+        if isinstance(_data, Unset) or _data is None:
             data = UNSET
         else:
             data = ClientLogEntryDtoData.from_dict(_data)
