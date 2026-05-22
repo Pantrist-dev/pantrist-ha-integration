@@ -138,7 +138,6 @@ class PantristPantryAmountNumber(PantristEntity, NumberEntity):
         # to a UUID stub if the API hands us a half-baked payload.
         item_name = item.get("name") or f"Item {self._item_uuid[:8]}…"
         self._attr_translation_placeholders = {"item": str(item_name)}
-        self._attr_name = f"Pantry: {item_name}"
         self._attr_unique_id = _amount_unique_id(
             coordinator.list_id, self._item_uuid
         )
