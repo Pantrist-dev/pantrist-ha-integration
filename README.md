@@ -24,11 +24,8 @@ households get separate sensors / todo entities for each list out of a single OA
 6. Authorize via the browser, pick a list, click **Allow**. Done.
 
 > Pantrist uses PKCE (public client, no secret) and the integration
-> ships its own default OAuth implementation — you do **not** need to
+> ships its own OAuth implementation — you do **not** need to
 > walk through *Application Credentials* before adding the integration.
-> If you want to override the client_id with your own (e.g. for a
-> self-hosted Pantrist instance), Application Credentials still works
-> as a fallback.
 
 ## Install manually (no HACS)
 
@@ -210,7 +207,8 @@ to attach to bug reports.
 
 The integration maintains a Socket.IO subscription to Pantrist's `/lists` namespace.
 Item additions/changes/deletions made from the mobile app or web UI appear in
-Home Assistant within ~1 second. A 5-minute REST poll runs as a safety net.
+Home Assistant within ~1 second. On reconnect after a disconnect, a one-shot refresh
+catches up on any missed events.
 
 ## Dashboard card (copy-paste)
 
@@ -347,10 +345,7 @@ entity IDs — only the tokens are refreshed.
 2. *(Optional — only if you no longer want Pantrist as an option in the
    "Add Integration" picker)* **HACS → Integrations → Pantrist → ⋮ → Remove**,
    then restart Home Assistant.
-3. *(Optional — to clear the OAuth client too)* **Settings → Devices &
-   Services → ⋮ → Application Credentials**, find the `pantrist-ha` entry,
-   delete.
-4. Manual installs: delete `/config/custom_components/pantrist/` and restart HA.
+3. Manual installs: delete `/config/custom_components/pantrist/` and restart HA.
 
 Pantrist data lives in your Pantrist account, not in Home Assistant — removing
 the integration only severs the link. The list itself is untouched.
@@ -360,7 +355,7 @@ the integration only severs the link. The list itself is untouched.
 | Problem | Fix |
 |---|---|
 | "Pantrist" doesn't appear in the Integrations list after install | Restart Home Assistant. `custom_components/` is only scanned at boot. |
-| `missing_configuration` in the OAuth dialog | Shouldn't happen with stock install — the integration pre-registers its OAuth client. If it does, you've probably *manually* added an Application Credential row that's overriding the default. Delete that row and reload the integration. |
+| `missing_configuration` in the OAuth dialog | Shouldn't happen — the integration registers its OAuth client on startup. If it does, try restarting Home Assistant. |
 | `invalid_auth` after OAuth | The token Pantrist returned was rejected by `/list`. Re-run the flow. |
 | `cannot_connect` after OAuth | The Pi couldn't reach `api.pantrist.app`. Check network. |
 | Browser redirect lands on a Pantrist error page | The Pantrist API needs `my.home-assistant.io` in its redirect-URI whitelist. Confirm the backend deployment is current. |

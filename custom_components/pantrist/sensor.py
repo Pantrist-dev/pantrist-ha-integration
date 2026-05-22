@@ -16,6 +16,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .const import (
     DOMAIN,
     SENSOR_EXPIRING_SOON,
+    SENSOR_LATEST_SHOPPING_ITEM,
     SENSOR_NEXT_EXPIRATION,
     SENSOR_PANTRY,
     SENSOR_SHOPPING_CART,
@@ -38,7 +39,7 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Add 5 sensors per Pantrist list, now and as new lists appear."""
+    """Add sensors per Pantrist list, now and as new lists appear."""
     manager: PantristListManager = entry.runtime_data
 
     @callback
@@ -49,6 +50,7 @@ async def async_setup_entry(
             PantristExpiringSoonSensor(coordinator),
             PantristShoppingCartSensor(coordinator),
             PantristNextExpirationSensor(coordinator),
+            PantristLatestShoppingItemSensor(coordinator),
         ]
 
     initial: list[SensorEntity] = []
@@ -322,3 +324,38 @@ class PantristNextExpirationSensor(PantristEntity, SensorEntity):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         return {"list_id": self.coordinator.list_id}
+
+
+class PantristLatestShoppingItemSensor(PantristEntity, SensorEntity):
+    """Name of the most-recently added shopping-list item.
+
+    Falls back to None (shown as unknown) when the list is empty.
+    The image_url attribute lets picture-entity cards display the item's
+    product image when one is available.
+    """
+
+    _attr_icon = "mdi:cart-arrow-down"
+    _attr_translation_key = SENSOR_LATEST_SHOPPING_ITEM
+
+    def __init__(self, coordinator: PantristCoordinator) -> None:
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.list_id}_{SENSOR_LATEST_SHOPPING_ITEM}"
+
+    @property
+    def native_value(self) -> str | None:
+        items = self.coordinator.data.shopping_list.get("items", [])
+        if not items:
+            return None
+        return items[0].get("name") or None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        items = self.coordinator.data.shopping_list.get("items", [])
+        if not items:
+            return {"image_url": None}
+        item = items[0]
+        return {
+            "image_url": item.get("imageUrl"),
+            "uuid": item.get("uuid"),
+            "display": _format_item(item).get("display"),
+        }

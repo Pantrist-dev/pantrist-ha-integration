@@ -12,15 +12,9 @@ Assistant instance (typically a Raspberry Pi with HAOS, or a UTM VM on Mac).
 ## One-time setup
 
 The integration ships its own PKCE OAuth client (`pantrist-ha`) and
-registers it automatically in `async_setup`. No `Application Credentials`
-row is required before adding the integration — just go straight to
+registers it automatically — no `Application Credentials` row is required
+before adding the integration. Just go straight to
 **Settings → Devices & Services → + Add Integration → Pantrist**.
-
-If you want to test with a custom `client_id` (e.g. a self-hosted
-Pantrist backend), you can override via the standard Application
-Credentials UI; the platform handler in `application_credentials.py`
-will produce a per-credential implementation alongside the bundled
-default.
 
 ## Install the integration files
 
@@ -90,7 +84,6 @@ Inside `custom_components/pantrist/`:
 |---|---|
 | `manifest.json` | Integration metadata, deps, OAuth declaration |
 | `const.py` | DOMAIN, OAuth URLs, sensor + service keys |
-| `application_credentials.py` | Provides `LocalOAuth2ImplementationWithPkce` (no client secret) |
 | `config_flow.py` | OAuth flow + reauth + reconfigure; runs `test-before-configure` against `/list` and stores the chosen `list_id` |
 | `api.py` | Async wrapper over the generated OpenAPI client; translates 401 → `PantristAuthError`, other HTTP/network failures → `PantristApiError` |
 | `coordinator.py` | One `DataUpdateCoordinator` *per list*. No periodic polling — Socket.IO `data:updated` events drive every refresh; on reconnect the coordinator triggers a single `async_request_refresh()` to catch up. Exponential backoff on disconnect. |
@@ -177,8 +170,8 @@ how the `.asyncio` vs `.asyncio_detailed` attribute mismatch on void
 endpoints was originally caught.
 
 Current coverage: **>95% lines + branches** across `__init__.py`,
-`api.py`, `application_credentials.py`, `config_flow.py`, `const.py`,
-`coordinator.py`, `diagnostics.py`, `entity.py`, `sensor.py`, `todo.py`.
+`api.py`, `config_flow.py`, `const.py`, `coordinator.py`, `diagnostics.py`,
+`entity.py`, `sensor.py`, `todo.py`.
 
 ### Regenerating the OpenAPI client
 
@@ -256,7 +249,7 @@ enforces this format.
 | Problem | Fix |
 |---|---|
 | "Pantrist" not appearing in "Add Integration" | Restart HA — `custom_components/` is only scanned at boot. |
-| `missing_configuration` | Shouldn't fire with the bundled default. If it does, the integration's `async_setup` hasn't run yet (HA restart needed) or the import failed (check logs). |
+| `missing_configuration` | Shouldn't fire — the implementation is registered in both `async_setup` and `async_step_user`. If it does, check HA logs for an import error in `__init__.py`. |
 | `invalid_redirect_uri` from Pantrist | The Pantrist API needs `my.home-assistant.io` in its redirect-URI whitelist. |
 | OAuth completes but sensors stay `unavailable` | Check HA logs for Socket.IO connection errors. Verify `api.pantrist.app` is reachable from the HA host. |
 | `missing_list_id` abort | The Pantrist consent page must include a list picker (Pantrist app deployment must be current). |

@@ -13,6 +13,7 @@ Usage:
     python scripts/generate_client.py
     python scripts/generate_client.py --url https://api.pantrist.app/swagger-ui-yaml
     python scripts/generate_client.py --skip-download   # use cached openapi-watch.yaml
+    python scripts/generate_client.py --patch-only      # re-apply nullable patches only
 """
 
 import argparse
@@ -213,7 +214,17 @@ def main() -> None:
         action="store_true",
         help="Regenerate from the existing openapi-watch.yaml without fetching",
     )
+    parser.add_argument(
+        "--patch-only",
+        action="store_true",
+        help="Apply nullable patches to the existing generated client without regenerating",
+    )
     args = parser.parse_args()
+
+    if args.patch_only:
+        patched = patch_nullable_handling(OUTPUT_DIR / "models")
+        print(f"  Patched {patched} model file(s).")
+        return
 
     check_generator()
 

@@ -73,6 +73,9 @@
       },
       "next_expiration": {
         "name": "Next expiration"
+      },
+      "latest_shopping_item": {
+        "name": "Latest shopping item"
       }
     },
     "binary_sensor": {
@@ -94,11 +97,6 @@
     "number": {
       "pantry_amount": {
         "name": "Pantry: {item}"
-      }
-    },
-    "image": {
-      "latest_shopping_item": {
-        "name": "Latest shopping item"
       }
     },
     "todo": {

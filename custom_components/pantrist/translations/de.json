@@ -73,6 +73,9 @@
       },
       "next_expiration": {
         "name": "Nächstes Ablaufdatum"
+      },
+      "latest_shopping_item": {
+        "name": "Letzter Einkaufslisten-Eintrag"
       }
     },
     "binary_sensor": {
@@ -94,11 +97,6 @@
     "number": {
       "pantry_amount": {
         "name": "Vorrat: {item}"
-      }
-    },
-    "image": {
-      "latest_shopping_item": {
-        "name": "Letzter Einkaufslisten-Eintrag"
       }
     },
     "todo": {

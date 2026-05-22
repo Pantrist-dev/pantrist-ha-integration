@@ -13,8 +13,12 @@ from homeassistant.config_entries import (
     ConfigFlowResult,
 )
 from homeassistant.helpers import aiohttp_client, config_entry_oauth2_flow
+from homeassistant.helpers.config_entry_oauth2_flow import (
+    LocalOAuth2ImplementationWithPkce,
+    async_register_implementation,
+)
 
-from .const import API_BASE, CONF_LIST_ID, DOMAIN
+from .const import API_BASE, CLIENT_ID, CONF_LIST_ID, DOMAIN, OAUTH2_AUTHORIZE, OAUTH2_TOKEN
 
 _PROBE_TIMEOUT = aiohttp.ClientTimeout(total=10)
 
@@ -32,6 +36,24 @@ class PantristOAuth2FlowHandler(
     @property
     def logger(self) -> logging.Logger:
         return _LOGGER
+
+    async def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Register the PKCE implementation if async_setup hasn't run yet (fresh install)."""
+        async_register_implementation(
+            self.hass,
+            DOMAIN,
+            LocalOAuth2ImplementationWithPkce(
+                self.hass,
+                DOMAIN,
+                CLIENT_ID,
+                authorize_url=OAUTH2_AUTHORIZE,
+                token_url=OAUTH2_TOKEN,
+                client_secret="",
+            ),
+        )
+        return await super().async_step_user(user_input)
 
     @property
     def extra_authorize_data(self) -> dict[str, Any]:

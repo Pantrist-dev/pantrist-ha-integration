@@ -3,7 +3,7 @@
   "name": "Pantrist",
   "codeowners": ["@nlueg"],
   "config_flow": true,
-  "dependencies": ["application_credentials"],
+  "dependencies": [],
   "documentation": "https://github.com/Pantrist-dev/pantrist-ha-addon",
   "integration_type": "service",
   "iot_class": "cloud_push",
