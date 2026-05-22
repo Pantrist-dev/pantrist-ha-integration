@@ -115,9 +115,21 @@ def _describe_item(item: dict[str, Any]) -> str | None:
     """Compact one-liner with amount/unit/brand for the calendar event body."""
     parts: list[str] = []
     amount = item.get("amount")
+    content_volume = item.get("contentVolume")
     unit = item.get("unitId")
     if amount is not None:
-        parts.append(f"{amount}{(' ' + unit) if unit else ''}")
+        def _n(v: Any) -> str:
+            try:
+                f = float(v)
+                return str(int(f)) if f.is_integer() else f"{f:g}"
+            except (TypeError, ValueError):
+                return str(v)
+        qty = _n(amount)
+        if content_volume is not None:
+            qty = f"{qty} × {_n(content_volume)}"
+        if unit:
+            qty += f" {unit}"
+        parts.append(qty)
     brand = item.get("brand")
     if brand:
         parts.append(str(brand))
