@@ -230,7 +230,19 @@ class PantristCoordinator(DataUpdateCoordinator[PantristData]):
         # bubbling up as the opaque "One or more namespaces failed to connect"
         # ConnectionError. Cost: a handful of DEBUG/INFO lines per reconnect,
         # which the user can silence via HA's logger config if they want.
-        sio = socketio.AsyncClient(logger=_LOGGER, engineio_logger=_LOGGER)
+        #
+        # ``reconnection=False`` is load-bearing: the Pantrist API's OAuth
+        # access_token is a Firebase custom token with a hard 1h expiry, and
+        # python-socketio's default internal reconnect would keep retrying
+        # forever with the original (now-expired) ``auth`` dict it captured
+        # at ``.connect()`` time. By disabling the internal reconnect, the
+        # outer ``_sio_loop`` owns retries — each iteration calls
+        # ``async_ensure_token_valid()`` so the handshake uses a fresh token.
+        sio = socketio.AsyncClient(
+            logger=_LOGGER,
+            engineio_logger=_LOGGER,
+            reconnection=False,
+        )
         self._sio = sio
 
         @sio.event(namespace=SOCKET_NAMESPACE)
