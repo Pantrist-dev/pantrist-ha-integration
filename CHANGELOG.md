@@ -4,6 +4,15 @@ All notable changes to the Pantrist HA Integration are recorded here.
 Generated from Conventional Commits by [standard-version](https://github.com/conventional-changelog/standard-version).
 
 
+### [0.1.1](https://github.com/Pantrist-dev/pantrist-ha-addon/compare/v0.1.0...v0.1.1) (2026-05-26)
+
+
+### Bug Fixes
+
+* **calendar:** display amount correctly ([4188357](https://github.com/Pantrist-dev/pantrist-ha-addon/commit/418835733fd3d231e42535060f39e1a4a4adb8e8))
+* **coordinator:** disable socketio internal reconnect to refresh tokens ([0217e02](https://github.com/Pantrist-dev/pantrist-ha-addon/commit/0217e022c3fbdfc8cff090eefae03fc2d79a88e2))
+* **pantry-values:** use localized item name ([e52984f](https://github.com/Pantrist-dev/pantrist-ha-addon/commit/e52984f5c49e42eb3cc1a08506ff547380d4d0b0))
+
 ## 0.1.0 (2026-05-22)
 
 
