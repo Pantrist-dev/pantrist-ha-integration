@@ -4,6 +4,13 @@ All notable changes to the Pantrist HA Integration are recorded here.
 Generated from Conventional Commits by [standard-version](https://github.com/conventional-changelog/standard-version).
 
 
+### [0.1.2](https://github.com/Pantrist-dev/pantrist-ha-addon/compare/v0.1.1...v0.1.2) (2026-05-27)
+
+
+### Bug Fixes
+
+* **logo:** add hDPI logo ([b378da3](https://github.com/Pantrist-dev/pantrist-ha-addon/commit/b378da372a194288097ff95bffcc46874116d652))
+
 ### [0.1.1](https://github.com/Pantrist-dev/pantrist-ha-addon/compare/v0.1.0...v0.1.1) (2026-05-26)
 
 
