@@ -172,6 +172,60 @@ def _coordinator_for_call(
     return coords[0]
 
 
+def _resolve_pantry_item_id(hass: HomeAssistant, call: ServiceCall) -> str:
+    """Resolve a pantry item to its UUID for change_pantry_item_amount.
+
+    Accepts either an explicit ``item_id`` (UUID, wins if given) or a
+    human-friendly ``name`` that we look up against the live pantry — so
+    automations and the action UI don't have to hunt for a UUID. Name
+    matching is case-insensitive: an exact match wins, otherwise we fall
+    back to a unique substring match. Ambiguous or missing matches raise a
+    translatable HomeAssistantError listing what's available.
+    """
+    item_id = (call.data.get("item_id") or "").strip()
+    if item_id:
+        return item_id
+
+    name = (call.data.get("name") or "").strip()
+    if not name:
+        raise HomeAssistantError(
+            translation_domain=DOMAIN,
+            translation_key="missing_item_identifier",
+        )
+
+    coordinator = _coordinator_for_call(hass, call.data.get("list_id"))
+    items = [
+        item
+        for item in (coordinator.data.pantry or {}).get("items", [])
+        if item.get("uuid") and item.get("name")
+    ]
+
+    needle = name.casefold()
+    exact = [i for i in items if str(i["name"]).strip().casefold() == needle]
+    matches = exact or [
+        i for i in items if needle in str(i["name"]).strip().casefold()
+    ]
+
+    if len(matches) == 1:
+        return str(matches[0]["uuid"])
+
+    if not matches:
+        available = ", ".join(sorted(str(i["name"]) for i in items)) or "(none)"
+        raise HomeAssistantError(
+            translation_domain=DOMAIN,
+            translation_key="pantry_item_not_found",
+            translation_placeholders={"name": name, "available": available},
+        )
+
+    # More than one match — make the user disambiguate with a UUID.
+    options = ", ".join(f"{i['name']} ({i['uuid']})" for i in matches)
+    raise HomeAssistantError(
+        translation_domain=DOMAIN,
+        translation_key="pantry_item_ambiguous",
+        translation_placeholders={"name": name, "matches": options},
+    )
+
+
 def _register_services(hass: HomeAssistant) -> None:
     """Register Pantrist services once (idempotent)."""
     if hass.services.has_service(DOMAIN, SERVICE_ADD_TO_SHOPPING_LIST):
@@ -235,10 +289,11 @@ def _register_services(hass: HomeAssistant) -> None:
         )
 
     async def change_pantry_amount(call: ServiceCall) -> None:
+        item_id = _resolve_pantry_item_id(hass, call)
         await _call_api(
             call,
             "change_pantry_item_amount",
-            item_id=call.data["item_id"],
+            item_id=item_id,
             change=float(call.data["change"]),
             auto_restock=bool(call.data.get("auto_restock", True)),
         )
@@ -296,7 +351,12 @@ def _register_services(hass: HomeAssistant) -> None:
         schema=vol.Schema(
             {
                 **common,
-                vol.Required("item_id"): cv.string,
+                # Identify the item by name (resolved against the live
+                # pantry) or by raw UUID — at least one is required, which
+                # is enforced in the handler so we can give a translatable
+                # error rather than a raw voluptuous one.
+                vol.Optional("name"): cv.string,
+                vol.Optional("item_id"): cv.string,
                 vol.Required("change"): vol.Coerce(float),
                 # Defaults to True here even though the underlying API
                 # defaults to False — the HA service is the automation

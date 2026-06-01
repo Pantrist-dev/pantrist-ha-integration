@@ -190,11 +190,16 @@ language model.
 | `pantrist.delete_shopping_list_item` | `item_id`, `list_id`* | Remove from shopping list |
 | `pantrist.add_to_pantry` | `name`, `amount`, `unit_id`, `list_id`* | Add a pantry item by name |
 | `pantrist.delete_pantry_item` | `item_id`, `list_id`* | Remove from pantry |
-| `pantrist.change_pantry_item_amount` | `item_id`, `change`, `unit_id`, `list_id`* | Increment/decrement pantry amount |
+| `pantrist.change_pantry_item_amount` | `name` **or** `item_id`, `change`, `auto_restock`, `list_id`* | Increment/decrement pantry amount |
 
 `*` `list_id` is optional — omit it on single-list accounts. With multiple lists,
 pass the list UUID (visible in **Settings → Devices & Services → Pantrist → device
 identifier**) to target a specific list.
+
+For `change_pantry_item_amount` you can identify the item by `name` (e.g. `Milk`) —
+it's matched against your current pantry, case-insensitively, so you don't need a
+UUID. Pass `item_id` instead only when two items share a name; the UUIDs are listed
+under the `items` attribute of `sensor.pantrist_pantry` (**Developer Tools → States**).
 
 ### Diagnostics
 

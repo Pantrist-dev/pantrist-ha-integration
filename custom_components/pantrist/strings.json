@@ -55,6 +55,15 @@
     },
     "number_set_failed": {
       "message": "Could not change pantry amount for {name}: {error}"
+    },
+    "missing_item_identifier": {
+      "message": "Specify the pantry item to change — provide its name or its UUID."
+    },
+    "pantry_item_not_found": {
+      "message": "No pantry item matches \"{name}\". Available items: {available}."
+    },
+    "pantry_item_ambiguous": {
+      "message": "Several pantry items match \"{name}\": {matches}. Re-run with the Item UUID to pick one."
     }
   },
   "entity": {
@@ -181,17 +190,17 @@
       "name": "Change pantry item amount",
       "description": "Adjust the amount of a pantry item by a delta.",
       "fields": {
+        "name": {
+          "name": "Item name",
+          "description": "Name of the pantry item to change (e.g. \"Milk\"). Looked up against your current pantry — no UUID needed. Provide either this or the Item UUID."
+        },
         "item_id": {
           "name": "Item UUID",
-          "description": "The uuid attribute of the item."
+          "description": "The uuid attribute of the item (from sensor.pantrist_pantry). Optional — prefer the Item name unless two items share a name."
         },
         "change": {
           "name": "Change",
           "description": "Positive to add, negative to consume."
-        },
-        "unit_id": {
-          "name": "Unit",
-          "description": "Accepted for backwards compatibility; ignored by the current backend."
         },
         "auto_restock": {
           "name": "Auto-restock when below minimum",

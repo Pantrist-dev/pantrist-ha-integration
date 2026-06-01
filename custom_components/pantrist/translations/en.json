@@ -55,6 +55,15 @@
     },
     "number_set_failed": {
       "message": "Could not change pantry amount for {name}: {error}"
+    },
+    "missing_item_identifier": {
+      "message": "Specify the pantry item to change — provide its name or its UUID."
+    },
+    "pantry_item_not_found": {
+      "message": "No pantry item matches \"{name}\". Available items: {available}."
+    },
+    "pantry_item_ambiguous": {
+      "message": "Several pantry items match \"{name}\": {matches}. Re-run with the Item UUID to pick one."
     }
   },
   "entity": {

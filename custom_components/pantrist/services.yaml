@@ -89,10 +89,23 @@ change_pantry_item_amount:
   name: Change pantry item amount
   description: Adjust the amount of a pantry item by a delta (positive to add, negative to consume).
   fields:
+    name:
+      name: Item name
+      description: >
+        Name of the pantry item to change (e.g. "Milk"). Looked up against
+        your current pantry, so you don't need the UUID. Matching is
+        case-insensitive and falls back to a partial match when it's
+        unambiguous. Provide either this or the Item UUID.
+      required: false
+      example: "Milk"
+      selector:
+        text:
     item_id:
       name: Item UUID
-      description: The uuid attribute of the item.
-      required: true
+      description: >
+        The uuid attribute of the item (from sensor.pantrist_pantry → items).
+        Optional — prefer the Item name field unless two items share a name.
+      required: false
       selector:
         text:
     change:

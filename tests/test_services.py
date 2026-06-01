@@ -143,6 +143,85 @@ async def test_change_pantry_amount_service(
     )
 
 
+def _seed_pantry(mock_api: MagicMock, items: list[dict]) -> None:
+    """Point the coordinator's pantry fetch at a fixed item set."""
+    mock_api.get_pantry_list.return_value = {"listId": LIST_ID, "items": items}
+
+
+async def test_change_pantry_amount_by_name(
+    hass: HomeAssistant, config_entry: MockConfigEntry, mock_api: MagicMock
+) -> None:
+    """A name is resolved to its UUID against the live pantry (case-insensitive)."""
+    _seed_pantry(
+        mock_api,
+        [
+            {"uuid": "milk-uuid", "name": "Milk"},
+            {"uuid": "eggs-uuid", "name": "Eggs"},
+        ],
+    )
+    await _setup(hass, config_entry)
+    await hass.services.async_call(
+        DOMAIN,
+        SERVICE_CHANGE_PANTRY_AMOUNT,
+        {"name": "milk", "change": -1},
+        blocking=True,
+    )
+    mock_api.change_pantry_item_amount.assert_awaited_with(
+        LIST_ID, item_id="milk-uuid", change=-1.0, auto_restock=True
+    )
+
+
+async def test_change_pantry_amount_name_not_found(
+    hass: HomeAssistant, config_entry: MockConfigEntry, mock_api: MagicMock
+) -> None:
+    _seed_pantry(mock_api, [{"uuid": "milk-uuid", "name": "Milk"}])
+    await _setup(hass, config_entry)
+    with pytest.raises(HomeAssistantError):
+        await hass.services.async_call(
+            DOMAIN,
+            SERVICE_CHANGE_PANTRY_AMOUNT,
+            {"name": "Sugar", "change": -1},
+            blocking=True,
+        )
+    mock_api.change_pantry_item_amount.assert_not_awaited()
+
+
+async def test_change_pantry_amount_ambiguous_name(
+    hass: HomeAssistant, config_entry: MockConfigEntry, mock_api: MagicMock
+) -> None:
+    """A substring that matches several items forces a UUID disambiguation."""
+    _seed_pantry(
+        mock_api,
+        [
+            {"uuid": "whole-uuid", "name": "Whole Milk"},
+            {"uuid": "oat-uuid", "name": "Oat Milk"},
+        ],
+    )
+    await _setup(hass, config_entry)
+    with pytest.raises(HomeAssistantError):
+        await hass.services.async_call(
+            DOMAIN,
+            SERVICE_CHANGE_PANTRY_AMOUNT,
+            {"name": "milk", "change": -1},
+            blocking=True,
+        )
+    mock_api.change_pantry_item_amount.assert_not_awaited()
+
+
+async def test_change_pantry_amount_requires_identifier(
+    hass: HomeAssistant, config_entry: MockConfigEntry, mock_api: MagicMock
+) -> None:
+    await _setup(hass, config_entry)
+    with pytest.raises(HomeAssistantError):
+        await hass.services.async_call(
+            DOMAIN,
+            SERVICE_CHANGE_PANTRY_AMOUNT,
+            {"change": -1},
+            blocking=True,
+        )
+    mock_api.change_pantry_item_amount.assert_not_awaited()
+
+
 async def test_service_with_explicit_list_id(
     hass: HomeAssistant, config_entry: MockConfigEntry, mock_api: MagicMock
 ) -> None:

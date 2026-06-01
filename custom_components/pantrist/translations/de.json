@@ -55,6 +55,15 @@
     },
     "number_set_failed": {
       "message": "Vorratsmenge für {name} konnte nicht geändert werden: {error}"
+    },
+    "missing_item_identifier": {
+      "message": "Gib an, welcher Vorratsartikel geändert werden soll — über seinen Namen oder seine UUID."
+    },
+    "pantry_item_not_found": {
+      "message": "Kein Vorratsartikel passt zu „{name}“. Verfügbare Artikel: {available}."
+    },
+    "pantry_item_ambiguous": {
+      "message": "Mehrere Vorratsartikel passen zu „{name}“: {matches}. Führe die Aktion erneut mit der Item-UUID aus, um einen auszuwählen."
     }
   },
   "entity": {
