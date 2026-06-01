@@ -207,6 +207,16 @@
           "description": "Server-side: also add the item to the shopping list when the decrement crosses its minimum. On by default for HA-triggered flows; set to false for bare-decrement use cases."
         }
       }
+    },
+    "search_pantry_items": {
+      "name": "Search pantry items",
+      "description": "Look up pantry items and their UUIDs; returns the matches as a response.",
+      "fields": {
+        "query": {
+          "name": "Search query",
+          "description": "Name (or part of a name) to match, case-insensitively. Leave empty to return the whole pantry."
+        }
+      }
     }
   }
 }

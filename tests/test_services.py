@@ -20,6 +20,7 @@ from custom_components.pantrist.const import (
     SERVICE_CHECK_SHOPPING_LIST_ITEM,
     SERVICE_DELETE_PANTRY_ITEM,
     SERVICE_DELETE_SHOPPING_LIST_ITEM,
+    SERVICE_SEARCH_PANTRY_ITEMS,
 )
 
 from .conftest import LIST_ID
@@ -220,6 +221,59 @@ async def test_change_pantry_amount_requires_identifier(
             blocking=True,
         )
     mock_api.change_pantry_item_amount.assert_not_awaited()
+
+
+async def test_search_pantry_items_with_query(
+    hass: HomeAssistant, config_entry: MockConfigEntry, mock_api: MagicMock
+) -> None:
+    """The search action returns matching items with their UUIDs."""
+    _seed_pantry(
+        mock_api,
+        [
+            {"uuid": "milk-uuid", "name": "Milk", "amount": 2, "unitId": "L"},
+            {"uuid": "eggs-uuid", "name": "Eggs", "amount": 6},
+        ],
+    )
+    await _setup(hass, config_entry)
+    response = await hass.services.async_call(
+        DOMAIN,
+        SERVICE_SEARCH_PANTRY_ITEMS,
+        {"query": "milk"},
+        blocking=True,
+        return_response=True,
+    )
+    assert response == {
+        "list_id": LIST_ID,
+        "items": [
+            {
+                "item_id": "milk-uuid",
+                "name": "Milk",
+                "amount": 2,
+                "unit": "L",
+            }
+        ],
+    }
+
+
+async def test_search_pantry_items_without_query_returns_all(
+    hass: HomeAssistant, config_entry: MockConfigEntry, mock_api: MagicMock
+) -> None:
+    _seed_pantry(
+        mock_api,
+        [
+            {"uuid": "milk-uuid", "name": "Milk"},
+            {"uuid": "eggs-uuid", "name": "Eggs"},
+        ],
+    )
+    await _setup(hass, config_entry)
+    response = await hass.services.async_call(
+        DOMAIN,
+        SERVICE_SEARCH_PANTRY_ITEMS,
+        {},
+        blocking=True,
+        return_response=True,
+    )
+    assert [i["item_id"] for i in response["items"]] == ["milk-uuid", "eggs-uuid"]
 
 
 async def test_service_with_explicit_list_id(

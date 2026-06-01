@@ -8,7 +8,12 @@ from typing import Any
 import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
-from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.core import (
+    HomeAssistant,
+    ServiceCall,
+    ServiceResponse,
+    SupportsResponse,
+)
 from homeassistant.exceptions import (
     ConfigEntryAuthFailed,
     HomeAssistantError,
@@ -34,6 +39,7 @@ from .const import (
     SERVICE_CHECK_SHOPPING_LIST_ITEM,
     SERVICE_DELETE_PANTRY_ITEM,
     SERVICE_DELETE_SHOPPING_LIST_ITEM,
+    SERVICE_SEARCH_PANTRY_ITEMS,
 )
 from .coordinator import PantristCoordinator
 from .list_manager import PantristListManager
@@ -172,6 +178,31 @@ def _coordinator_for_call(
     return coords[0]
 
 
+def _pantry_items(coordinator: PantristCoordinator) -> list[dict[str, Any]]:
+    """Pantry items from the coordinator snapshot that have a uuid and name."""
+    return [
+        item
+        for item in (coordinator.data.pantry or {}).get("items", [])
+        if item.get("uuid") and item.get("name")
+    ]
+
+
+def _match_pantry_items(
+    items: list[dict[str, Any]], query: str
+) -> list[dict[str, Any]]:
+    """Match ``query`` against item names, case-insensitively.
+
+    An exact (trimmed, case-folded) match wins outright; only when there is
+    no exact match do we fall back to substring matches. Returns every item
+    in the winning tier, in pantry order.
+    """
+    needle = query.strip().casefold()
+    exact = [i for i in items if str(i["name"]).strip().casefold() == needle]
+    if exact:
+        return exact
+    return [i for i in items if needle in str(i["name"]).strip().casefold()]
+
+
 def _resolve_pantry_item_id(hass: HomeAssistant, call: ServiceCall) -> str:
     """Resolve a pantry item to its UUID for change_pantry_item_amount.
 
@@ -194,17 +225,8 @@ def _resolve_pantry_item_id(hass: HomeAssistant, call: ServiceCall) -> str:
         )
 
     coordinator = _coordinator_for_call(hass, call.data.get("list_id"))
-    items = [
-        item
-        for item in (coordinator.data.pantry or {}).get("items", [])
-        if item.get("uuid") and item.get("name")
-    ]
-
-    needle = name.casefold()
-    exact = [i for i in items if str(i["name"]).strip().casefold() == needle]
-    matches = exact or [
-        i for i in items if needle in str(i["name"]).strip().casefold()
-    ]
+    items = _pantry_items(coordinator)
+    matches = _match_pantry_items(items, name)
 
     if len(matches) == 1:
         return str(matches[0]["uuid"])
@@ -298,6 +320,32 @@ def _register_services(hass: HomeAssistant) -> None:
             auto_restock=bool(call.data.get("auto_restock", True)),
         )
 
+    async def search_pantry_items(call: ServiceCall) -> ServiceResponse:
+        """Return pantry items (and their UUIDs) matching an optional query.
+
+        Read-only helper so users can discover the ``item_id`` to feed into
+        change_pantry_item_amount — run it from Developer Tools → Actions to
+        eyeball the UUID, or chain it in a script via ``response_variable``.
+        With no ``query`` it returns the whole pantry.
+        """
+        coordinator = _coordinator_for_call(hass, call.data.get("list_id"))
+        items = _pantry_items(coordinator)
+        query = (call.data.get("query") or "").strip()
+        if query:
+            items = _match_pantry_items(items, query)
+        return {
+            "list_id": coordinator.list_id,
+            "items": [
+                {
+                    "item_id": str(item["uuid"]),
+                    "name": str(item["name"]),
+                    "amount": item.get("amount"),
+                    "unit": item.get("unitId"),
+                }
+                for item in items
+            ],
+        }
+
     # Annotated as dict[vol.Marker, Any] so mypy doesn't infer the narrower
     # marker subtype from the literal and reject the **spread below.
     common: dict[Any, Any] = {vol.Optional("list_id"): cv.string}
@@ -366,4 +414,11 @@ def _register_services(hass: HomeAssistant) -> None:
                 vol.Optional("auto_restock", default=True): cv.boolean,
             }
         ),
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_SEARCH_PANTRY_ITEMS,
+        search_pantry_items,
+        schema=vol.Schema({**common, vol.Optional("query"): cv.string}),
+        supports_response=SupportsResponse.ONLY,
     )

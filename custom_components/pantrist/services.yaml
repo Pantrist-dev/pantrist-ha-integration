@@ -129,3 +129,20 @@ change_pantry_item_amount:
       default: true
       selector:
         boolean:
+
+search_pantry_items:
+  name: Search pantry items
+  description: >
+    Look up pantry items and their UUIDs. Returns the matching items as a
+    response — handy for finding the Item UUID to pass to "Change pantry item
+    amount", or for chaining in a script via a response variable.
+  fields:
+    query:
+      name: Search query
+      description: >
+        Name (or part of a name) to match, case-insensitively. Leave empty to
+        return every item in the pantry.
+      required: false
+      example: "Milk"
+      selector:
+        text:
