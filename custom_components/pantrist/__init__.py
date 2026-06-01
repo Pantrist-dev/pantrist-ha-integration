@@ -240,7 +240,6 @@ def _register_services(hass: HomeAssistant) -> None:
             "change_pantry_item_amount",
             item_id=call.data["item_id"],
             change=float(call.data["change"]),
-            unit_id=call.data.get("unit_id"),
             auto_restock=bool(call.data.get("auto_restock", True)),
         )
 
@@ -299,7 +298,6 @@ def _register_services(hass: HomeAssistant) -> None:
                 **common,
                 vol.Required("item_id"): cv.string,
                 vol.Required("change"): vol.Coerce(float),
-                vol.Optional("unit_id"): cv.string,
                 # Defaults to True here even though the underlying API
                 # defaults to False — the HA service is the automation
                 # surface; a "consume + auto-reorder" round-trip is the
