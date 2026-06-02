@@ -1,0 +1,26 @@
+name: Feature request
+description: Suggest a new entity, service, blueprint or behaviour
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What automation are you trying to build?
+      description: Tell us about the use case — what would you wire up if this existed?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: |
+        Which sensor, service, blueprint or config option should we add?
+        If a Pantrist API endpoint already exposes the data you need,
+        please link to it.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Existing workarounds (template sensors, REST commands, etc.) you've tried.

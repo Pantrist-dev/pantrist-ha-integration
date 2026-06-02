@@ -1,0 +1,86 @@
+name: Bug report
+description: Something in the Pantrist Home Assistant integration isn't working
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug! A few details up-front
+        make it much faster to reproduce and fix. **Please attach the
+        integration's diagnostics download if you can** — Settings →
+        Devices & Services → Pantrist → ⋮ → Download diagnostics. It
+        redacts your tokens automatically.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect, and what did you see instead?
+      placeholder: |
+        Steps to reproduce:
+        1. …
+        2. …
+        3. …
+
+        Expected: …
+        Actual:   …
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which area is affected?
+      options:
+        - Setup / config flow (OAuth, account linking)
+        - Sensors (shopping list, pantry, expiring soon, shopping cart)
+        - Todo lists
+        - Services (add, check, remove items)
+        - Blueprints
+        - Socket.IO real-time updates
+        - Other / unsure
+    validations:
+      required: true
+  - type: input
+    id: integration-version
+    attributes:
+      label: Pantrist integration version
+      placeholder: e.g. 0.1.2 (see Settings → Devices & Services → Pantrist)
+    validations:
+      required: true
+  - type: input
+    id: ha-version
+    attributes:
+      label: Home Assistant version
+      placeholder: e.g. Core 2025.4.0, Supervisor 2025.04.0
+    validations:
+      required: true
+  - type: dropdown
+    id: install-type
+    attributes:
+      label: Home Assistant installation type
+      options:
+        - Home Assistant OS
+        - Home Assistant Supervised
+        - Home Assistant Container (Docker)
+        - Home Assistant Core (venv)
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: |
+        Enable debug logging via Settings → Devices & Services → Pantrist →
+        ⋮ → Enable debug logging, reproduce the issue, then disable to
+        download. **Diagnostics downloads are preferred — attach the JSON.**
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-flight
+      options:
+        - label: I searched existing issues for a duplicate.
+          required: true
+        - label: I'm on the latest release of the integration available in HACS.
+          required: true
+        - label: I removed any tokens or personal data from the report above.
+          required: true

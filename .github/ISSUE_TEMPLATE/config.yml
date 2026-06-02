@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/Pantrist-dev/pantrist-ha-integration/security/policy
+    about: Please report security issues privately — see SECURITY.md, do not open a public issue.
+  - name: Pantrist community forum
+    url: https://community.pantrist.com/
+    about: General Pantrist questions, account problems and feature voting belong here.
+  - name: Home Assistant community forum
+    url: https://community.home-assistant.io/
+    about: Questions about Home Assistant itself (automations, templates, dashboards) are best asked here.
+  - name: HACS support
+    url: https://hacs.xyz/docs/help/issues
+    about: Problems installing the integration through HACS itself.

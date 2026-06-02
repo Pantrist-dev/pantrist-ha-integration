@@ -6,10 +6,10 @@
   ],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/Pantrist-dev/pantrist-ha-addon",
+  "documentation": "https://github.com/Pantrist-dev/pantrist-ha-integration",
   "integration_type": "service",
   "iot_class": "cloud_push",
-  "issue_tracker": "https://github.com/Pantrist-dev/pantrist-ha-addon/issues",
+  "issue_tracker": "https://github.com/Pantrist-dev/pantrist-ha-integration/issues",
   "loggers": [
     "pantrist",
     "socketio",

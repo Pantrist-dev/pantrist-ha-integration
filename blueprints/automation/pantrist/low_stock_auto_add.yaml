@@ -7,7 +7,7 @@ blueprint:
     name match) are skipped, so this blueprint composes safely with
     the API-side ``autoRestock`` flag — if the server already restocked
     on the same decrement, the blueprint becomes a no-op for that item.
-  source_url: https://github.com/Pantrist-dev/pantrist-ha-addon/blob/main/blueprints/automation/pantrist/low_stock_auto_add.yaml
+  source_url: https://github.com/Pantrist-dev/pantrist-ha-integration/blob/main/blueprints/automation/pantrist/low_stock_auto_add.yaml
   domain: automation
   homeassistant:
     min_version: 2024.10.0

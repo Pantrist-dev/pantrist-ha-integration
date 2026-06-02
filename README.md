@@ -17,21 +17,17 @@ households get separate sensors / todo entities for each list out of a single OA
 
 1. Install [HACS](https://hacs.xyz/docs/use/download/) if you don't already have it.
 2. Open HACS → **Integrations** → ⋮ → **Custom repositories**.
-3. Repository URL: `https://github.com/Pantrist-dev/pantrist-ha-addon`
+3. Repository URL: `https://github.com/Pantrist-dev/pantrist-ha-integration`
    Category: **Integration** → **Add**.
 4. Search for **Pantrist** → **Download** → **Restart Home Assistant**.
 5. **Settings → Devices & Services → + Add Integration** → search **Pantrist** → click.
 6. Authorize via the browser, pick a list, click **Allow**. Done.
 
-> Pantrist uses PKCE (public client, no secret) and the integration
-> ships its own OAuth implementation — you do **not** need to
-> walk through *Application Credentials* before adding the integration.
-
 ## Install manually (no HACS)
 
 ```bash
 # From your computer, with /config mounted via Samba (or use scp/rsync via SSH)
-cp -r custom_components/pantrist /config/custom_components/pantrist
+cp -r custom_components/pantrist /config/custom_components/
 ```
 
 Restart Home Assistant, then continue from step 5 above.
@@ -283,10 +279,10 @@ and paste these URLs:
 
 | Blueprint | URL | What it does |
 |---|---|---|
-| Voice — Add to shopping list | `https://github.com/Pantrist-dev/pantrist-ha-addon/blob/main/blueprints/automation/pantrist/voice_add_to_shopping_list.yaml` | Say "Add milk to the shopping list" (or German "Schreib Milch auf die Einkaufsliste") via HA Assist and the item lands on the list. |
-| Low-stock auto-add | `https://github.com/Pantrist-dev/pantrist-ha-addon/blob/main/blueprints/automation/pantrist/low_stock_auto_add.yaml` | Pantry items that fall at or below their configured minimum amount are automatically added to the shopping list. Items already on the list (by name) are skipped, so it composes safely with the server-side `autoRestock` flag — whichever fires first wins. |
-| Expiring-soon notification | `https://github.com/Pantrist-dev/pantrist-ha-addon/blob/main/blueprints/automation/pantrist/expiring_notification.yaml` | Fires a notify action (push / TTS / persistent notification — your choice) once per day if any pantry items are within the expiry window. |
-| NFC consume pantry item | `https://github.com/Pantrist-dev/pantrist-ha-addon/blob/main/blueprints/automation/pantrist/nfc_consume_pantry_item.yaml` | Scan an NFC tag (Companion app, ESPHome PN532, …) to decrement the bound pantry item. With **Auto-restock when below minimum** enabled (default), one scan does both halves server-side: pantry decrement *and* shopping-list insert, with full article metadata. |
+| Voice — Add to shopping list | `https://github.com/Pantrist-dev/pantrist-ha-integration/blob/main/blueprints/automation/pantrist/voice_add_to_shopping_list.yaml` | Say "Add milk to the shopping list" (or German "Schreib Milch auf die Einkaufsliste") via HA Assist and the item lands on the list. |
+| Low-stock auto-add | `https://github.com/Pantrist-dev/pantrist-ha-integration/blob/main/blueprints/automation/pantrist/low_stock_auto_add.yaml` | Pantry items that fall at or below their configured minimum amount are automatically added to the shopping list. Items already on the list (by name) are skipped, so it composes safely with the server-side `autoRestock` flag — whichever fires first wins. |
+| Expiring-soon notification | `https://github.com/Pantrist-dev/pantrist-ha-integration/blob/main/blueprints/automation/pantrist/expiring_notification.yaml` | Fires a notify action (push / TTS / persistent notification — your choice) once per day if any pantry items are within the expiry window. |
+| NFC consume pantry item | `https://github.com/Pantrist-dev/pantrist-ha-integration/blob/main/blueprints/automation/pantrist/nfc_consume_pantry_item.yaml` | Scan an NFC tag (Companion app, ESPHome PN532, …) to decrement the bound pantry item. With **Auto-restock when below minimum** enabled (default), one scan does both halves server-side: pantry decrement *and* shopping-list insert, with full article metadata. |
 
 After import: **Automations → + Create from blueprint** → pick one → fill in the inputs → Save.
 

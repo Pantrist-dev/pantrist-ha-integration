@@ -4,7 +4,7 @@ blueprint:
     Sends a notification once per day if any pantry items are within the
     configured expiry window. Choose any notify service (mobile_app,
     persistent_notification, tts, etc.).
-  source_url: https://github.com/Pantrist-dev/pantrist-ha-addon/blob/main/blueprints/automation/pantrist/expiring_notification.yaml
+  source_url: https://github.com/Pantrist-dev/pantrist-ha-integration/blob/main/blueprints/automation/pantrist/expiring_notification.yaml
   domain: automation
   homeassistant:
     min_version: 2024.10.0
