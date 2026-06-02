@@ -116,5 +116,107 @@
         "name": "Vorratskammer"
       }
     }
+  },
+  "services": {
+    "add_to_shopping_list": {
+      "name": "Zur Einkaufsliste hinzufügen",
+      "description": "Fügt einen Artikel per Name zur verbundenen Pantrist-Einkaufsliste hinzu.",
+      "fields": {
+        "name": {
+          "name": "Artikelname",
+          "description": "Freitext-Artikelname."
+        }
+      }
+    },
+    "add_to_shopping_list_by_barcode": {
+      "name": "Per Barcode zur Einkaufsliste hinzufügen",
+      "description": "Sucht ein Produkt anhand des Barcodes und fügt es zur Einkaufsliste hinzu.",
+      "fields": {
+        "barcode": {
+          "name": "Barcode",
+          "description": "Der Produkt-Barcode (EAN-13, UPC-A usw.)."
+        }
+      }
+    },
+    "check_shopping_list_item": {
+      "name": "Einkaufslisten-Artikel abhaken",
+      "description": "Markiert einen Artikel auf der Einkaufsliste als gekauft.",
+      "fields": {
+        "item_id": {
+          "name": "Artikel-UUID",
+          "description": "Das uuid-Attribut des Artikels."
+        }
+      }
+    },
+    "delete_shopping_list_item": {
+      "name": "Einkaufslisten-Artikel löschen",
+      "description": "Entfernt einen Artikel von der Einkaufsliste.",
+      "fields": {
+        "item_id": {
+          "name": "Artikel-UUID",
+          "description": "Das uuid-Attribut des Artikels."
+        }
+      }
+    },
+    "add_to_pantry": {
+      "name": "Zur Vorratskammer hinzufügen",
+      "description": "Fügt einen Artikel per Name zur verbundenen Pantrist-Vorratskammer hinzu.",
+      "fields": {
+        "name": {
+          "name": "Artikelname",
+          "description": "Freitext-Artikelname."
+        },
+        "amount": {
+          "name": "Menge",
+          "description": "Hinzuzufügende Menge (Standard: 1)."
+        },
+        "unit_id": {
+          "name": "Einheit",
+          "description": "Einheitenkennung (Standard: pieces)."
+        }
+      }
+    },
+    "delete_pantry_item": {
+      "name": "Vorratsartikel löschen",
+      "description": "Entfernt einen Artikel aus der Vorratskammer.",
+      "fields": {
+        "item_id": {
+          "name": "Artikel-UUID",
+          "description": "Das uuid-Attribut des Artikels."
+        }
+      }
+    },
+    "change_pantry_item_amount": {
+      "name": "Vorratsmenge ändern",
+      "description": "Ändert die Menge eines Vorratsartikels um einen Differenzwert.",
+      "fields": {
+        "name": {
+          "name": "Artikelname",
+          "description": "Name des zu ändernden Vorratsartikels (z. B. „Milch“). Wird in deiner aktuellen Vorratskammer nachgeschlagen – keine UUID nötig. Gib entweder dies oder die Artikel-UUID an."
+        },
+        "item_id": {
+          "name": "Artikel-UUID",
+          "description": "Das uuid-Attribut des Artikels (aus sensor.pantrist_pantry). Optional – nutze bevorzugt den Artikelnamen, außer zwei Artikel haben denselben Namen."
+        },
+        "change": {
+          "name": "Änderung",
+          "description": "Positiv zum Hinzufügen, negativ zum Verbrauchen."
+        },
+        "auto_restock": {
+          "name": "Automatisch nachbestellen, wenn unter Minimum",
+          "description": "Serverseitig: legt den Artikel auch auf die Einkaufsliste, wenn die Menge beim Verringern das Minimum erreicht oder unterschreitet. Standardmäßig aktiv für HA-Auslöser; auf „false“ setzen, wenn nur die Menge verringert werden soll."
+        }
+      }
+    },
+    "search_pantry_items": {
+      "name": "Vorratsartikel suchen",
+      "description": "Sucht Vorratsartikel und ihre UUIDs; liefert die Treffer als Antwort zurück.",
+      "fields": {
+        "query": {
+          "name": "Suchbegriff",
+          "description": "Name (oder Namensteil), groß-/kleinschreibungsunabhängig. Leer lassen, um die gesamte Vorratskammer zurückzugeben."
+        }
+      }
+    }
   }
 }
