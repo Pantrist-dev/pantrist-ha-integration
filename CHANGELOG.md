@@ -4,6 +4,20 @@ All notable changes to the Pantrist HA Integration are recorded here.
 Generated from Conventional Commits by [standard-version](https://github.com/conventional-changelog/standard-version).
 
 
+### [0.1.3](https://github.com/Pantrist-dev/pantrist-ha-addon/compare/v0.1.2...v0.1.3) (2026-06-02)
+
+
+### Features
+
+* **services:** add search_pantry_items response action ([8c2c449](https://github.com/Pantrist-dev/pantrist-ha-addon/commit/8c2c449b3e75a46bd72e23cdd9bbe6a7889f17f4))
+* **services:** include content_volume and brand in search results ([9a1806e](https://github.com/Pantrist-dev/pantrist-ha-addon/commit/9a1806e4549fae517acbb06abfa9d46a38292a3d))
+* **services:** look up pantry items by name in change_pantry_item_amount ([0b8c794](https://github.com/Pantrist-dev/pantrist-ha-addon/commit/0b8c794560add659e7f6fe7fe2a3f80474918cd7))
+
+
+### Refactoring
+
+* **services:** drop legacy unit_id from change_pantry_item_amount ([1bf91fb](https://github.com/Pantrist-dev/pantrist-ha-addon/commit/1bf91fbae83bb8475123469aef8bf42a7fbbddab))
+
 ### [0.1.2](https://github.com/Pantrist-dev/pantrist-ha-integration/compare/v0.1.1...v0.1.2) (2026-05-27)
 
 
