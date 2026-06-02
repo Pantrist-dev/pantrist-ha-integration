@@ -230,7 +230,14 @@ async def test_search_pantry_items_with_query(
     _seed_pantry(
         mock_api,
         [
-            {"uuid": "milk-uuid", "name": "Milk", "amount": 2, "unitId": "L"},
+            {
+                "uuid": "milk-uuid",
+                "name": "Milk",
+                "amount": 2,
+                "contentVolume": 1.5,
+                "unitId": "L",
+                "brand": "Acme",
+            },
             {"uuid": "eggs-uuid", "name": "Eggs", "amount": 6},
         ],
     )
@@ -249,7 +256,9 @@ async def test_search_pantry_items_with_query(
                 "item_id": "milk-uuid",
                 "name": "Milk",
                 "amount": 2,
+                "content_volume": 1.5,
                 "unit": "L",
+                "brand": "Acme",
             }
         ],
     }

@@ -340,7 +340,9 @@ def _register_services(hass: HomeAssistant) -> None:
                     "item_id": str(item["uuid"]),
                     "name": str(item["name"]),
                     "amount": item.get("amount"),
+                    "content_volume": item.get("contentVolume"),
                     "unit": item.get("unitId"),
+                    "brand": item.get("brand"),
                 }
                 for item in items
             ],
