@@ -1,1 +1,120 @@
-{}
+{
+    "config": {
+        "step": {
+            "pick_implementation": {
+                "title": "Połącz konto Pantrist",
+                "description": "Zezwól Home Assistant na dostęp do danych Pantrist."
+            },
+            "reauth_confirm": {
+                "title": "Ponownie połącz konto Pantrist",
+                "description": "Token odświeżania Pantrist nie jest już ważny. Autoryzuj ponownie, aby dalej otrzymywać aktualizacje."
+            }
+        },
+        "abort": {
+            "authorize_url_timeout": "Przekroczono limit czasu podczas tworzenia adresu URL autoryzacji.",
+            "missing_configuration": "Dane uwierzytelniające aplikacji Pantrist nie są skonfigurowane.",
+            "missing_list_id": "Pantrist nie zwrócił identyfikatora Gospodarstwa — spróbuj ponownie i wybierz Gospodarstwo w oknie zgody.",
+            "already_configured": "To Gospodarstwo Pantrist jest już połączone.",
+            "wrong_account": "Podczas ponownego uwierzytelniania wybrano inne Gospodarstwo niż pierwotnie. Usuń ten wpis i dodaj nowy.",
+            "reauth_successful": "Ponownie połączono z Pantrist.",
+            "reconfigure_successful": "Pantrist został pomyślnie ponownie skonfigurowany.",
+            "invalid_auth": "Pantrist odrzucił token dostępu. Spróbuj ponownie.",
+            "cannot_connect": "Nie można połączyć się z API Pantrist. Sprawdź połączenie i spróbuj ponownie."
+        },
+        "create_entry": {
+            "default": "Pomyślnie połączono z Pantrist."
+        }
+    },
+    "issues": {
+        "socket_disconnected": {
+            "title": "Aktualizacje Pantrist w czasie rzeczywistym zostały przerwane",
+            "description": "Połączenie Pantrist Socket.IO dla Gospodarstwa {list_name} jest przerwane od około {minutes} min. Po przywróceniu połączenia zawartość Gospodarstwa zaktualizuje się automatycznie. Jeśli tak się nie stanie, sprawdź Ustawienia → System → Dzienniki pod kątem błędów ``custom_components.pantrist``."
+        }
+    },
+    "exceptions": {
+        "not_configured": {
+            "message": "Integracja Pantrist nie jest skonfigurowana. Najpierw ją dodaj."
+        },
+        "unknown_list_id": {
+            "message": "Brak koordynatora Pantrist dla list_id={list_id}. Dostępne: {available}."
+        },
+        "api_request_failed": {
+            "message": "Wywołanie API Pantrist nie powiodło się: {error}"
+        },
+        "todo_missing_summary": {
+            "message": "Pozycja na Liście Zakupów musi mieć nazwę."
+        },
+        "todo_add_failed": {
+            "message": "Nie udało się dodać pozycji do Listy Zakupów: {error}"
+        },
+        "todo_check_failed": {
+            "message": "Nie udało się oznaczyć pozycji na Liście Zakupów jako kupionej: {error}"
+        },
+        "todo_delete_failed": {
+            "message": "Nie udało się usunąć pozycji {uid} z Listy Zakupów: {error}"
+        },
+        "number_set_failed": {
+            "message": "Nie udało się zmienić ilości w Spiżarni dla {name}: {error}"
+        },
+        "missing_item_identifier": {
+            "message": "Wskaż produkt w Spiżarni, który ma zostać zmieniony — podaj jego nazwę albo UUID."
+        },
+        "pantry_item_not_found": {
+            "message": "Żaden produkt w Spiżarni nie pasuje do „{name}”. Dostępne produkty: {available}."
+        },
+        "pantry_item_ambiguous": {
+            "message": "Kilka produktów w Spiżarni pasuje do „{name}”: {matches}. Uruchom akcję ponownie z UUID produktu, aby wybrać właściwy."
+        }
+    },
+    "entity": {
+        "sensor": {
+            "shopping_list": {
+                "name": "Lista Zakupów"
+            },
+            "pantry": {
+                "name": "Spiżarnia"
+            },
+            "expiring_soon": {
+                "name": "Wkrótce przeterminowane"
+            },
+            "shopping_cart": {
+                "name": "Koszyk"
+            },
+            "next_expiration": {
+                "name": "Najbliższa data ważności"
+            },
+            "latest_shopping_item": {
+                "name": "Ostatnia pozycja z Listy Zakupów"
+            }
+        },
+        "binary_sensor": {
+            "low_stock": {
+                "name": "Niski stan zapasów"
+            },
+            "has_expired_items": {
+                "name": "Są przeterminowane produkty"
+            },
+            "shopping_list_has_items": {
+                "name": "Lista Zakupów zawiera pozycje"
+            }
+        },
+        "calendar": {
+            "pantry_calendar": {
+                "name": "Daty ważności w Spiżarni"
+            }
+        },
+        "number": {
+            "pantry_amount": {
+                "name": "Stan produktu: {item}"
+            }
+        },
+        "todo": {
+            "shopping_list_todo": {
+                "name": "Lista Zakupów"
+            },
+            "pantry_todo": {
+                "name": "Spiżarnia"
+            }
+        }
+    }
+}
