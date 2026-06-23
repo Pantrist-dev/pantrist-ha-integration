@@ -8,6 +8,7 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+import socketio
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import UpdateFailed
@@ -272,6 +273,52 @@ async def test_sio_connect_disconnect_swallows_errors(hass: HomeAssistant) -> No
         return_value=fake_sio,
     ):
         await coord._sio_connect_and_wait()
+
+
+async def test_sio_connect_failure_closes_leaked_session(
+    hass: HomeAssistant,
+) -> None:
+    """A failed connect must still close the engineio aiohttp session.
+
+    engineio leaks its ClientSession when the WebSocket connect fails, which
+    during a DNS / network outage would accumulate "Unclosed client session"
+    errors and destabilise HA. The connect attempt must clean it up.
+    """
+    api = MagicMock()
+    api._session = MagicMock()
+    api._session.async_ensure_token_valid = AsyncMock()
+    api._session.token = {"access_token": "tok"}
+
+    coord = _build(hass, api)
+
+    http = MagicMock()
+    http.closed = False
+    http.close = AsyncMock()
+
+    fake_sio = MagicMock()
+    fake_sio.connect = AsyncMock(
+        side_effect=socketio.exceptions.ConnectionError("Connection error")
+    )
+    fake_sio.wait = AsyncMock()
+    fake_sio.disconnect = AsyncMock()
+    fake_sio.connected = False
+    fake_sio.eio = MagicMock()
+    fake_sio.eio.http = http
+    fake_sio.event = MagicMock(side_effect=lambda **_k: (lambda fn: fn))
+    fake_sio.on = MagicMock(side_effect=lambda *_a, **_k: (lambda fn: fn))
+    fake_sio.emit = AsyncMock()
+
+    with patch(
+        "custom_components.pantrist.coordinator.socketio.AsyncClient",
+        return_value=fake_sio,
+    ):
+        with pytest.raises(socketio.exceptions.ConnectionError):
+            await coord._sio_connect_and_wait()
+
+    # The leaked session was closed, and we never blocked in wait().
+    http.close.assert_awaited_once()
+    fake_sio.wait.assert_not_awaited()
+    assert coord._sio is None
 
 
 async def test_sio_event_callbacks_invoked(hass: HomeAssistant) -> None:

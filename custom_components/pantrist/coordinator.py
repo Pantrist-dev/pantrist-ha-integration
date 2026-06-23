@@ -357,13 +357,13 @@ class PantristCoordinator(DataUpdateCoordinator[PantristData]):
                 str(list_id),
             )
 
-        await sio.connect(
-            API_BASE,
-            namespaces=[SOCKET_NAMESPACE],
-            auth={"token": token},
-            transports=["websocket"],
-        )
         try:
+            await sio.connect(
+                API_BASE,
+                namespaces=[SOCKET_NAMESPACE],
+                auth={"token": token},
+                transports=["websocket"],
+            )
             await sio.wait()
         finally:
             if sio.connected:
@@ -371,5 +371,28 @@ class PantristCoordinator(DataUpdateCoordinator[PantristData]):
                     await sio.disconnect()
                 except Exception:  # noqa: BLE001
                     pass
+            # engineio does NOT close its internal aiohttp ClientSession
+            # when the WebSocket connect fails — it raises ConnectionError
+            # and leaks the session (see
+            # engineio.async_client._connect_websocket). During a DNS /
+            # network outage the outer reconnect loop would otherwise leak
+            # one session per attempt, surfacing as HA's "Unclosed client
+            # session" / "Unclosed connection" errors and eventually
+            # destabilising the event loop. Close it defensively here so
+            # every connect attempt — successful or not — cleans up.
+            await self._close_sio_session(sio)
             if self._sio is sio:
                 self._sio = None
+
+    @staticmethod
+    async def _close_sio_session(sio: socketio.AsyncClient) -> None:
+        """Close the engineio aiohttp session backing ``sio``, if any."""
+        eio = getattr(sio, "eio", None)
+        http = getattr(eio, "http", None)
+        if http is not None and not http.closed:
+            try:
+                await http.close()
+            except Exception:  # noqa: BLE001
+                _LOGGER.debug(
+                    "Closing engineio HTTP session raised", exc_info=True
+                )
