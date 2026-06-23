@@ -4,6 +4,13 @@ All notable changes to the Pantrist HA Integration are recorded here.
 Generated from Conventional Commits by [standard-version](https://github.com/conventional-changelog/standard-version).
 
 
+### [0.1.4](https://github.com/Pantrist-dev/pantrist-ha-addon/compare/v0.1.3...v0.1.4) (2026-06-23)
+
+
+### Bug Fixes
+
+* **socket:** close engineio aiohttp session in case of error ([9bdedf0](https://github.com/Pantrist-dev/pantrist-ha-addon/commit/9bdedf0622a1571b23b0c5d1eb808010c8b122d7))
+
 ### [0.1.3](https://github.com/Pantrist-dev/pantrist-ha-addon/compare/v0.1.2...v0.1.3) (2026-06-02)
 
 

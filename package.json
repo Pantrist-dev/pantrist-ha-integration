@@ -1,6 +1,6 @@
 {
   "name": "pantrist-ha-integration",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Pantrist Home Assistant Custom Integration — release tooling",
   "private": true,
   "scripts": {
