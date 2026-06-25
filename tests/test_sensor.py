@@ -134,6 +134,19 @@ async def test_pantry_sensor_reports_low_stock(hass: HomeAssistant) -> None:
     assert attrs["low_stock_items"][0]["name"] == "Pasta"
 
 
+async def test_pantry_sensor_bulky_attrs_not_recorded(hass: HomeAssistant) -> None:
+    """The large item lists are excluded from recorder history (16 KB cap).
+
+    They stay in the live state for dashboards but must not be persisted, or
+    the recorder logs "State attributes … exceed maximum size" and drops them.
+    """
+    coord = _make_coordinator(hass, PantristData(pantry={"items": []}))
+    sensor = PantristPantrySensor(coord)
+    assert {"items", "low_stock_items"} <= PantristPantrySensor._unrecorded_attributes
+    # The attributes are still exposed live.
+    assert "items" in sensor.extra_state_attributes
+
+
 async def test_expiring_soon_sensor_splits_expiring_and_expired(
     hass: HomeAssistant,
 ) -> None:

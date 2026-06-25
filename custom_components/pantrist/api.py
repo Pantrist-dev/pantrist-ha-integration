@@ -25,6 +25,7 @@ from typing import Any
 import httpx
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.config_entry_oauth2_flow import OAuth2Session
+from homeassistant.util.ssl import client_context
 
 from .const import API_BASE
 from .pantrist_client import AuthenticatedClient
@@ -70,12 +71,48 @@ class PantristApi:
     def __init__(self, hass: HomeAssistant, session: OAuth2Session) -> None:
         self._hass = hass
         self._session = session
+        self._httpx_client: httpx.AsyncClient | None = None
+
+    async def _async_httpx_client(self) -> httpx.AsyncClient:
+        """Return a lazily-built, reusable ``httpx.AsyncClient``.
+
+        Constructing an ``httpx.AsyncClient`` makes httpx read the certifi CA
+        bundle and call ``ssl.SSLContext.load_verify_locations()`` — a blocking
+        file read. Done lazily on the first API call it lands inside the event
+        loop, which HA detects and aborts the setup over.
+
+        We sidestep that by building the SSL context once in the executor (via
+        HA's cached ``client_context`` helper) and handing the ready-made
+        context to httpx, so no blocking disk read ever runs in the loop. The
+        client is reused across calls (connection pooling) and closed in
+        :meth:`async_close` when the config entry unloads.
+        """
+        if self._httpx_client is None:
+            ssl_context = await self._hass.async_add_executor_job(client_context)
+            self._httpx_client = httpx.AsyncClient(
+                base_url=API_BASE, verify=ssl_context
+            )
+        return self._httpx_client
 
     async def _client(self) -> AuthenticatedClient:
         """Return an AuthenticatedClient with a freshly-refreshed token."""
         await self._session.async_ensure_token_valid()
         token = self._session.token["access_token"]
-        return AuthenticatedClient(base_url=API_BASE, token=token)
+        httpx_client = await self._async_httpx_client()
+        # The generated client only stamps the auth header while *constructing*
+        # its own httpx client; since we inject a pre-built one, set the bearer
+        # ourselves. Concurrent calls (e.g. the coordinator's gather) share the
+        # same refreshed token, so this write is idempotent and race-free.
+        httpx_client.headers["Authorization"] = f"Bearer {token}"
+        client = AuthenticatedClient(base_url=API_BASE, token=token)
+        client.set_async_httpx_client(httpx_client)
+        return client
+
+    async def async_close(self) -> None:
+        """Close the shared httpx client. Called when the config entry unloads."""
+        if self._httpx_client is not None:
+            await self._httpx_client.aclose()
+            self._httpx_client = None
 
     @staticmethod
     def _wrap(value: Any) -> Any:
