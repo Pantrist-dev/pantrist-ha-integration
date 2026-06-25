@@ -4,6 +4,13 @@ All notable changes to the Pantrist HA Integration are recorded here.
 Generated from Conventional Commits by [standard-version](https://github.com/conventional-changelog/standard-version).
 
 
+### [0.1.5](https://github.com/Pantrist-dev/pantrist-ha-addon/compare/v0.1.4...v0.1.5) (2026-06-25)
+
+
+### Bug Fixes
+
+* **api:** build SSL context off-loop to stop blocking-call setup crash ([7b0d7b7](https://github.com/Pantrist-dev/pantrist-ha-addon/commit/7b0d7b7d38e1796bd1e18ad1e2ca96ec6569dce6))
+
 ### [0.1.4](https://github.com/Pantrist-dev/pantrist-ha-addon/compare/v0.1.3...v0.1.4) (2026-06-23)
 
 
