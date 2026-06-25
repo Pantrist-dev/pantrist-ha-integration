@@ -153,6 +153,11 @@ class PantristShoppingListSensor(_PantristBaseSensor):
 
     _attr_icon = "mdi:cart"
     _attr_translation_key = "shopping_list"
+    # The full per-item list can grow past the recorder's 16 KB attribute cap
+    # (it logs a warning and drops the attributes from history). Keep it live
+    # for dashboards/templates but don't persist it — the item count (the
+    # sensor's state) is the historically interesting signal.
+    _unrecorded_attributes = frozenset({"items"})
 
     def __init__(self, coordinator: PantristCoordinator) -> None:
         super().__init__(coordinator, SENSOR_SHOPPING_LIST)
@@ -175,6 +180,11 @@ class PantristPantrySensor(_PantristBaseSensor):
 
     _attr_icon = "mdi:fridge"
     _attr_translation_key = "pantry"
+    # A full pantry easily exceeds the recorder's 16 KB attribute cap (this is
+    # the sensor that triggered the "State attributes … exceed maximum size"
+    # warning). Don't persist the bulky item lists — the counts remain in
+    # history, and the live attributes stay available for cards/automations.
+    _unrecorded_attributes = frozenset({"items", "low_stock_items"})
 
     def __init__(self, coordinator: PantristCoordinator) -> None:
         super().__init__(coordinator, SENSOR_PANTRY)
@@ -205,6 +215,9 @@ class PantristExpiringSoonSensor(_PantristBaseSensor):
 
     _attr_icon = "mdi:calendar-alert"
     _attr_translation_key = "expiring_soon"
+    # Same recorder-size guard as the pantry sensor — the counts are recorded,
+    # the per-item lists are kept live-only.
+    _unrecorded_attributes = frozenset({"expiring_items", "expired_items"})
 
     def __init__(self, coordinator: PantristCoordinator) -> None:
         super().__init__(coordinator, SENSOR_EXPIRING_SOON)
@@ -259,6 +272,8 @@ class PantristShoppingCartSensor(_PantristBaseSensor):
 
     _attr_icon = "mdi:cart-check"
     _attr_translation_key = "shopping_cart"
+    # Same recorder-size guard — keep the item list live-only.
+    _unrecorded_attributes = frozenset({"items"})
 
     def __init__(self, coordinator: PantristCoordinator) -> None:
         super().__init__(coordinator, SENSOR_SHOPPING_CART)

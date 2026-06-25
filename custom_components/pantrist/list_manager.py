@@ -192,6 +192,9 @@ class PantristListManager:
         for coord in list(self._coordinators.values()):
             await coord.async_stop_socketio()
         self._coordinators.clear()
+        # Release the shared httpx client (and its connection pool) we built
+        # for this entry's API wrapper.
+        await self._api.async_close()
 
     async def _on_interval(self, _now: datetime) -> None:
         await self.async_reconcile()

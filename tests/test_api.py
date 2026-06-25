@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import AsyncGenerator
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -18,13 +19,22 @@ LIST_ID = "00000000-0000-4000-8000-000000000001"
 
 
 @pytest.fixture
-def api() -> PantristApi:
+async def api() -> AsyncGenerator[PantristApi, None]:
     """An API wrapper with a stubbed OAuth2 session — no real HA needed."""
     hass = MagicMock()
+    # Run executor jobs inline so the lazily-built SSL context (used when the
+    # shared httpx client is constructed) resolves without a real HA loop.
+    async def _run_executor_job(func: Any, *args: Any) -> Any:
+        return func(*args)
+
+    hass.async_add_executor_job = AsyncMock(side_effect=_run_executor_job)
     session = MagicMock()
     session.async_ensure_token_valid = AsyncMock()
     session.token = {"access_token": "tok"}
-    return PantristApi(hass, session)
+    wrapper = PantristApi(hass, session)
+    yield wrapper
+    # Close the shared httpx client built lazily by ``_client()``.
+    await wrapper.async_close()
 
 
 async def test_client_refreshes_token(api: PantristApi) -> None:
@@ -32,6 +42,41 @@ async def test_client_refreshes_token(api: PantristApi) -> None:
     session: Any = api._session
     session.async_ensure_token_valid.assert_awaited_once()
     assert client.token == "tok"
+
+
+async def test_client_injects_shared_httpx_client(api: PantristApi) -> None:
+    """The AuthenticatedClient uses our pre-built, auth-stamped httpx client."""
+    client = await api._client()
+    httpx_client = client.get_async_httpx_client()
+    # No new client is constructed inside the loop — the injected one is used.
+    assert httpx_client is api._httpx_client
+    assert httpx_client.headers["Authorization"] == "Bearer tok"
+
+
+async def test_ssl_context_built_in_executor(api: PantristApi) -> None:
+    """The SSL context is built off-loop so no blocking call hits the loop."""
+    from custom_components.pantrist import api as api_module
+
+    await api._client()
+    hass: Any = api._hass
+    hass.async_add_executor_job.assert_awaited_once_with(api_module.client_context)
+
+
+async def test_httpx_client_reused_across_calls(api: PantristApi) -> None:
+    """The shared httpx client (and its SSL context) is built exactly once."""
+    await api._client()
+    await api._client()
+    hass: Any = api._hass
+    assert hass.async_add_executor_job.await_count == 1
+
+
+async def test_async_close_disposes_httpx_client(api: PantristApi) -> None:
+    await api._client()
+    assert api._httpx_client is not None
+    await api.async_close()
+    assert api._httpx_client is None
+    # Idempotent — closing again with nothing open is a no-op.
+    await api.async_close()
 
 
 def test_wrap_passthrough_for_plain_types() -> None:
