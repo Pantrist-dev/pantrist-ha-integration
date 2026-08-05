@@ -8,12 +8,12 @@ commands), plus services for adding, checking, and removing items from automatio
 The integration creates **one HA device per Pantrist list** in the account, so multi-list
 households get separate sensors / todo entities for each list out of a single OAuth flow.
 
-> The repository name still says "addon" for historical reasons. The current code
-> is a Custom Integration (Python, in-process) — the Docker Add-on has been retired.
+> This is a **Custom Integration** (Python, in-process). An earlier Docker Add-on has
+> been retired.
 
 ## Install via HACS
 
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Pantrist-dev&repository=pantrist-ha-addon&category=integration)
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Pantrist-dev&repository=pantrist-ha-integration&category=integration)
 
 1. Install [HACS](https://hacs.xyz/docs/use/download/) if you don't already have it.
 2. Open HACS → **Integrations** → ⋮ → **Custom repositories**.
