@@ -10,7 +10,7 @@
     "release:gh": "TAG=$(git describe --tags --abbrev=0); awk '/^### \\[|^## \\[/{c++} c==1' CHANGELOG.md | gh release create \"$TAG\" --title \"$TAG\" --notes-file -"
   },
   "devDependencies": {
-    "@commitlint/config-conventional": "^19.0.0",
+    "@commitlint/config-conventional": "^21.0.0",
     "standard-version": "^9.5.0"
   },
   "commitlint": {
