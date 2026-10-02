@@ -161,6 +161,51 @@ async def test_reconcile_removes_device_for_vanished_list(
 
 
 @pytest.mark.usefixtures("mock_oauth_session", "mock_socketio")
+async def test_reconcile_keeps_everything_when_the_inventory_comes_back_empty(
+    hass: HomeAssistant, manager_entry: MockConfigEntry, mock_api: MagicMock
+) -> None:
+    """Every list vanishing at once is far more likely to be a bad answer.
+
+    Deleting the last list in the app is possible but rare; an inventory
+    that came back empty for some other reason is not, and the cost of
+    being wrong is every device, entity, automation reference and scrap of
+    history the user had.
+    """
+    manager_entry.add_to_hass(hass)
+    second_id = "22222222-2222-4222-8222-222222222222"
+
+    mock_api.get_lists = AsyncMock(
+        return_value=[
+            {"id": LIST_ID, "name": LIST_NAME},
+            {"id": second_id, "name": "Second"},
+        ]
+    )
+    manager = PantristListManager(hass, manager_entry, mock_api)
+    await manager.async_initial_setup()
+
+    registry = dr.async_get(hass)
+    registry.async_get_or_create(
+        config_entry_id=manager_entry.entry_id,
+        identifiers={(DOMAIN, second_id)},
+    )
+
+    mock_api.get_lists = AsyncMock(return_value=[])
+    await manager.async_reconcile()
+
+    assert set(manager) == {LIST_ID, second_id}
+    assert registry.async_get_device(identifiers={(DOMAIN, second_id)}) is not None
+
+    # And it recovers on its own once the inventory reads properly again.
+    mock_api.get_lists = AsyncMock(
+        return_value=[{"id": LIST_ID, "name": LIST_NAME}]
+    )
+    await manager.async_reconcile()
+    assert set(manager) == {LIST_ID}
+    assert registry.async_get_device(identifiers={(DOMAIN, second_id)}) is None
+    await manager.async_shutdown()
+
+
+@pytest.mark.usefixtures("mock_oauth_session", "mock_socketio")
 async def test_reconcile_swallows_api_errors(
     hass: HomeAssistant, manager_entry: MockConfigEntry, mock_api: MagicMock
 ) -> None:

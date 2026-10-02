@@ -154,11 +154,28 @@ async def test_get_lists(api: PantristApi) -> None:
 
 
 async def test_get_lists_empty(api: PantristApi) -> None:
+    """An account with no lists answers with an empty list, and that is fine."""
+    with patch(
+        "custom_components.pantrist.api.list_controller_get_list.asyncio",
+        new=AsyncMock(return_value=[]),
+    ):
+        assert await api.get_lists() == []
+
+
+async def test_get_lists_raises_when_the_endpoint_did_not_answer(
+    api: PantristApi,
+) -> None:
+    """``None`` means a non-2xx the generated client swallowed, not "no lists".
+
+    Returning ``[]`` here let a 401 or a 502 look like the user having
+    deleted everything, and the reconcile loop removed every device.
+    """
     with patch(
         "custom_components.pantrist.api.list_controller_get_list.asyncio",
         new=AsyncMock(return_value=None),
     ):
-        assert await api.get_lists() == []
+        with pytest.raises(PantristApiError):
+            await api.get_lists()
 
 
 async def test_get_shopping_list(api: PantristApi) -> None:

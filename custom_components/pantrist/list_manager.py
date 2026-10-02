@@ -252,6 +252,18 @@ class PantristListManager:
             new_ids.append(list_id)
 
         gone = [lid for lid in self._coordinators if lid not in seen_ids]
+        if gone and not seen_ids and self._coordinators:
+            # Every list at once, and none left. Deleting the last list in
+            # the app is possible but rare; an inventory that came back empty
+            # for some other reason is not, and the cost of being wrong is
+            # every device, entity, automation reference and scrap of history
+            # the user had. Leave them and let the next reconcile decide.
+            _LOGGER.warning(
+                "Pantrist returned no lists at all while %d were known; "
+                "keeping them rather than removing every device",
+                len(self._coordinators),
+            )
+            gone = []
         for list_id in gone:
             coord = self._coordinators.pop(list_id)
             await coord.async_stop_socketio()
