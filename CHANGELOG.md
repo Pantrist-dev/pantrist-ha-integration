@@ -4,6 +4,16 @@ All notable changes to the Pantrist HA Integration are recorded here.
 Generated from Conventional Commits by [standard-version](https://github.com/conventional-changelog/standard-version).
 
 
+## [0.1.6](https://github.com/Pantrist-dev/pantrist-ha-integration/compare/v0.1.5...v0.1.6) (2026-10-02)
+
+### Bug Fixes
+
+* stop a network blip looking like a dead account ([2ebcc97](https://github.com/Pantrist-dev/pantrist-ha-integration/commit/2ebcc971d9dd408e964fcfd0f4856b99710720b4))
+
+### Documentation
+
+* point HACS badge and repo notes to pantrist-ha-integration ([ec2dba6](https://github.com/Pantrist-dev/pantrist-ha-integration/commit/ec2dba68874922d57126af243c12f5df87523cfb))
+
 ### [0.1.5](https://github.com/Pantrist-dev/pantrist-ha-addon/compare/v0.1.4...v0.1.5) (2026-06-25)
 
 
