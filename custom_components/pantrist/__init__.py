@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import Any
 
+import aiohttp
 import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
@@ -16,6 +18,7 @@ from homeassistant.core import (
 )
 from homeassistant.exceptions import (
     ConfigEntryAuthFailed,
+    ConfigEntryNotReady,
     HomeAssistantError,
 )
 from homeassistant.helpers import config_entry_oauth2_flow
@@ -107,8 +110,27 @@ async def async_setup_entry(hass: HomeAssistant, entry: PantristConfigEntry) -> 
     session = config_entry_oauth2_flow.OAuth2Session(hass, entry, implementation)
     try:
         await session.async_ensure_token_valid()
-    except Exception as err:
-        raise ConfigEntryAuthFailed("OAuth token refresh failed") from err
+    except aiohttp.ClientResponseError as err:
+        # Only the token endpoint refusing the grant means the user has to do
+        # something. OAuth 2 answers a dead refresh token with 400
+        # (`invalid_grant`), and the API answers an unknown one with 401.
+        if err.status in (400, 401):
+            raise ConfigEntryAuthFailed("OAuth token refresh was refused") from err
+        raise ConfigEntryNotReady(
+            f"Pantrist token endpoint answered {err.status}"
+        ) from err
+    except (aiohttp.ClientError, asyncio.TimeoutError) as err:
+        # No connection, DNS, TLS, a timeout. Says nothing about the token.
+        # ConfigEntryNotReady makes Home Assistant retry setup with its own
+        # backoff; ConfigEntryAuthFailed would put the entry into reauth and
+        # sit there with a notification until somebody signs in again, which
+        # is the wrong answer to "the internet was down for a minute". That
+        # happens on every power cut, where HA comes back before the WAN.
+        raise ConfigEntryNotReady(f"Cannot reach the Pantrist API: {err}") from err
+    except Exception as err:  # noqa: BLE001
+        # Anything unforeseen is likewise not evidence that the token is
+        # dead, so retry rather than demand a sign-in.
+        raise ConfigEntryNotReady(f"Pantrist token refresh failed: {err}") from err
 
     api = PantristApi(hass, session)
     manager = PantristListManager(hass, entry, api)

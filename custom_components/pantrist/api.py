@@ -145,9 +145,19 @@ class PantristApi:
     # ------------------------------------------------------------------
 
     async def get_lists(self) -> list[dict[str, Any]]:
-        """Return all pantry blocks (lists) the user has access to."""
+        """Return all pantry blocks (lists) the user has access to.
+
+        ``None`` is an error, not an empty account. The generated client runs
+        with ``raise_on_unexpected_status`` off, so it answers any non-2xx by
+        returning ``None`` rather than raising; a genuinely empty account
+        comes back as an empty list. Reading ``None`` as "no lists" let a 401
+        or a 502 look like the user having deleted everything, and the
+        reconcile loop then removed every device and its entities.
+        """
         client = await self._client()
         result = await self._call(list_controller_get_list.asyncio(client=client))
+        if result is None:
+            raise PantristApiError("The lists endpoint did not return a list")
         return self._wrap(result) or []
 
     # ------------------------------------------------------------------
