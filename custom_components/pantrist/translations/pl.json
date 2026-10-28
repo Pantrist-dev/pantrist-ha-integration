@@ -69,16 +69,20 @@
     "entity": {
         "sensor": {
             "shopping_list": {
-                "name": "Lista Zakupów"
+                "name": "Lista Zakupów",
+                "unit_of_measurement": "pozycje"
             },
             "pantry": {
-                "name": "Spiżarnia"
+                "name": "Spiżarnia",
+                "unit_of_measurement": "pozycje"
             },
             "expiring_soon": {
-                "name": "Wkrótce przeterminowane"
+                "name": "Wkrótce przeterminowane",
+                "unit_of_measurement": "pozycje"
             },
             "shopping_cart": {
-                "name": "Koszyk"
+                "name": "Koszyk",
+                "unit_of_measurement": "pozycje"
             },
             "next_expiration": {
                 "name": "Najbliższa data ważności"
@@ -114,6 +118,62 @@
             },
             "pantry_todo": {
                 "name": "Spiżarnia"
+            }
+        }
+    },
+    "selector": {
+        "unit_name": {
+            "options": {
+                "cup": "szkl.",
+                "fl-oz": "fl-oz",
+                "g": "g",
+                "gal": "gal",
+                "kg": "kg",
+                "l": "l",
+                "lbs": "lb",
+                "ml": "ml",
+                "oz": "oz",
+                "packet": "paczka/paczki",
+                "pieces": "sztuka/sztuki",
+                "qt": "kwarta/kwarty",
+                "tbsp": "łyżka/łyżki",
+                "tsp": "łyżeczka/łyżeczki"
+            }
+        },
+        "unit_singular": {
+            "options": {
+                "cup": "szkl.",
+                "fl-oz": "fl-oz",
+                "g": "g",
+                "gal": "gal",
+                "kg": "kg",
+                "l": "l",
+                "lbs": "lb",
+                "ml": "ml",
+                "oz": "oz",
+                "packet": "paczka",
+                "pieces": "sztuka",
+                "qt": "kwarta",
+                "tbsp": "łyżka",
+                "tsp": "łyżeczka"
+            }
+        },
+        "unit_plural": {
+            "options": {
+                "cup": "szkl.",
+                "fl-oz": "fl-oz",
+                "g": "g",
+                "gal": "gal",
+                "kg": "kg",
+                "l": "l",
+                "lbs": "lb",
+                "ml": "ml",
+                "oz": "oz",
+                "packet": "paczki",
+                "pieces": "sztuki",
+                "qt": "kwarty",
+                "tbsp": "łyżki",
+                "tsp": "łyżeczki"
             }
         }
     }

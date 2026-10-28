@@ -1,1 +1,74 @@
-{}
+{
+  "entity": {
+    "sensor": {
+      "shopping_list": {
+        "unit_of_measurement": "artiklar"
+      },
+      "pantry": {
+        "unit_of_measurement": "artiklar"
+      },
+      "expiring_soon": {
+        "unit_of_measurement": "artiklar"
+      },
+      "shopping_cart": {
+        "unit_of_measurement": "artiklar"
+      }
+    }
+  },
+  "selector": {
+    "unit_name": {
+      "options": {
+        "cup": "cup(s)",
+        "fl-oz": "fl-oz",
+        "g": "g",
+        "gal": "gallon",
+        "kg": "kg",
+        "l": "L",
+        "lbs": "lbs",
+        "ml": "ml",
+        "oz": "oz",
+        "packet": "Paket(er)",
+        "pieces": "bit(ar)",
+        "qt": "qt",
+        "tbsp": "msk",
+        "tsp": "tsk"
+      }
+    },
+    "unit_singular": {
+      "options": {
+        "cup": "cup",
+        "fl-oz": "fl-oz",
+        "g": "g",
+        "gal": "gallon",
+        "kg": "kg",
+        "l": "L",
+        "lbs": "lbs",
+        "ml": "ml",
+        "oz": "oz",
+        "packet": "Paket",
+        "pieces": "bit",
+        "qt": "qt",
+        "tbsp": "msk",
+        "tsp": "tsk"
+      }
+    },
+    "unit_plural": {
+      "options": {
+        "cup": "cups",
+        "fl-oz": "fl-oz",
+        "g": "g",
+        "gal": "gallon",
+        "kg": "kg",
+        "l": "L",
+        "lbs": "lbs",
+        "ml": "ml",
+        "oz": "oz",
+        "packet": "förpackningar",
+        "pieces": "bitar",
+        "qt": "qt",
+        "tbsp": "msk",
+        "tsp": "tsk"
+      }
+    }
+  }
+}

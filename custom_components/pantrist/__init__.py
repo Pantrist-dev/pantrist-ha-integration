@@ -46,6 +46,7 @@ from .const import (
 )
 from .coordinator import PantristCoordinator
 from .list_manager import PantristListManager
+from .units import async_load_unit_labels
 
 # Bronze (runtime-data): the entry holds the per-list coordinator manager.
 type PantristConfigEntry = ConfigEntry[PantristListManager]
@@ -141,6 +142,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: PantristConfigEntry) -> 
         return False
 
     entry.runtime_data = manager
+    await async_load_unit_labels(hass)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
 

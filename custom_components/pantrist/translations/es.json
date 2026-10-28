@@ -1,1 +1,74 @@
-{}
+{
+  "entity": {
+    "sensor": {
+      "shopping_list": {
+        "unit_of_measurement": "artículos"
+      },
+      "pantry": {
+        "unit_of_measurement": "artículos"
+      },
+      "expiring_soon": {
+        "unit_of_measurement": "artículos"
+      },
+      "shopping_cart": {
+        "unit_of_measurement": "artículos"
+      }
+    }
+  },
+  "selector": {
+    "unit_name": {
+      "options": {
+        "cup": "taza(s)",
+        "fl-oz": "fl-oz",
+        "g": "g",
+        "gal": "gal",
+        "kg": "kg",
+        "l": "l",
+        "lbs": "lbs",
+        "ml": "ml",
+        "oz": "oz",
+        "packet": "paquete(s)",
+        "pieces": "unidad(es)",
+        "qt": "qt",
+        "tbsp": "cda.",
+        "tsp": "cdta."
+      }
+    },
+    "unit_singular": {
+      "options": {
+        "cup": "taza",
+        "fl-oz": "fl-oz",
+        "g": "g",
+        "gal": "gal",
+        "kg": "kg",
+        "l": "l",
+        "lbs": "lbs",
+        "ml": "ml",
+        "oz": "oz",
+        "packet": "paquete",
+        "pieces": "unidad",
+        "qt": "qt",
+        "tbsp": "cda.",
+        "tsp": "cdta."
+      }
+    },
+    "unit_plural": {
+      "options": {
+        "cup": "tazas",
+        "fl-oz": "fl-oz",
+        "g": "g",
+        "gal": "gal",
+        "kg": "kg",
+        "l": "l",
+        "lbs": "lbs",
+        "ml": "ml",
+        "oz": "oz",
+        "packet": "paquetes",
+        "pieces": "unidades",
+        "qt": "qt",
+        "tbsp": "cda.",
+        "tsp": "cdta."
+      }
+    }
+  }
+}

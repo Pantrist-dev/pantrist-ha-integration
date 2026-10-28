@@ -69,16 +69,20 @@
   "entity": {
     "sensor": {
       "shopping_list": {
-        "name": "Einkaufsliste"
+        "name": "Einkaufsliste",
+        "unit_of_measurement": "Artikel"
       },
       "pantry": {
-        "name": "Vorratskammer"
+        "name": "Vorratskammer",
+        "unit_of_measurement": "Artikel"
       },
       "expiring_soon": {
-        "name": "Bald ablaufend"
+        "name": "Bald ablaufend",
+        "unit_of_measurement": "Artikel"
       },
       "shopping_cart": {
-        "name": "Einkaufskorb"
+        "name": "Einkaufskorb",
+        "unit_of_measurement": "Artikel"
       },
       "next_expiration": {
         "name": "Nächstes Ablaufdatum"
@@ -216,6 +220,62 @@
           "name": "Suchbegriff",
           "description": "Name (oder Namensteil), groß-/kleinschreibungsunabhängig. Leer lassen, um die gesamte Vorratskammer zurückzugeben."
         }
+      }
+    }
+  },
+  "selector": {
+    "unit_name": {
+      "options": {
+        "cup": "cup(s)",
+        "fl-oz": "fl-oz",
+        "g": "g",
+        "gal": "gal",
+        "kg": "kg",
+        "l": "l",
+        "lbs": "lbs",
+        "ml": "ml",
+        "oz": "oz",
+        "packet": "Päckchen",
+        "pieces": "Stück(e)",
+        "qt": "qt",
+        "tbsp": "EL",
+        "tsp": "TL"
+      }
+    },
+    "unit_singular": {
+      "options": {
+        "cup": "cup",
+        "fl-oz": "fl-oz",
+        "g": "g",
+        "gal": "gal",
+        "kg": "kg",
+        "l": "l",
+        "lbs": "lbs",
+        "ml": "ml",
+        "oz": "oz",
+        "packet": "Päckchen",
+        "pieces": "Stück",
+        "qt": "qt",
+        "tbsp": "EL",
+        "tsp": "TL"
+      }
+    },
+    "unit_plural": {
+      "options": {
+        "cup": "cups",
+        "fl-oz": "fl-oz",
+        "g": "g",
+        "gal": "gal",
+        "kg": "kg",
+        "l": "l",
+        "lbs": "lbs",
+        "ml": "ml",
+        "oz": "oz",
+        "packet": "Päckchen",
+        "pieces": "Stücke",
+        "qt": "qt",
+        "tbsp": "EL",
+        "tsp": "TL"
       }
     }
   }

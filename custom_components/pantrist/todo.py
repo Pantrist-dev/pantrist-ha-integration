@@ -33,6 +33,7 @@ from .const import DOMAIN
 from .coordinator import PantristCoordinator
 from .entity import PantristEntity
 from .list_manager import PantristListManager, signal_new_list
+from .units import format_amount
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -93,7 +94,7 @@ class PantristShoppingTodoEntity(PantristEntity, TodoListEntity):
             summary = raw.get("name")
             if not uid or not summary:
                 continue
-            description = _describe_item(raw)
+            description = _describe_item(raw, self.hass, self.coordinator.data.units)
             out.append(
                 TodoItem(
                     uid=uid,
@@ -166,24 +167,17 @@ class PantristShoppingTodoEntity(PantristEntity, TodoListEntity):
         await self.coordinator.async_request_refresh()
 
 
-def _describe_item(raw: dict[str, Any]) -> str | None:
+def _describe_item(
+    raw: dict[str, Any],
+    hass: HomeAssistant | None = None,
+    list_units: dict[str, dict[str, Any]] | None = None,
+) -> str | None:
     """Compact one-liner with amount/unit/brand/notes for the todo description."""
     parts: list[str] = []
-    amount = raw.get("amount")
-    content_volume = raw.get("contentVolume")
-    unit = raw.get("unitId")
-    if amount is not None:
-        def _n(v: Any) -> str:
-            try:
-                f = float(v)
-                return str(int(f)) if f.is_integer() else f"{f:g}"
-            except (TypeError, ValueError):
-                return str(v)
-        qty = _n(amount)
-        if content_volume is not None:
-            qty = f"{qty} × {_n(content_volume)}"
-        if unit:
-            qty += f" {unit}"
+    qty = format_amount(
+        hass, list_units, raw.get("amount"), raw.get("contentVolume"), raw.get("unitId")
+    )
+    if qty:
         parts.append(qty)
     brand = raw.get("brand")
     if brand:

@@ -26,6 +26,7 @@ from .coordinator import PantristCoordinator, PantristData
 from .entity import PantristEntity
 from .list_manager import PantristListManager, signal_new_list
 from .stock import is_low_stock
+from .units import format_amount
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -70,7 +71,11 @@ async def async_setup_entry(
     )
 
 
-def _format_item(item: dict[str, Any]) -> dict[str, Any]:
+def _format_item(
+    item: dict[str, Any],
+    hass: HomeAssistant | None = None,
+    list_units: dict[str, dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     """Extract a concise ArticleDto projection for HA attributes.
 
     Pantrist's data model splits an article's quantity into three pieces:
@@ -83,7 +88,9 @@ def _format_item(item: dict[str, Any]) -> dict[str, Any]:
     Exposing all three lets dashboards render "3 × 1 L" rather than the
     nonsensical "3 L" you'd get if ``amount`` and ``unit`` were paired
     directly. The pre-composed ``display`` field is provided as a
-    convenience for ``markdown`` cards.
+    convenience for ``markdown`` cards and reads like the app's amount
+    (labels from the list's units, built-in ones translated); the raw
+    ``unit`` id is kept for templates.
     """
     amount = item.get("amount")
     content_volume = item.get("contentVolume")
@@ -94,33 +101,13 @@ def _format_item(item: dict[str, Any]) -> dict[str, Any]:
         "amount": amount,
         "content_volume": content_volume,
         "unit": unit,
-        "display": _compose_display(amount, content_volume, unit),
+        "display": format_amount(hass, list_units, amount, content_volume, unit)
+        or (_fmt_num(amount) if amount is not None else None),
         "brand": item.get("brand"),
         "category_uuid": item.get("categoryUuid"),
         "notes": item.get("notes"),
         "image_url": item.get("imageUrl"),
     }
-
-
-def _compose_display(
-    amount: Any, content_volume: Any, unit: str | None
-) -> str | None:
-    """Render the canonical "<n> × <v> <unit>" string for an item.
-
-    ``amount=3, content_volume=1, unit="L"`` → ``"3 × 1 L"``.
-    Falls back gracefully when content_volume or unit is missing:
-    ``amount=3, content_volume=None`` → ``"3"``;
-    ``amount=3, content_volume=1.5, unit=None`` → ``"3 × 1.5"``.
-    Returns None if no quantity info is set at all.
-    """
-    if amount is None:
-        return None
-    out = _fmt_num(amount)
-    if content_volume is not None:
-        out += f" × {_fmt_num(content_volume)}"
-        if unit:
-            out += f" {unit}"
-    return out
 
 
 def _fmt_num(value: Any) -> str:
@@ -136,8 +123,6 @@ def _fmt_num(value: Any) -> str:
 
 class _PantristBaseSensor(PantristEntity, SensorEntity):
     """Common base for Pantrist sensors tied to one list."""
-
-    _attr_native_unit_of_measurement = "items"
 
     def __init__(self, coordinator: PantristCoordinator, key: str) -> None:
         super().__init__(coordinator)
@@ -172,7 +157,9 @@ class PantristShoppingListSensor(_PantristBaseSensor):
         items = self.data.shopping_list.get("items", [])
         return {
             "list_id": self.coordinator.list_id,
-            "items": [_format_item(i) for i in items],
+            "items": [
+                _format_item(i, self.hass, self.coordinator.data.units) for i in items
+            ],
         }
 
 
@@ -197,10 +184,16 @@ class PantristPantrySensor(_PantristBaseSensor):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         items = self.data.pantry.get("items", [])
-        low_stock = [_format_item(i) for i in items if is_low_stock(i)]
+        low_stock = [
+            _format_item(i, self.hass, self.coordinator.data.units)
+            for i in items
+            if is_low_stock(i)
+        ]
         return {
             "list_id": self.coordinator.list_id,
-            "items": [_format_item(i) for i in items],
+            "items": [
+                _format_item(i, self.hass, self.coordinator.data.units) for i in items
+            ],
             "low_stock_count": len(low_stock),
             "low_stock_items": low_stock,
         }
@@ -235,7 +228,10 @@ class PantristExpiringSoonSensor(_PantristBaseSensor):
                 bb = datetime.strptime(earliest, "%Y-%m-%d").date()
             except (ValueError, TypeError):
                 continue
-            formatted = {**_format_item(item), "best_before": earliest}
+            formatted = {
+                **_format_item(item, self.hass, self.coordinator.data.units),
+                "best_before": earliest,
+            }
             if bb < today:
                 expired.append(formatted)
             elif bb <= cutoff:
@@ -287,7 +283,9 @@ class PantristShoppingCartSensor(_PantristBaseSensor):
                 {
                     "cart_uuid": i.get("uuid"),
                     "moved_at": i.get("movedAt"),
-                    **_format_item(i.get("article") or {}),
+                    **_format_item(
+                        i.get("article") or {}, self.hass, self.coordinator.data.units
+                    ),
                 }
                 for i in items
             ],
@@ -368,5 +366,7 @@ class PantristLatestShoppingItemSensor(PantristEntity, SensorEntity):
         return {
             "image_url": item.get("imageUrl"),
             "uuid": item.get("uuid"),
-            "display": _format_item(item).get("display"),
+            "display": _format_item(item, self.hass, self.coordinator.data.units).get(
+                "display"
+            ),
         }

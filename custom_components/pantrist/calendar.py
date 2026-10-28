@@ -22,6 +22,7 @@ from homeassistant.util import dt as dt_util
 from .coordinator import PantristCoordinator
 from .entity import PantristEntity
 from .list_manager import PantristListManager, signal_new_list
+from .units import format_amount
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -104,31 +105,30 @@ class PantristPantryCalendar(PantristEntity, CalendarEntity):
                     start=bb,
                     end=bb + timedelta(days=1),
                     summary=str(summary),
-                    description=_describe_item(item),
+                    description=_describe_item(
+                        item, self.hass, self.coordinator.data.units
+                    ),
                     uid=str(item.get("uuid") or f"{summary}-{raw}"),
                 )
             )
         return events
 
 
-def _describe_item(item: dict[str, Any]) -> str | None:
+def _describe_item(
+    item: dict[str, Any],
+    hass: HomeAssistant | None = None,
+    list_units: dict[str, dict[str, Any]] | None = None,
+) -> str | None:
     """Compact one-liner with amount/unit/brand for the calendar event body."""
     parts: list[str] = []
-    amount = item.get("amount")
-    content_volume = item.get("contentVolume")
-    unit = item.get("unitId")
-    if amount is not None:
-        def _n(v: Any) -> str:
-            try:
-                f = float(v)
-                return str(int(f)) if f.is_integer() else f"{f:g}"
-            except (TypeError, ValueError):
-                return str(v)
-        qty = _n(amount)
-        if content_volume is not None:
-            qty = f"{qty} × {_n(content_volume)}"
-        if unit:
-            qty += f" {unit}"
+    qty = format_amount(
+        hass,
+        list_units,
+        item.get("amount"),
+        item.get("contentVolume"),
+        item.get("unitId"),
+    )
+    if qty:
         parts.append(qty)
     brand = item.get("brand")
     if brand:

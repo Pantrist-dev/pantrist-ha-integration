@@ -1,1 +1,74 @@
-{}
+{
+  "entity": {
+    "sensor": {
+      "shopping_list": {
+        "unit_of_measurement": "artikelen"
+      },
+      "pantry": {
+        "unit_of_measurement": "artikelen"
+      },
+      "expiring_soon": {
+        "unit_of_measurement": "artikelen"
+      },
+      "shopping_cart": {
+        "unit_of_measurement": "artikelen"
+      }
+    }
+  },
+  "selector": {
+    "unit_name": {
+      "options": {
+        "cup": "cup(s)",
+        "fl-oz": "fl-oz",
+        "g": "g",
+        "gal": "gal",
+        "kg": "kg",
+        "l": "L",
+        "lbs": "lbs",
+        "ml": "ml",
+        "oz": "oz",
+        "packet": "pak(ken)",
+        "pieces": "stuk(s)",
+        "qt": "qt",
+        "tbsp": "el.",
+        "tsp": "tl."
+      }
+    },
+    "unit_singular": {
+      "options": {
+        "cup": "cup",
+        "fl-oz": "fl-oz",
+        "g": "g",
+        "gal": "gal",
+        "kg": "kg",
+        "l": "L",
+        "lbs": "lbs",
+        "ml": "ml",
+        "oz": "oz",
+        "packet": "pak",
+        "pieces": "stuk",
+        "qt": "qt",
+        "tbsp": "el.",
+        "tsp": "tl."
+      }
+    },
+    "unit_plural": {
+      "options": {
+        "cup": "cups",
+        "fl-oz": "fl-oz",
+        "g": "g",
+        "gal": "gal",
+        "kg": "kg",
+        "l": "L",
+        "lbs": "lbs",
+        "ml": "ml",
+        "oz": "oz",
+        "packet": "pakken",
+        "pieces": "stukken",
+        "qt": "qt",
+        "tbsp": "el.",
+        "tsp": "tl."
+      }
+    }
+  }
+}

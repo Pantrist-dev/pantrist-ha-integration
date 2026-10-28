@@ -69,16 +69,20 @@
   "entity": {
     "sensor": {
       "shopping_list": {
-        "name": "Shopping list"
+        "name": "Shopping list",
+        "unit_of_measurement": "items"
       },
       "pantry": {
-        "name": "Pantry"
+        "name": "Pantry",
+        "unit_of_measurement": "items"
       },
       "expiring_soon": {
-        "name": "Expiring soon"
+        "name": "Expiring soon",
+        "unit_of_measurement": "items"
       },
       "shopping_cart": {
-        "name": "Shopping cart"
+        "name": "Shopping cart",
+        "unit_of_measurement": "items"
       },
       "next_expiration": {
         "name": "Next expiration"
@@ -114,6 +118,62 @@
       },
       "pantry_todo": {
         "name": "Pantry"
+      }
+    }
+  },
+  "selector": {
+    "unit_name": {
+      "options": {
+        "cup": "cup(s)",
+        "fl-oz": "fl-oz",
+        "g": "g",
+        "gal": "gal",
+        "kg": "kg",
+        "l": "l",
+        "lbs": "lbs",
+        "ml": "ml",
+        "oz": "oz",
+        "packet": "pack(s)",
+        "pieces": "piece(s)",
+        "qt": "qt",
+        "tbsp": "tbsp",
+        "tsp": "tsp"
+      }
+    },
+    "unit_singular": {
+      "options": {
+        "cup": "cup",
+        "fl-oz": "fl-oz",
+        "g": "g",
+        "gal": "gal",
+        "kg": "kg",
+        "l": "l",
+        "lbs": "lbs",
+        "ml": "ml",
+        "oz": "oz",
+        "packet": "pack",
+        "pieces": "piece",
+        "qt": "qt",
+        "tbsp": "tbsp",
+        "tsp": "tsp"
+      }
+    },
+    "unit_plural": {
+      "options": {
+        "cup": "cups",
+        "fl-oz": "fl-oz",
+        "g": "g",
+        "gal": "gal",
+        "kg": "kg",
+        "l": "l",
+        "lbs": "lbs",
+        "ml": "ml",
+        "oz": "oz",
+        "packet": "packs",
+        "pieces": "pieces",
+        "qt": "qt",
+        "tbsp": "tbsp",
+        "tsp": "tsp"
       }
     }
   }

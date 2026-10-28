@@ -38,6 +38,8 @@ class PantristData:
     shopping_list: dict[str, Any] = field(default_factory=dict)
     pantry: dict[str, Any] = field(default_factory=dict)
     shopping_cart: list[dict[str, Any]] = field(default_factory=list)
+    # The list's saved units by uid; empty means the built-in ones apply.
+    units: dict[str, dict[str, Any]] = field(default_factory=dict)
 
 
 class PantristCoordinator(DataUpdateCoordinator[PantristData]):
@@ -107,6 +109,7 @@ class PantristCoordinator(DataUpdateCoordinator[PantristData]):
             shopping_list=shopping or {},
             pantry=pantry or {},
             shopping_cart=cart or [],
+            units=await self._async_fetch_units(),
         )
 
         # Notify the ``number`` platform when the pantry inventory shifts so
@@ -123,6 +126,21 @@ class PantristCoordinator(DataUpdateCoordinator[PantristData]):
                 )
 
         return new_data
+
+    async def _async_fetch_units(self) -> dict[str, dict[str, Any]]:
+        """The list's units by uid, keeping the last known ones on failure.
+
+        Units only change how amounts read, so a failed fetch must not fail
+        the whole refresh.
+        """
+        try:
+            units = await self._api.get_list_units(self._list_id)
+        except PantristAuthError as err:
+            raise ConfigEntryAuthFailed("Pantrist auth failed") from err
+        except PantristApiError as err:
+            _LOGGER.debug("Keeping previous units for %s: %s", self._list_id, err)
+            return self.data.units if self.data else {}
+        return {str(u["uid"]): u for u in units if u.get("uid")}
 
     @staticmethod
     def _pantry_item_ids(data: PantristData | None) -> frozenset[str]:

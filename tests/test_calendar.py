@@ -85,7 +85,8 @@ async def test_get_events_filters_to_window(hass: HomeAssistant) -> None:
     events = await cal.async_get_events(hass, window_start, window_end)
     assert len(events) == 1
     assert events[0].summary == "Eggs"
-    assert events[0].description == "6 pieces"
+    # Pieces aren't shown on items, as in the app.
+    assert events[0].description == "6"
 
 
 async def test_get_events_skips_undated_and_invalid(hass: HomeAssistant) -> None:
@@ -112,4 +113,4 @@ def test_describe_item_returns_none_for_empty() -> None:
 
 def test_describe_item_with_brand_and_amount() -> None:
     out = _describe_item({"amount": 2, "unitId": "L", "brand": "Foo"})
-    assert out == "2 L · Foo"
+    assert out == "2 × 1 L · Foo"

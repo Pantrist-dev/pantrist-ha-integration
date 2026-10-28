@@ -1,1 +1,74 @@
-{}
+{
+  "entity": {
+    "sensor": {
+      "shopping_list": {
+        "unit_of_measurement": "articoli"
+      },
+      "pantry": {
+        "unit_of_measurement": "articoli"
+      },
+      "expiring_soon": {
+        "unit_of_measurement": "articoli"
+      },
+      "shopping_cart": {
+        "unit_of_measurement": "articoli"
+      }
+    }
+  },
+  "selector": {
+    "unit_name": {
+      "options": {
+        "cup": "cup(s)",
+        "fl-oz": "fl-oz",
+        "g": "g",
+        "gal": "gal",
+        "kg": "kg",
+        "l": "l",
+        "lbs": "lbs",
+        "ml": "ml",
+        "oz": "oz",
+        "packet": "conf.",
+        "pieces": "pezzo/i",
+        "qt": "qt",
+        "tbsp": "tbsp",
+        "tsp": "tsp"
+      }
+    },
+    "unit_singular": {
+      "options": {
+        "cup": "cup",
+        "fl-oz": "fl-oz",
+        "g": "g",
+        "gal": "gal",
+        "kg": "kg",
+        "l": "l",
+        "lbs": "lbs",
+        "ml": "ml",
+        "oz": "oz",
+        "packet": "confezione",
+        "pieces": "pezzo",
+        "qt": "qt",
+        "tbsp": "tbsp",
+        "tsp": "tsp"
+      }
+    },
+    "unit_plural": {
+      "options": {
+        "cup": "cups",
+        "fl-oz": "fl-oz",
+        "g": "g",
+        "gal": "gal",
+        "kg": "kg",
+        "l": "l",
+        "lbs": "lbs",
+        "ml": "ml",
+        "oz": "oz",
+        "packet": "conf.",
+        "pieces": "pezzi",
+        "qt": "qt",
+        "tbsp": "tbsp",
+        "tsp": "tsp"
+      }
+    }
+  }
+}

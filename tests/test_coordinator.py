@@ -31,6 +31,7 @@ async def test_update_data_aggregates_three_endpoints(hass: HomeAssistant) -> No
     api.get_shopping_list = AsyncMock(return_value={"items": [{"uuid": "s"}]})
     api.get_pantry_list = AsyncMock(return_value={"items": [{"uuid": "p"}]})
     api.get_shopping_cart = AsyncMock(return_value=[{"uuid": "c"}])
+    api.get_list_units = AsyncMock(return_value=[{"uid": "u1", "name": "Tüte"}])
 
     coord = _build(hass, api)
     data = await coord._async_update_data()
@@ -38,6 +39,7 @@ async def test_update_data_aggregates_three_endpoints(hass: HomeAssistant) -> No
     assert data.shopping_list["items"][0]["uuid"] == "s"
     assert data.pantry["items"][0]["uuid"] == "p"
     assert data.shopping_cart[0]["uuid"] == "c"
+    assert data.units == {"u1": {"uid": "u1", "name": "Tüte"}}
 
 
 async def test_update_data_translates_auth_error(hass: HomeAssistant) -> None:

@@ -1,1 +1,74 @@
-{}
+{
+  "entity": {
+    "sensor": {
+      "shopping_list": {
+        "unit_of_measurement": "itens"
+      },
+      "pantry": {
+        "unit_of_measurement": "itens"
+      },
+      "expiring_soon": {
+        "unit_of_measurement": "itens"
+      },
+      "shopping_cart": {
+        "unit_of_measurement": "itens"
+      }
+    }
+  },
+  "selector": {
+    "unit_name": {
+      "options": {
+        "cup": "cup(s)",
+        "fl-oz": "fl-oz",
+        "g": "g",
+        "gal": "gal",
+        "kg": "kg",
+        "l": "L",
+        "lbs": "lb",
+        "ml": "ml",
+        "oz": "oz",
+        "packet": "pacote(s)",
+        "pieces": "unidade(s)",
+        "qt": "qt",
+        "tbsp": "colher(es) de sopa",
+        "tsp": "colher(es) de chá"
+      }
+    },
+    "unit_singular": {
+      "options": {
+        "cup": "cup",
+        "fl-oz": "fl-oz",
+        "g": "g",
+        "gal": "gal",
+        "kg": "kg",
+        "l": "L",
+        "lbs": "lb",
+        "ml": "ml",
+        "oz": "oz",
+        "packet": "pacote",
+        "pieces": "unidade",
+        "qt": "qt",
+        "tbsp": "colher de sopa",
+        "tsp": "colher de chá"
+      }
+    },
+    "unit_plural": {
+      "options": {
+        "cup": "cups",
+        "fl-oz": "fl-oz",
+        "g": "g",
+        "gal": "gal",
+        "kg": "kg",
+        "l": "L",
+        "lbs": "lb",
+        "ml": "ml",
+        "oz": "oz",
+        "packet": "pacotes",
+        "pieces": "unidades",
+        "qt": "qt",
+        "tbsp": "colheres de sopa",
+        "tsp": "colheres de chá"
+      }
+    }
+  }
+}

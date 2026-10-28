@@ -31,6 +31,9 @@ from .const import API_BASE
 from .pantrist_client import AuthenticatedClient
 from .pantrist_client.api.barcode import barcode_controller_find_one
 from .pantrist_client.api.list_ import list_controller_get_list
+from .pantrist_client.api.list_units import (
+    list_units_controller_get_units as _units_get,
+)
 from .pantrist_client.api.pantry_list import (
     pantry_list_items_controller_add_by_name,
     pantry_list_items_controller_change_amount,
@@ -158,6 +161,18 @@ class PantristApi:
         result = await self._call(list_controller_get_list.asyncio(client=client))
         if result is None:
             raise PantristApiError("The lists endpoint did not return a list")
+        return self._wrap(result) or []
+
+    async def get_list_units(self, list_id: str) -> list[dict[str, Any]]:
+        """GET /list/{list_id}/units — the units the list has saved.
+
+        Empty when the list never customised its units; the app then falls
+        back to its built-in ones, and so do we (see ``units.py``).
+        """
+        client = await self._client()
+        result = await self._call(_units_get.asyncio(client=client, list_id=list_id))
+        if result is None:
+            raise PantristApiError("The units endpoint did not return a list")
         return self._wrap(result) or []
 
     # ------------------------------------------------------------------
