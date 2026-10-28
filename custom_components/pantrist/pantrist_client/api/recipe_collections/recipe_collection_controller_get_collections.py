@@ -77,10 +77,10 @@ def sync_detailed(
     search_text: str | Unset = UNSET,
     type_: RecipeCollectionControllerGetCollectionsType | Unset = UNSET,
 ) -> Response[Any | list[GetRecipeCollectionsWithImagesDto]]:
-    """Get recipe collections of the current user
+    """Get recipe collections visible to the current user
 
-     Returns all recipe collections of the authenticated user. Supports filtering by type and search
-    text.
+     Returns the recipe collections the authenticated user may see: their own ones plus the ones shared
+    by other members of their lists. Supports filtering by type and search text.
 
     Args:
         search_text (str | Unset):
@@ -112,10 +112,10 @@ def sync(
     search_text: str | Unset = UNSET,
     type_: RecipeCollectionControllerGetCollectionsType | Unset = UNSET,
 ) -> Any | list[GetRecipeCollectionsWithImagesDto] | None:
-    """Get recipe collections of the current user
+    """Get recipe collections visible to the current user
 
-     Returns all recipe collections of the authenticated user. Supports filtering by type and search
-    text.
+     Returns the recipe collections the authenticated user may see: their own ones plus the ones shared
+    by other members of their lists. Supports filtering by type and search text.
 
     Args:
         search_text (str | Unset):
@@ -142,10 +142,10 @@ async def asyncio_detailed(
     search_text: str | Unset = UNSET,
     type_: RecipeCollectionControllerGetCollectionsType | Unset = UNSET,
 ) -> Response[Any | list[GetRecipeCollectionsWithImagesDto]]:
-    """Get recipe collections of the current user
+    """Get recipe collections visible to the current user
 
-     Returns all recipe collections of the authenticated user. Supports filtering by type and search
-    text.
+     Returns the recipe collections the authenticated user may see: their own ones plus the ones shared
+    by other members of their lists. Supports filtering by type and search text.
 
     Args:
         search_text (str | Unset):
@@ -175,10 +175,10 @@ async def asyncio(
     search_text: str | Unset = UNSET,
     type_: RecipeCollectionControllerGetCollectionsType | Unset = UNSET,
 ) -> Any | list[GetRecipeCollectionsWithImagesDto] | None:
-    """Get recipe collections of the current user
+    """Get recipe collections visible to the current user
 
-     Returns all recipe collections of the authenticated user. Supports filtering by type and search
-    text.
+     Returns the recipe collections the authenticated user may see: their own ones plus the ones shared
+    by other members of their lists. Supports filtering by type and search text.
 
     Args:
         search_text (str | Unset):

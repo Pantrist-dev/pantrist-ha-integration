@@ -54,8 +54,8 @@ class SendNotificationDto:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.notification_payload_dto import NotificationPayloadDto
-        from ..models.send_notification_dto_data import SendNotificationDtoData
+        from ..models.notification_payload_dto import NotificationPayloadDto  # noqa: PLC0415
+        from ..models.send_notification_dto_data import SendNotificationDtoData  # noqa: PLC0415
 
         d = dict(src_dict)
         topic = d.pop("topic")

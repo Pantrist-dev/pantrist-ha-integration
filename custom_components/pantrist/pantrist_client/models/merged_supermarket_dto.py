@@ -51,7 +51,7 @@ class MergedSupermarketDto:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.merged_supermarket_dto_list_supermarket_ids import MergedSupermarketDtoListSupermarketIds
+        from ..models.merged_supermarket_dto_list_supermarket_ids import MergedSupermarketDtoListSupermarketIds  # noqa: PLC0415
 
         d = dict(src_dict)
         name = d.pop("name")

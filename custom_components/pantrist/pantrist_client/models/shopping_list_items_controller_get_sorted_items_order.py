@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class ShoppingListItemsControllerGetSortedItemsOrder(str, Enum):
+class ShoppingListItemsControllerGetSortedItemsOrder(StrEnum):
     ASC = "asc"
     DESC = "desc"
 

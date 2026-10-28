@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, TypeVar
+from typing import Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -16,12 +16,16 @@ class NotificationSettingsDto:
     """
     Attributes:
         notification_time (str | Unset):
-        thirty_days (bool | Unset):
-        seven_days (bool | Unset):
-        at_expiry_date (bool | Unset):
+        reminder_days (list[float] | Unset): Days before the best before date on which to send an expiry reminder (0 =
+            on the day itself). When a request leaves it out, it is derived from the legacy `atExpiryDate` / `sevenDays` /
+            `thirtyDays` toggles; responses always contain it. Example: [0, 14, 30].
+        thirty_days (bool | Unset): Use reminderDays
+        seven_days (bool | Unset): Use reminderDays. Despite its name it stands for a reminder 14 days before expiry.
+        at_expiry_date (bool | Unset): Use reminderDays
     """
 
     notification_time: str | Unset = UNSET
+    reminder_days: list[float] | Unset = UNSET
     thirty_days: bool | Unset = UNSET
     seven_days: bool | Unset = UNSET
     at_expiry_date: bool | Unset = UNSET
@@ -29,6 +33,10 @@ class NotificationSettingsDto:
 
     def to_dict(self) -> dict[str, Any]:
         notification_time = self.notification_time
+
+        reminder_days: list[float] | Unset = UNSET
+        if not isinstance(self.reminder_days, Unset):
+            reminder_days = self.reminder_days
 
         thirty_days = self.thirty_days
 
@@ -41,6 +49,8 @@ class NotificationSettingsDto:
         field_dict.update({})
         if notification_time is not UNSET:
             field_dict["notificationTime"] = notification_time
+        if reminder_days is not UNSET:
+            field_dict["reminderDays"] = reminder_days
         if thirty_days is not UNSET:
             field_dict["thirtyDays"] = thirty_days
         if seven_days is not UNSET:
@@ -55,6 +65,8 @@ class NotificationSettingsDto:
         d = dict(src_dict)
         notification_time = d.pop("notificationTime", UNSET)
 
+        reminder_days = cast(list[float], d.pop("reminderDays", UNSET))
+
         thirty_days = d.pop("thirtyDays", UNSET)
 
         seven_days = d.pop("sevenDays", UNSET)
@@ -63,6 +75,7 @@ class NotificationSettingsDto:
 
         notification_settings_dto = cls(
             notification_time=notification_time,
+            reminder_days=reminder_days,
             thirty_days=thirty_days,
             seven_days=seven_days,
             at_expiry_date=at_expiry_date,

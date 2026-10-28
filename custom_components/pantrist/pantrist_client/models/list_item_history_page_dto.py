@@ -54,7 +54,7 @@ class ListItemHistoryPageDto:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.list_item_history_dto import ListItemHistoryDto
+        from ..models.list_item_history_dto import ListItemHistoryDto  # noqa: PLC0415
 
         d = dict(src_dict)
         entries = []

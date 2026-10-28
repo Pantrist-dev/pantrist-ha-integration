@@ -7,18 +7,27 @@ import httpx
 from ... import errors
 from ...client import AuthenticatedClient, Client
 from ...models.article_dto import ArticleDto
-from ...types import Response
+from ...types import UNSET, Response, Unset
 
 
 def _get_kwargs(
     list_id: str,
+    *,
+    updated_since: float | Unset = UNSET,
 ) -> dict[str, Any]:
+
+    params: dict[str, Any] = {}
+
+    params["updatedSince"] = updated_since
+
+    params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
 
     _kwargs: dict[str, Any] = {
         "method": "get",
         "url": "/list/{list_id}/pantryList".format(
             list_id=quote(str(list_id), safe=""),
         ),
+        "params": params,
     }
 
     return _kwargs
@@ -54,11 +63,13 @@ def sync_detailed(
     list_id: str,
     *,
     client: AuthenticatedClient,
+    updated_since: float | Unset = UNSET,
 ) -> Response[list[ArticleDto]]:
     """Get all pantry list items
 
     Args:
         list_id (str):
+        updated_since (float | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -70,6 +81,7 @@ def sync_detailed(
 
     kwargs = _get_kwargs(
         list_id=list_id,
+        updated_since=updated_since,
     )
 
     response = client.get_httpx_client().request(
@@ -83,11 +95,13 @@ def sync(
     list_id: str,
     *,
     client: AuthenticatedClient,
+    updated_since: float | Unset = UNSET,
 ) -> list[ArticleDto] | None:
     """Get all pantry list items
 
     Args:
         list_id (str):
+        updated_since (float | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -100,6 +114,7 @@ def sync(
     return sync_detailed(
         list_id=list_id,
         client=client,
+        updated_since=updated_since,
     ).parsed
 
 
@@ -107,11 +122,13 @@ async def asyncio_detailed(
     list_id: str,
     *,
     client: AuthenticatedClient,
+    updated_since: float | Unset = UNSET,
 ) -> Response[list[ArticleDto]]:
     """Get all pantry list items
 
     Args:
         list_id (str):
+        updated_since (float | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -123,6 +140,7 @@ async def asyncio_detailed(
 
     kwargs = _get_kwargs(
         list_id=list_id,
+        updated_since=updated_since,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -134,11 +152,13 @@ async def asyncio(
     list_id: str,
     *,
     client: AuthenticatedClient,
+    updated_since: float | Unset = UNSET,
 ) -> list[ArticleDto] | None:
     """Get all pantry list items
 
     Args:
         list_id (str):
+        updated_since (float | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -152,5 +172,6 @@ async def asyncio(
         await asyncio_detailed(
             list_id=list_id,
             client=client,
+            updated_since=updated_since,
         )
     ).parsed

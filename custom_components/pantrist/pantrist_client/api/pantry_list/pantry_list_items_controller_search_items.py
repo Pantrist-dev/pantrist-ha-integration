@@ -65,7 +65,8 @@ def sync_detailed(
     client: AuthenticatedClient,
     name: str,
 ) -> Response[list[ArticleDto]]:
-    """Search pantry list items by name (case-insensitive contains)
+    """Search pantry list items by name, best match first (ignores case, hyphens, spaces and umlauts;
+    tolerates a typo or plural)
 
     Args:
         list_id (str):
@@ -97,7 +98,8 @@ def sync(
     client: AuthenticatedClient,
     name: str,
 ) -> list[ArticleDto] | None:
-    """Search pantry list items by name (case-insensitive contains)
+    """Search pantry list items by name, best match first (ignores case, hyphens, spaces and umlauts;
+    tolerates a typo or plural)
 
     Args:
         list_id (str):
@@ -124,7 +126,8 @@ async def asyncio_detailed(
     client: AuthenticatedClient,
     name: str,
 ) -> Response[list[ArticleDto]]:
-    """Search pantry list items by name (case-insensitive contains)
+    """Search pantry list items by name, best match first (ignores case, hyphens, spaces and umlauts;
+    tolerates a typo or plural)
 
     Args:
         list_id (str):
@@ -154,7 +157,8 @@ async def asyncio(
     client: AuthenticatedClient,
     name: str,
 ) -> list[ArticleDto] | None:
-    """Search pantry list items by name (case-insensitive contains)
+    """Search pantry list items by name, best match first (ignores case, hyphens, spaces and umlauts;
+    tolerates a typo or plural)
 
     Args:
         list_id (str):

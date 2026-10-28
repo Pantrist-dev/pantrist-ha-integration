@@ -55,7 +55,7 @@ class ValueWithMetricAndOpeningDto:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.value_with_metric_dto import ValueWithMetricDto
+        from ..models.value_with_metric_dto import ValueWithMetricDto  # noqa: PLC0415
 
         d = dict(src_dict)
         value = d.pop("value", UNSET)

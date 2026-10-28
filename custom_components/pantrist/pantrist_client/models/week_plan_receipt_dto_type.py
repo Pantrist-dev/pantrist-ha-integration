@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class WeekPlanReceiptDtoType(str, Enum):
+class WeekPlanReceiptDtoType(StrEnum):
     MANUAL = "manual"
     RECIPE = "recipe"
 

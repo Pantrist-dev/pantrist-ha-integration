@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class AccessTokenControllerAuthorizeCodeChallengeMethod(str, Enum):
+class AccessTokenControllerAuthorizeCodeChallengeMethod(StrEnum):
     S256 = "S256"
 
     def __str__(self) -> str:

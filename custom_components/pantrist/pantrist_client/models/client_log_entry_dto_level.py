@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class ClientLogEntryDtoLevel(str, Enum):
+class ClientLogEntryDtoLevel(StrEnum):
     ERROR = "error"
     INFO = "info"
     WARN = "warn"

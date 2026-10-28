@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any
+from typing import Any, cast
 from urllib.parse import quote
 
 import httpx
@@ -37,11 +37,17 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> ArticleCatalogDto | None:
+def _parse_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> Any | ArticleCatalogDto | None:
     if response.status_code == 200:
         response_200 = ArticleCatalogDto.from_dict(response.json())
 
         return response_200
+
+    if response.status_code == 400:
+        response_400 = cast(Any, None)
+        return response_400
 
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
@@ -49,7 +55,9 @@ def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Res
         return None
 
 
-def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Response[ArticleCatalogDto]:
+def _build_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> Response[Any | ArticleCatalogDto]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -65,7 +73,7 @@ def sync_detailed(
     client: AuthenticatedClient,
     body: ArticleCatalogDto,
     x_socket_id: str | Unset = UNSET,
-) -> Response[ArticleCatalogDto]:
+) -> Response[Any | ArticleCatalogDto]:
     """Upsert a catalog article
 
     Args:
@@ -79,7 +87,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[ArticleCatalogDto]
+        Response[Any | ArticleCatalogDto]
     """
 
     kwargs = _get_kwargs(
@@ -103,7 +111,7 @@ def sync(
     client: AuthenticatedClient,
     body: ArticleCatalogDto,
     x_socket_id: str | Unset = UNSET,
-) -> ArticleCatalogDto | None:
+) -> Any | ArticleCatalogDto | None:
     """Upsert a catalog article
 
     Args:
@@ -117,7 +125,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        ArticleCatalogDto
+        Any | ArticleCatalogDto
     """
 
     return sync_detailed(
@@ -136,7 +144,7 @@ async def asyncio_detailed(
     client: AuthenticatedClient,
     body: ArticleCatalogDto,
     x_socket_id: str | Unset = UNSET,
-) -> Response[ArticleCatalogDto]:
+) -> Response[Any | ArticleCatalogDto]:
     """Upsert a catalog article
 
     Args:
@@ -150,7 +158,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[ArticleCatalogDto]
+        Response[Any | ArticleCatalogDto]
     """
 
     kwargs = _get_kwargs(
@@ -172,7 +180,7 @@ async def asyncio(
     client: AuthenticatedClient,
     body: ArticleCatalogDto,
     x_socket_id: str | Unset = UNSET,
-) -> ArticleCatalogDto | None:
+) -> Any | ArticleCatalogDto | None:
     """Upsert a catalog article
 
     Args:
@@ -186,7 +194,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        ArticleCatalogDto
+        Any | ArticleCatalogDto
     """
 
     return (

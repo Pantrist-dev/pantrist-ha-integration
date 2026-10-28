@@ -79,7 +79,7 @@ class UpdateItemDto:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.article_product_group import ArticleProductGroup
+        from ..models.article_product_group import ArticleProductGroup  # noqa: PLC0415
 
         d = dict(src_dict)
         name = d.pop("name", UNSET)

@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class ParseRecipeRequestDtoType(str, Enum):
+class ParseRecipeRequestDtoType(StrEnum):
     NORMAL = "normal"
     SMART = "smart"
 

@@ -43,7 +43,7 @@ class ListPurchasesControllerGetPurchasesResponse200:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.purchased_item_dto import PurchasedItemDto
+        from ..models.purchased_item_dto import PurchasedItemDto  # noqa: PLC0415
 
         d = dict(src_dict)
         _list_ = d.pop("list", UNSET)

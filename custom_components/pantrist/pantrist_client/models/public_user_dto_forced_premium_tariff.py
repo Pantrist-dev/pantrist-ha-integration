@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class PublicUserDtoForcedPremiumTariff(str, Enum):
+class PublicUserDtoForcedPremiumTariff(StrEnum):
     FIVEUSERS = "fiveUsers"
     SINGLE = "single"
     TWOUSERS = "twoUsers"

@@ -85,7 +85,7 @@ class MergedUnitDto:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.merged_unit_dto_list_unit_ids import MergedUnitDtoListUnitIds
+        from ..models.merged_unit_dto_list_unit_ids import MergedUnitDtoListUnitIds  # noqa: PLC0415
 
         d = dict(src_dict)
         name = d.pop("name")

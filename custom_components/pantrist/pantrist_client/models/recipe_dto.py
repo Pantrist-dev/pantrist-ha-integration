@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..models.allergen import Allergen
 from ..models.receipt_category import ReceiptCategory
 from ..models.recipe_dto_language import RecipeDtoLanguage
 from ..types import UNSET, Unset
@@ -14,7 +15,9 @@ if TYPE_CHECKING:
     from ..models.article_nutriments_dto import ArticleNutrimentsDto
     from ..models.ingredient_dto import IngredientDto
     from ..models.partial_step_dto import PartialStepDto
+    from ..models.recipe_source_dto import RecipeSourceDto
     from ..models.step_dto import StepDto
+    from ..models.substitution_suggestion_dto import SubstitutionSuggestionDto
 
 
 T = TypeVar("T", bound="RecipeDto")
@@ -26,12 +29,12 @@ class RecipeDto:
     Attributes:
         uuid (str): Unique recipe identifier (UUID) Example: a3f1c5e4-1234-4f56-9abc-1234567890ab.
         name (str): Recipe name Example: Banana Pancakes.
-        favorites (float): Number of times this recipe was favorited
         total_time (float): Total time in minutes
         preparation_time (float): Preparation time in minutes
         default_servings (float): Default number of servings
         servings_unit (str): Unit used for servings (e.g. Portion, g, ml) Example: Portion.
-        should_be_public (bool): Whether the recipe is publicly visible
+        should_be_public (bool): Whether the recipe is publicly visible inside the app. Imports are kept out of the
+            sitemap and carry robots: noindex regardless, so this never exposes somebody else's post to a search engine.
         categories (list[ReceiptCategory]): Recipe categories
         language (RecipeDtoLanguage): Recipe language (IETF locale) Example: en-US.
         show_author (bool): Whether to show the author publicly
@@ -39,9 +42,14 @@ class RecipeDto:
         ingredients (list[IngredientDto]): List of ingredients
         steps (list[StepDto]): Preparation steps
         image_url (str | Unset): Public image URL for the recipe
+        favorites (float | Unset): Number of times this recipe was favorited. Read-only — any value sent on
+            create/update is ignored; it is computed from likes.
         description (str | Unset): Detailed recipe description
         cooking_time (float | Unset): Cooking time in minutes
         waiting_time (float | Unset): Waiting/resting time in minutes
+        allergens (list[Allergen] | Unset): Allergens contained in the recipe (EU 14). Extracted by the recipe parser
+            and/or derived from ingredients on save; clients should treat this as best-effort guidance, not a legal
+            declaration.
         link (str | Unset): External reference link
         partial_steps (list[PartialStepDto] | Unset): Optional partial steps for grouping instructions
         copied_from_receipt_uuid (str | Unset): UUID of the recipe this one was copied from
@@ -52,11 +60,22 @@ class RecipeDto:
             pagination with current stock
         matching_ingredient_count (float | Unset): Number of ingredients in the recipe that match to the stock. Only set
             when requesting recipe pagination with current stock
+        missing_ingredients (list[str] | Unset): Names of the recipe ingredients that are NOT covered by the current
+            stock (pantry staples such as salt, oil or water are excluded and always treated as available). Only set when
+            filtering by ingredients.
+        substitutable_count (float | Unset): Number of missing ingredients the user could substitute from their pantry.
+            Counted separately from matches — show as a softer "can substitute" state, not as "have it". Only set when
+            filtering by ingredients and a substitution applies.
+        substitutable_ingredients (list[str] | Unset): Names of the recipe ingredients that are not in stock but covered
+            by a curated substitution from the pantry. These are excluded from missingIngredients. Only set when filtering
+            by ingredients.
+        substitutions (list[SubstitutionSuggestionDto] | Unset): Concrete "use X instead of Y" suggestions for the
+            substitutable ingredients. Only set when filtering by ingredients and a substitution applies.
+        source (RecipeSourceDto | Unset):
     """
 
     uuid: str
     name: str
-    favorites: float
     total_time: float
     preparation_time: float
     default_servings: float
@@ -69,9 +88,11 @@ class RecipeDto:
     ingredients: list[IngredientDto]
     steps: list[StepDto]
     image_url: str | Unset = UNSET
+    favorites: float | Unset = UNSET
     description: str | Unset = UNSET
     cooking_time: float | Unset = UNSET
     waiting_time: float | Unset = UNSET
+    allergens: list[Allergen] | Unset = UNSET
     link: str | Unset = UNSET
     partial_steps: list[PartialStepDto] | Unset = UNSET
     copied_from_receipt_uuid: str | Unset = UNSET
@@ -80,14 +101,17 @@ class RecipeDto:
     updated_at: str | Unset = UNSET
     ingredient_count: float | Unset = UNSET
     matching_ingredient_count: float | Unset = UNSET
+    missing_ingredients: list[str] | Unset = UNSET
+    substitutable_count: float | Unset = UNSET
+    substitutable_ingredients: list[str] | Unset = UNSET
+    substitutions: list[SubstitutionSuggestionDto] | Unset = UNSET
+    source: RecipeSourceDto | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         uuid = self.uuid
 
         name = self.name
-
-        favorites = self.favorites
 
         total_time = self.total_time
 
@@ -122,11 +146,20 @@ class RecipeDto:
 
         image_url = self.image_url
 
+        favorites = self.favorites
+
         description = self.description
 
         cooking_time = self.cooking_time
 
         waiting_time = self.waiting_time
+
+        allergens: list[str] | Unset = UNSET
+        if not isinstance(self.allergens, Unset):
+            allergens = []
+            for allergens_item_data in self.allergens:
+                allergens_item = allergens_item_data.value
+                allergens.append(allergens_item)
 
         link = self.link
 
@@ -151,13 +184,33 @@ class RecipeDto:
 
         matching_ingredient_count = self.matching_ingredient_count
 
+        missing_ingredients: list[str] | Unset = UNSET
+        if not isinstance(self.missing_ingredients, Unset):
+            missing_ingredients = self.missing_ingredients
+
+        substitutable_count = self.substitutable_count
+
+        substitutable_ingredients: list[str] | Unset = UNSET
+        if not isinstance(self.substitutable_ingredients, Unset):
+            substitutable_ingredients = self.substitutable_ingredients
+
+        substitutions: list[dict[str, Any]] | Unset = UNSET
+        if not isinstance(self.substitutions, Unset):
+            substitutions = []
+            for substitutions_item_data in self.substitutions:
+                substitutions_item = substitutions_item_data.to_dict()
+                substitutions.append(substitutions_item)
+
+        source: dict[str, Any] | Unset = UNSET
+        if not isinstance(self.source, Unset):
+            source = self.source.to_dict()
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
             {
                 "uuid": uuid,
                 "name": name,
-                "favorites": favorites,
                 "totalTime": total_time,
                 "preparationTime": preparation_time,
                 "defaultServings": default_servings,
@@ -173,12 +226,16 @@ class RecipeDto:
         )
         if image_url is not UNSET:
             field_dict["imageUrl"] = image_url
+        if favorites is not UNSET:
+            field_dict["favorites"] = favorites
         if description is not UNSET:
             field_dict["description"] = description
         if cooking_time is not UNSET:
             field_dict["cookingTime"] = cooking_time
         if waiting_time is not UNSET:
             field_dict["waitingTime"] = waiting_time
+        if allergens is not UNSET:
+            field_dict["allergens"] = allergens
         if link is not UNSET:
             field_dict["link"] = link
         if partial_steps is not UNSET:
@@ -195,22 +252,32 @@ class RecipeDto:
             field_dict["ingredientCount"] = ingredient_count
         if matching_ingredient_count is not UNSET:
             field_dict["matchingIngredientCount"] = matching_ingredient_count
+        if missing_ingredients is not UNSET:
+            field_dict["missingIngredients"] = missing_ingredients
+        if substitutable_count is not UNSET:
+            field_dict["substitutableCount"] = substitutable_count
+        if substitutable_ingredients is not UNSET:
+            field_dict["substitutableIngredients"] = substitutable_ingredients
+        if substitutions is not UNSET:
+            field_dict["substitutions"] = substitutions
+        if source is not UNSET:
+            field_dict["source"] = source
 
         return field_dict
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.article_nutriments_dto import ArticleNutrimentsDto
-        from ..models.ingredient_dto import IngredientDto
-        from ..models.partial_step_dto import PartialStepDto
-        from ..models.step_dto import StepDto
+        from ..models.article_nutriments_dto import ArticleNutrimentsDto  # noqa: PLC0415
+        from ..models.ingredient_dto import IngredientDto  # noqa: PLC0415
+        from ..models.partial_step_dto import PartialStepDto  # noqa: PLC0415
+        from ..models.recipe_source_dto import RecipeSourceDto  # noqa: PLC0415
+        from ..models.step_dto import StepDto  # noqa: PLC0415
+        from ..models.substitution_suggestion_dto import SubstitutionSuggestionDto  # noqa: PLC0415
 
         d = dict(src_dict)
         uuid = d.pop("uuid")
 
         name = d.pop("name")
-
-        favorites = d.pop("favorites")
 
         total_time = d.pop("totalTime")
 
@@ -251,11 +318,22 @@ class RecipeDto:
 
         image_url = d.pop("imageUrl", UNSET)
 
+        favorites = d.pop("favorites", UNSET)
+
         description = d.pop("description", UNSET)
 
         cooking_time = d.pop("cookingTime", UNSET)
 
         waiting_time = d.pop("waitingTime", UNSET)
+
+        _allergens = d.pop("allergens", UNSET)
+        allergens: list[Allergen] | Unset = UNSET
+        if _allergens is not UNSET:
+            allergens = []
+            for allergens_item_data in _allergens:
+                allergens_item = Allergen(allergens_item_data)
+
+                allergens.append(allergens_item)
 
         link = d.pop("link", UNSET)
 
@@ -285,10 +363,31 @@ class RecipeDto:
 
         matching_ingredient_count = d.pop("matchingIngredientCount", UNSET)
 
+        missing_ingredients = cast(list[str], d.pop("missingIngredients", UNSET))
+
+        substitutable_count = d.pop("substitutableCount", UNSET)
+
+        substitutable_ingredients = cast(list[str], d.pop("substitutableIngredients", UNSET))
+
+        _substitutions = d.pop("substitutions", UNSET)
+        substitutions: list[SubstitutionSuggestionDto] | Unset = UNSET
+        if _substitutions is not UNSET:
+            substitutions = []
+            for substitutions_item_data in _substitutions:
+                substitutions_item = SubstitutionSuggestionDto.from_dict(substitutions_item_data)
+
+                substitutions.append(substitutions_item)
+
+        _source = d.pop("source", UNSET)
+        source: RecipeSourceDto | Unset
+        if isinstance(_source, Unset) or _source is None:
+            source = UNSET
+        else:
+            source = RecipeSourceDto.from_dict(_source)
+
         recipe_dto = cls(
             uuid=uuid,
             name=name,
-            favorites=favorites,
             total_time=total_time,
             preparation_time=preparation_time,
             default_servings=default_servings,
@@ -301,9 +400,11 @@ class RecipeDto:
             ingredients=ingredients,
             steps=steps,
             image_url=image_url,
+            favorites=favorites,
             description=description,
             cooking_time=cooking_time,
             waiting_time=waiting_time,
+            allergens=allergens,
             link=link,
             partial_steps=partial_steps,
             copied_from_receipt_uuid=copied_from_receipt_uuid,
@@ -312,6 +413,11 @@ class RecipeDto:
             updated_at=updated_at,
             ingredient_count=ingredient_count,
             matching_ingredient_count=matching_ingredient_count,
+            missing_ingredients=missing_ingredients,
+            substitutable_count=substitutable_count,
+            substitutable_ingredients=substitutable_ingredients,
+            substitutions=substitutions,
+            source=source,
         )
 
         recipe_dto.additional_properties = d

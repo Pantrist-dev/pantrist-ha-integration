@@ -52,8 +52,8 @@ class AnalysisSettingsDto:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.analysis_pantry_settings_dto import AnalysisPantrySettingsDto
-        from ..models.analysis_shopping_settings_dto import AnalysisShoppingSettingsDto
+        from ..models.analysis_pantry_settings_dto import AnalysisPantrySettingsDto  # noqa: PLC0415
+        from ..models.analysis_shopping_settings_dto import AnalysisShoppingSettingsDto  # noqa: PLC0415
 
         d = dict(src_dict)
         pantry = AnalysisPantrySettingsDto.from_dict(d.pop("pantry"))

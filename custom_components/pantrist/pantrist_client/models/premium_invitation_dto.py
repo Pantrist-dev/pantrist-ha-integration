@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING, Any, TypeVar
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-from dateutil.parser import isoparse
 
 if TYPE_CHECKING:
     from ..models.invited_user_dto import InvitedUserDto
@@ -73,7 +72,7 @@ class PremiumInvitationDto:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.invited_user_dto import InvitedUserDto
+        from ..models.invited_user_dto import InvitedUserDto  # noqa: PLC0415
 
         d = dict(src_dict)
         id = d.pop("id")
@@ -91,9 +90,9 @@ class PremiumInvitationDto:
 
             invited_users.append(invited_users_item)
 
-        created_at = isoparse(d.pop("createdAt"))
+        created_at = datetime.datetime.fromisoformat(d.pop("createdAt"))
 
-        updated_at = isoparse(d.pop("updatedAt"))
+        updated_at = datetime.datetime.fromisoformat(d.pop("updatedAt"))
 
         premium_invitation_dto = cls(
             id=id,

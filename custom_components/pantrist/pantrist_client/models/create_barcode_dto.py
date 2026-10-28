@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, TypeVar, cast
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..models.allergen import Allergen
 from ..models.volume_unit import VolumeUnit
 from ..types import UNSET, Unset
 
@@ -31,7 +32,11 @@ class CreateBarcodeDto:
         language_specific (CreateBarcodeDtoLanguageSpecific | Unset):
         author (str | Unset):
         image_url (str | Unset):
+        additional_image_urls (list[str] | None | Unset): Additional product photo URLs, ordered. imageUrl is the
+            primary photo.
         tags (list[str] | Unset):
+        allergens (list[Allergen] | None | Unset): Allergens (EU 14) detected in the product. Best-effort guidance, not
+            a legal declaration.
         nutriments (ArticleNutrimentsDto | Unset):
         complex_best_before_data (ArticleCatalogBestBeforeDatesDto | Unset):
     """
@@ -45,7 +50,9 @@ class CreateBarcodeDto:
     language_specific: CreateBarcodeDtoLanguageSpecific | Unset = UNSET
     author: str | Unset = UNSET
     image_url: str | Unset = UNSET
+    additional_image_urls: list[str] | None | Unset = UNSET
     tags: list[str] | Unset = UNSET
+    allergens: list[Allergen] | None | Unset = UNSET
     nutriments: ArticleNutrimentsDto | Unset = UNSET
     complex_best_before_data: ArticleCatalogBestBeforeDatesDto | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -71,9 +78,30 @@ class CreateBarcodeDto:
 
         image_url = self.image_url
 
+        additional_image_urls: list[str] | None | Unset
+        if isinstance(self.additional_image_urls, Unset):
+            additional_image_urls = UNSET
+        elif isinstance(self.additional_image_urls, list):
+            additional_image_urls = self.additional_image_urls
+
+        else:
+            additional_image_urls = self.additional_image_urls
+
         tags: list[str] | Unset = UNSET
         if not isinstance(self.tags, Unset):
             tags = self.tags
+
+        allergens: list[str] | None | Unset
+        if isinstance(self.allergens, Unset):
+            allergens = UNSET
+        elif isinstance(self.allergens, list):
+            allergens = []
+            for allergens_type_0_item_data in self.allergens:
+                allergens_type_0_item = allergens_type_0_item_data.value
+                allergens.append(allergens_type_0_item)
+
+        else:
+            allergens = self.allergens
 
         nutriments: dict[str, Any] | Unset = UNSET
         if not isinstance(self.nutriments, Unset):
@@ -102,8 +130,12 @@ class CreateBarcodeDto:
             field_dict["author"] = author
         if image_url is not UNSET:
             field_dict["imageUrl"] = image_url
+        if additional_image_urls is not UNSET:
+            field_dict["additionalImageUrls"] = additional_image_urls
         if tags is not UNSET:
             field_dict["tags"] = tags
+        if allergens is not UNSET:
+            field_dict["allergens"] = allergens
         if nutriments is not UNSET:
             field_dict["nutriments"] = nutriments
         if complex_best_before_data is not UNSET:
@@ -113,9 +145,9 @@ class CreateBarcodeDto:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.article_catalog_best_before_dates_dto import ArticleCatalogBestBeforeDatesDto
-        from ..models.article_nutriments_dto import ArticleNutrimentsDto
-        from ..models.create_barcode_dto_language_specific import CreateBarcodeDtoLanguageSpecific
+        from ..models.article_catalog_best_before_dates_dto import ArticleCatalogBestBeforeDatesDto  # noqa: PLC0415
+        from ..models.article_nutriments_dto import ArticleNutrimentsDto  # noqa: PLC0415
+        from ..models.create_barcode_dto_language_specific import CreateBarcodeDtoLanguageSpecific  # noqa: PLC0415
 
         d = dict(src_dict)
         barcode = d.pop("barcode")
@@ -141,7 +173,46 @@ class CreateBarcodeDto:
 
         image_url = d.pop("imageUrl", UNSET)
 
+        def _parse_additional_image_urls(data: object) -> list[str] | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, list):
+                    raise TypeError()
+                additional_image_urls_type_0 = cast(list[str], data)
+
+                return additional_image_urls_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(list[str] | None | Unset, data)
+
+        additional_image_urls = _parse_additional_image_urls(d.pop("additionalImageUrls", UNSET))
+
         tags = cast(list[str], d.pop("tags", UNSET))
+
+        def _parse_allergens(data: object) -> list[Allergen] | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, list):
+                    raise TypeError()
+                allergens_type_0 = []
+                _allergens_type_0 = data
+                for allergens_type_0_item_data in _allergens_type_0:
+                    allergens_type_0_item = Allergen(allergens_type_0_item_data)
+
+                    allergens_type_0.append(allergens_type_0_item)
+
+                return allergens_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(list[Allergen] | None | Unset, data)
+
+        allergens = _parse_allergens(d.pop("allergens", UNSET))
 
         _nutriments = d.pop("nutriments", UNSET)
         nutriments: ArticleNutrimentsDto | Unset
@@ -167,7 +238,9 @@ class CreateBarcodeDto:
             language_specific=language_specific,
             author=author,
             image_url=image_url,
+            additional_image_urls=additional_image_urls,
             tags=tags,
+            allergens=allergens,
             nutriments=nutriments,
             complex_best_before_data=complex_best_before_data,
         )

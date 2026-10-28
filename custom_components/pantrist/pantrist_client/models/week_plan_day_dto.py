@@ -46,7 +46,7 @@ class WeekPlanDayDto:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.week_plan_receipt_dto import WeekPlanReceiptDto
+        from ..models.week_plan_receipt_dto import WeekPlanReceiptDto  # noqa: PLC0415
 
         d = dict(src_dict)
         date = d.pop("date")

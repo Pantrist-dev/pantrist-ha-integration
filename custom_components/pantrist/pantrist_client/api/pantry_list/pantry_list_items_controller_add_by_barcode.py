@@ -64,10 +64,10 @@ def sync_detailed(
     body: AddPantryByBarcodeDto,
     x_socket_id: str | Unset = UNSET,
 ) -> Response[ArticleDto]:
-    r"""Add an item to the pantry list by barcode
+    """Add an item to the pantry list by barcode
 
      Looks up the barcode in the Pantrist catalog and adds the resolved product to the pantry. amount
-    defaults to 1, unitId defaults to \"pieces\". Returns 404 if the barcode is unknown.
+    defaults to 1, unitId defaults to "pieces". Returns 404 if the barcode is unknown.
 
     Args:
         list_id (str):
@@ -102,10 +102,10 @@ def sync(
     body: AddPantryByBarcodeDto,
     x_socket_id: str | Unset = UNSET,
 ) -> ArticleDto | None:
-    r"""Add an item to the pantry list by barcode
+    """Add an item to the pantry list by barcode
 
      Looks up the barcode in the Pantrist catalog and adds the resolved product to the pantry. amount
-    defaults to 1, unitId defaults to \"pieces\". Returns 404 if the barcode is unknown.
+    defaults to 1, unitId defaults to "pieces". Returns 404 if the barcode is unknown.
 
     Args:
         list_id (str):
@@ -135,10 +135,10 @@ async def asyncio_detailed(
     body: AddPantryByBarcodeDto,
     x_socket_id: str | Unset = UNSET,
 ) -> Response[ArticleDto]:
-    r"""Add an item to the pantry list by barcode
+    """Add an item to the pantry list by barcode
 
      Looks up the barcode in the Pantrist catalog and adds the resolved product to the pantry. amount
-    defaults to 1, unitId defaults to \"pieces\". Returns 404 if the barcode is unknown.
+    defaults to 1, unitId defaults to "pieces". Returns 404 if the barcode is unknown.
 
     Args:
         list_id (str):
@@ -171,10 +171,10 @@ async def asyncio(
     body: AddPantryByBarcodeDto,
     x_socket_id: str | Unset = UNSET,
 ) -> ArticleDto | None:
-    r"""Add an item to the pantry list by barcode
+    """Add an item to the pantry list by barcode
 
      Looks up the barcode in the Pantrist catalog and adds the resolved product to the pantry. amount
-    defaults to 1, unitId defaults to \"pieces\". Returns 404 if the barcode is unknown.
+    defaults to 1, unitId defaults to "pieces". Returns 404 if the barcode is unknown.
 
     Args:
         list_id (str):

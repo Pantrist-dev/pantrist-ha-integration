@@ -40,7 +40,7 @@ class PantryLocationDto:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.pantry_location_dto_name_type_1 import PantryLocationDtoNameType1
+        from ..models.pantry_location_dto_name_type_1 import PantryLocationDtoNameType1  # noqa: PLC0415
 
         uuid = self.uuid
 
@@ -96,7 +96,7 @@ class PantryLocationDto:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.pantry_location_dto_name_type_1 import PantryLocationDtoNameType1
+        from ..models.pantry_location_dto_name_type_1 import PantryLocationDtoNameType1  # noqa: PLC0415
 
         d = dict(src_dict)
         uuid = d.pop("uuid")

@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class PurchasedItemDtoPriceType(str, Enum):
+class PurchasedItemDtoPriceType(StrEnum):
     PERUNIT = "perUnit"
     PERVOLUME = "perVolume"
     PERWEIGHT = "perWeight"

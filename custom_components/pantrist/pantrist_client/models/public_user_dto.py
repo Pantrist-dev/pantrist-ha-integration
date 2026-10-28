@@ -18,11 +18,14 @@ class PublicUserDto:
     Attributes:
         uid (str):
         display_name (str):
+        profile_image (str | Unset): Public profile picture key/URL. Safe to expose so members of a shared list can
+            render each other’s avatars.
         forced_premium_tariff (PublicUserDtoForcedPremiumTariff | Unset):
     """
 
     uid: str
     display_name: str
+    profile_image: str | Unset = UNSET
     forced_premium_tariff: PublicUserDtoForcedPremiumTariff | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -30,6 +33,8 @@ class PublicUserDto:
         uid = self.uid
 
         display_name = self.display_name
+
+        profile_image = self.profile_image
 
         forced_premium_tariff: str | Unset = UNSET
         if not isinstance(self.forced_premium_tariff, Unset):
@@ -43,6 +48,8 @@ class PublicUserDto:
                 "displayName": display_name,
             }
         )
+        if profile_image is not UNSET:
+            field_dict["profileImage"] = profile_image
         if forced_premium_tariff is not UNSET:
             field_dict["forcedPremiumTariff"] = forced_premium_tariff
 
@@ -55,6 +62,8 @@ class PublicUserDto:
 
         display_name = d.pop("displayName")
 
+        profile_image = d.pop("profileImage", UNSET)
+
         _forced_premium_tariff = d.pop("forcedPremiumTariff", UNSET)
         forced_premium_tariff: PublicUserDtoForcedPremiumTariff | Unset
         if isinstance(_forced_premium_tariff, Unset) or _forced_premium_tariff is None or _forced_premium_tariff == "":
@@ -65,6 +74,7 @@ class PublicUserDto:
         public_user_dto = cls(
             uid=uid,
             display_name=display_name,
+            profile_image=profile_image,
             forced_premium_tariff=forced_premium_tariff,
         )
 

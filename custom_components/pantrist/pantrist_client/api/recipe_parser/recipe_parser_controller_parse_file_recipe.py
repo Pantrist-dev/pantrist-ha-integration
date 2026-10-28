@@ -6,21 +6,34 @@ import httpx
 from ...client import AuthenticatedClient, Client
 from ...models.recipe_parser_controller_parse_file_recipe_body import RecipeParserControllerParseFileRecipeBody
 from ...models.recipe_parsing_result_dto import RecipeParsingResultDto
-from ...types import Response
+from ...types import UNSET, Response, Unset
 
 
 def _get_kwargs(
     *,
     body: RecipeParserControllerParseFileRecipeBody,
+    target_language: str | Unset = UNSET,
+    defer_nutriments: str | Unset = "False",
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
+
+    params: dict[str, Any] = {}
+
+    params["targetLanguage"] = target_language
+
+    params["deferNutriments"] = defer_nutriments
+
+    params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
 
     _kwargs: dict[str, Any] = {
         "method": "post",
         "url": "/parse-recipe/file",
+        "params": params,
     }
 
     _kwargs["files"] = body.to_multipart()
+
+    headers["Content-Type"] = "multipart/form-data; boundary=+++"
 
     _kwargs["headers"] = headers
     return _kwargs
@@ -47,9 +60,13 @@ def sync_detailed(
     *,
     client: AuthenticatedClient | Client,
     body: RecipeParserControllerParseFileRecipeBody,
+    target_language: str | Unset = UNSET,
+    defer_nutriments: str | Unset = "False",
 ) -> Response[RecipeParsingResultDto]:
     """
     Args:
+        target_language (str | Unset):  Example: de.
+        defer_nutriments (str | Unset):  Default: 'False'.
         body (RecipeParserControllerParseFileRecipeBody):
 
     Raises:
@@ -62,6 +79,8 @@ def sync_detailed(
 
     kwargs = _get_kwargs(
         body=body,
+        target_language=target_language,
+        defer_nutriments=defer_nutriments,
     )
 
     response = client.get_httpx_client().request(
@@ -75,9 +94,13 @@ def sync(
     *,
     client: AuthenticatedClient | Client,
     body: RecipeParserControllerParseFileRecipeBody,
+    target_language: str | Unset = UNSET,
+    defer_nutriments: str | Unset = "False",
 ) -> RecipeParsingResultDto | None:
     """
     Args:
+        target_language (str | Unset):  Example: de.
+        defer_nutriments (str | Unset):  Default: 'False'.
         body (RecipeParserControllerParseFileRecipeBody):
 
     Raises:
@@ -91,6 +114,8 @@ def sync(
     return sync_detailed(
         client=client,
         body=body,
+        target_language=target_language,
+        defer_nutriments=defer_nutriments,
     ).parsed
 
 
@@ -98,9 +123,13 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient | Client,
     body: RecipeParserControllerParseFileRecipeBody,
+    target_language: str | Unset = UNSET,
+    defer_nutriments: str | Unset = "False",
 ) -> Response[RecipeParsingResultDto]:
     """
     Args:
+        target_language (str | Unset):  Example: de.
+        defer_nutriments (str | Unset):  Default: 'False'.
         body (RecipeParserControllerParseFileRecipeBody):
 
     Raises:
@@ -113,6 +142,8 @@ async def asyncio_detailed(
 
     kwargs = _get_kwargs(
         body=body,
+        target_language=target_language,
+        defer_nutriments=defer_nutriments,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -124,9 +155,13 @@ async def asyncio(
     *,
     client: AuthenticatedClient | Client,
     body: RecipeParserControllerParseFileRecipeBody,
+    target_language: str | Unset = UNSET,
+    defer_nutriments: str | Unset = "False",
 ) -> RecipeParsingResultDto | None:
     """
     Args:
+        target_language (str | Unset):  Example: de.
+        defer_nutriments (str | Unset):  Default: 'False'.
         body (RecipeParserControllerParseFileRecipeBody):
 
     Raises:
@@ -141,5 +176,7 @@ async def asyncio(
         await asyncio_detailed(
             client=client,
             body=body,
+            target_language=target_language,
+            defer_nutriments=defer_nutriments,
         )
     ).parsed

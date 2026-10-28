@@ -73,8 +73,8 @@ class ItemPantrySettingsDto:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.pantry_settings_dto import PantrySettingsDto
-        from ..models.saved_for_recipe_dto import SavedForRecipeDto
+        from ..models.pantry_settings_dto import PantrySettingsDto  # noqa: PLC0415
+        from ..models.saved_for_recipe_dto import SavedForRecipeDto  # noqa: PLC0415
 
         d = dict(src_dict)
         article_list = []

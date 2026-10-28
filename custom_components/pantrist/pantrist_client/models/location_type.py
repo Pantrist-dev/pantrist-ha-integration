@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class LocationType(str, Enum):
+class LocationType(StrEnum):
     FREEZER = "freezer"
     REFRIGERATOR = "refrigerator"
     UNREFRIGERATED = "unrefrigerated"

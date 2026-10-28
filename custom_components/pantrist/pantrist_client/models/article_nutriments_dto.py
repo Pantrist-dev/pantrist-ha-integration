@@ -113,7 +113,7 @@ class ArticleNutrimentsDto:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.general_nutriments_dto import GeneralNutrimentsDto
+        from ..models.general_nutriments_dto import GeneralNutrimentsDto  # noqa: PLC0415
 
         d = dict(src_dict)
         _energy_kcal = d.pop("energy_kcal", UNSET)

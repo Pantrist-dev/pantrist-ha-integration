@@ -17,12 +17,15 @@ class GetRecipeCollectionsWithImagesDto:
         name (str):
         share_in_list (bool):
         connected_recipe_images (list[str]):
+        recipe_count (float): Total number of recipes in the collection. May be larger than connectedRecipeImages.length
+            because recipes without an image are still counted.
     """
 
     uuid: str
     name: str
     share_in_list: bool
     connected_recipe_images: list[str]
+    recipe_count: float
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -34,6 +37,8 @@ class GetRecipeCollectionsWithImagesDto:
 
         connected_recipe_images = self.connected_recipe_images
 
+        recipe_count = self.recipe_count
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -42,6 +47,7 @@ class GetRecipeCollectionsWithImagesDto:
                 "name": name,
                 "shareInList": share_in_list,
                 "connectedRecipeImages": connected_recipe_images,
+                "recipeCount": recipe_count,
             }
         )
 
@@ -58,11 +64,14 @@ class GetRecipeCollectionsWithImagesDto:
 
         connected_recipe_images = cast(list[str], d.pop("connectedRecipeImages"))
 
+        recipe_count = d.pop("recipeCount")
+
         get_recipe_collections_with_images_dto = cls(
             uuid=uuid,
             name=name,
             share_in_list=share_in_list,
             connected_recipe_images=connected_recipe_images,
+            recipe_count=recipe_count,
         )
 
         get_recipe_collections_with_images_dto.additional_properties = d

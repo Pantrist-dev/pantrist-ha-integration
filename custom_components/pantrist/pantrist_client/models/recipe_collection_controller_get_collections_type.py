@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class RecipeCollectionControllerGetCollectionsType(str, Enum):
+class RecipeCollectionControllerGetCollectionsType(StrEnum):
     OWN = "own"
     SHARED = "shared"
 

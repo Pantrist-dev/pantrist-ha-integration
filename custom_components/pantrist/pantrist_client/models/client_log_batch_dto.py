@@ -41,7 +41,7 @@ class ClientLogBatchDto:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.client_log_entry_dto import ClientLogEntryDto
+        from ..models.client_log_entry_dto import ClientLogEntryDto  # noqa: PLC0415
 
         d = dict(src_dict)
         entries = []

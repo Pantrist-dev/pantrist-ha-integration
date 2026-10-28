@@ -80,7 +80,7 @@ class AnalysisPantrySettingsDto:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.analysis_emergency_supply_settings_dto import AnalysisEmergencySupplySettingsDto
+        from ..models.analysis_emergency_supply_settings_dto import AnalysisEmergencySupplySettingsDto  # noqa: PLC0415
 
         d = dict(src_dict)
         people_count = d.pop("peopleCount")

@@ -1,10 +1,11 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class ApiFilterDtoSortBy(str, Enum):
+class ApiFilterDtoSortBy(StrEnum):
     ALPHABETICALASC = "AlphabeticalAsc"
     ALPHABETICALDESC = "AlphabeticalDesc"
     FAVORITES = "Favorites"
+    NEWEST = "Newest"
     RANDOM = "Random"
     TOTALTIME = "TotalTime"
 

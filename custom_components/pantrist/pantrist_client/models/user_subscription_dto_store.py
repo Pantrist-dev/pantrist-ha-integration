@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class UserSubscriptionDtoStore(str, Enum):
+class UserSubscriptionDtoStore(StrEnum):
     APP_STORE = "APP_STORE"
     PLAY_STORE = "PLAY_STORE"
     STRIPE = "STRIPE"

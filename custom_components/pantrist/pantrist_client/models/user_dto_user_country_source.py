@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class UserDtoUserCountrySource(str, Enum):
+class UserDtoUserCountrySource(StrEnum):
     GEOLOCATION = "geolocation"
     IP = "ip"
     MANUALLY_SET = "manually-set"

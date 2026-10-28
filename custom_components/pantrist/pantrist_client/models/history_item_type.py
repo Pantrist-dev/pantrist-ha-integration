@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class HistoryItemType(str, Enum):
+class HistoryItemType(StrEnum):
     INTERMEDIATE = "intermediate"
     PANTRY = "pantry"
     SHOPPING = "shopping"

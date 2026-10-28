@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-from dateutil.parser import isoparse
 
 from ..models.volume_unit import VolumeUnit
 from ..types import UNSET, Unset
@@ -33,7 +32,9 @@ class BarcodePageDto:
         related_barcodes (list[BarcodeSummaryDto]):
         updated_at (datetime.datetime):
         created_at (datetime.datetime):
-        indexable (bool): False when the page should render <meta name="robots" content="noindex">.
+        indexable (bool): False when the page should render <meta name="robots" content="noindex">. Computed from GTIN
+            validity, name length, image presence, and at least two of: brand, category, nutriments, tags or allergens
+            (offers do not count).
         name_by_language (BarcodePageDtoNameByLanguage | Unset): Language-specific name overrides keyed by IETF language
             tag (de-DE, en-US, ...).
         brand (str | Unset):
@@ -161,11 +162,11 @@ class BarcodePageDto:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.article_catalog_best_before_dates_dto import ArticleCatalogBestBeforeDatesDto
-        from ..models.article_nutriments_dto import ArticleNutrimentsDto
-        from ..models.barcode_affiliate_product_dto import BarcodeAffiliateProductDto
-        from ..models.barcode_page_dto_name_by_language import BarcodePageDtoNameByLanguage
-        from ..models.barcode_summary_dto import BarcodeSummaryDto
+        from ..models.article_catalog_best_before_dates_dto import ArticleCatalogBestBeforeDatesDto  # noqa: PLC0415
+        from ..models.article_nutriments_dto import ArticleNutrimentsDto  # noqa: PLC0415
+        from ..models.barcode_affiliate_product_dto import BarcodeAffiliateProductDto  # noqa: PLC0415
+        from ..models.barcode_page_dto_name_by_language import BarcodePageDtoNameByLanguage  # noqa: PLC0415
+        from ..models.barcode_summary_dto import BarcodeSummaryDto  # noqa: PLC0415
 
         d = dict(src_dict)
         ean = d.pop("ean")
@@ -188,9 +189,9 @@ class BarcodePageDto:
 
             related_barcodes.append(related_barcodes_item)
 
-        updated_at = isoparse(d.pop("updatedAt"))
+        updated_at = datetime.datetime.fromisoformat(d.pop("updatedAt"))
 
-        created_at = isoparse(d.pop("createdAt"))
+        created_at = datetime.datetime.fromisoformat(d.pop("createdAt"))
 
         indexable = d.pop("indexable")
 

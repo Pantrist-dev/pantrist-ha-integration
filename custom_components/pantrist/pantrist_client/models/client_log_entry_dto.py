@@ -90,7 +90,7 @@ class ClientLogEntryDto:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.client_log_entry_dto_data import ClientLogEntryDtoData
+        from ..models.client_log_entry_dto_data import ClientLogEntryDtoData  # noqa: PLC0415
 
         d = dict(src_dict)
         level = ClientLogEntryDtoLevel(d.pop("level"))

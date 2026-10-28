@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class PantryListItemsControllerGetSortedItemsSortBy(str, Enum):
+class PantryListItemsControllerGetSortedItemsSortBy(StrEnum):
     BESTBEFORE = "bestBefore"
     TIMESTAMP = "timestamp"
 

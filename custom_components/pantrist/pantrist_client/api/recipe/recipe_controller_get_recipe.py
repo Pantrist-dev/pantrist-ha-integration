@@ -52,6 +52,10 @@ def sync_detailed(
 ) -> Response[RecipeDto]:
     """Get a recipe by UUID
 
+     Anonymous-friendly: callable with a Firebase token, a custom API key, a signed x-api-key, or with no
+    credentials at all. When a user identity is resolved, the caller also sees their own private recipes
+    and those of connected list users.
+
     Args:
         uid (str):
 
@@ -81,6 +85,10 @@ def sync(
 ) -> RecipeDto | None:
     """Get a recipe by UUID
 
+     Anonymous-friendly: callable with a Firebase token, a custom API key, a signed x-api-key, or with no
+    credentials at all. When a user identity is resolved, the caller also sees their own private recipes
+    and those of connected list users.
+
     Args:
         uid (str):
 
@@ -104,6 +112,10 @@ async def asyncio_detailed(
     client: AuthenticatedClient | Client,
 ) -> Response[RecipeDto]:
     """Get a recipe by UUID
+
+     Anonymous-friendly: callable with a Firebase token, a custom API key, a signed x-api-key, or with no
+    credentials at all. When a user identity is resolved, the caller also sees their own private recipes
+    and those of connected list users.
 
     Args:
         uid (str):
@@ -131,6 +143,10 @@ async def asyncio(
     client: AuthenticatedClient | Client,
 ) -> RecipeDto | None:
     """Get a recipe by UUID
+
+     Anonymous-friendly: callable with a Firebase token, a custom API key, a signed x-api-key, or with no
+    credentials at all. When a user identity is resolved, the caller also sees their own private recipes
+    and those of connected list users.
 
     Args:
         uid (str):

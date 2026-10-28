@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class UserSubscriptionDtoStatus(str, Enum):
+class UserSubscriptionDtoStatus(StrEnum):
     ACTIVE = "active"
     CANCELLED = "cancelled"
     EXPIRED = "expired"

@@ -50,7 +50,7 @@ class AnalysisEmergencySupplySettingsDto:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.analysis_emergency_supply_settings_dto_mappings import AnalysisEmergencySupplySettingsDtoMappings
+        from ..models.analysis_emergency_supply_settings_dto_mappings import AnalysisEmergencySupplySettingsDtoMappings  # noqa: PLC0415
 
         d = dict(src_dict)
         enabled = d.pop("enabled")

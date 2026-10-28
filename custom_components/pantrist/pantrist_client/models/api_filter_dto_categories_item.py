@@ -1,8 +1,10 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class ApiFilterDtoCategoriesItem(str, Enum):
+class ApiFilterDtoCategoriesItem(StrEnum):
+    ADVANCED = "Advanced"
     APPETIZER = "Appetizer"
+    ASIAN = "Asian"
     BAKING = "Baking"
     BASIC = "Basic"
     BREAKFAST = "Breakfast"
@@ -16,9 +18,12 @@ class ApiFilterDtoCategoriesItem(str, Enum):
     FEWINGREDIENTS = "FewIngredients"
     FISH = "Fish"
     FRUITS = "Fruits"
+    GERMAN = "German"
     GLUTENFREE = "GlutenFree"
     HIGHFIBER = "HighFiber"
     HIGHPROTEIN = "HighProtein"
+    INDIAN = "Indian"
+    ITALIAN = "Italian"
     KETO = "Keto"
     LACTOSEFREE = "LactoseFree"
     LOWCALORIE = "LowCalorie"
@@ -26,6 +31,9 @@ class ApiFilterDtoCategoriesItem(str, Enum):
     LOWFAT = "LowFat"
     LUNCH = "Lunch"
     MEAT = "Meat"
+    MEDITERRANEAN = "Mediterranean"
+    MEXICAN = "Mexican"
+    ORIENTAL = "Oriental"
     OVENDISH = "OvenDish"
     PASTA = "Pasta"
     PESCATARIAN = "Pescatarian"

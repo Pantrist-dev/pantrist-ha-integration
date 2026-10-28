@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class AnalysisEmergencySupplySettingsDtoStandard(str, Enum):
+class AnalysisEmergencySupplySettingsDtoStandard(StrEnum):
     BMEL = "bmel"
     WFP = "wfp"
 

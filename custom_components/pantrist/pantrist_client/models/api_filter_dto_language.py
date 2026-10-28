@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class ApiFilterDtoLanguage(str, Enum):
+class ApiFilterDtoLanguage(StrEnum):
     DE_DE = "de-DE"
     EN_GB = "en-GB"
     EN_US = "en-US"

@@ -18,16 +18,21 @@ class CreateInviteDto:
     Attributes:
         role (Role): Role to assign to the user
         ttl_minutes (float | Unset): How many minutes the invite stays valid for. Defaults to 60.
+        recipient_uid (str | Unset): Pantrist user to send the invite to as a push notification, for inviting someone by
+            e-mail address. Without it the invite is only a share link.
     """
 
     role: Role
     ttl_minutes: float | Unset = UNSET
+    recipient_uid: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         role = self.role.value
 
         ttl_minutes = self.ttl_minutes
+
+        recipient_uid = self.recipient_uid
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
@@ -38,6 +43,8 @@ class CreateInviteDto:
         )
         if ttl_minutes is not UNSET:
             field_dict["ttlMinutes"] = ttl_minutes
+        if recipient_uid is not UNSET:
+            field_dict["recipientUid"] = recipient_uid
 
         return field_dict
 
@@ -48,9 +55,12 @@ class CreateInviteDto:
 
         ttl_minutes = d.pop("ttlMinutes", UNSET)
 
+        recipient_uid = d.pop("recipientUid", UNSET)
+
         create_invite_dto = cls(
             role=role,
             ttl_minutes=ttl_minutes,
+            recipient_uid=recipient_uid,
         )
 
         create_invite_dto.additional_properties = d

@@ -46,7 +46,7 @@ class UpdateListDto:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.block_settings_dto import BlockSettingsDto
+        from ..models.block_settings_dto import BlockSettingsDto  # noqa: PLC0415
 
         d = dict(src_dict)
         _settings = d.pop("settings", UNSET)

@@ -57,7 +57,7 @@ class PremiumInvitationDataDto:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.premium_invitation_base_data_dto import PremiumInvitationBaseDataDto
+        from ..models.premium_invitation_base_data_dto import PremiumInvitationBaseDataDto  # noqa: PLC0415
 
         d = dict(src_dict)
         inviter_subscription_valid = d.pop("inviterSubscriptionValid", UNSET)

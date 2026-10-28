@@ -67,7 +67,11 @@ def sync_detailed(
 ) -> Response[Any]:
     """Delete a file from storage
 
-     Deletes the object (and its thumbnail) at the given S3 key. If `ownerType` and `ownerId` are
+     Deletes the object (and its thumbnail) at the given S3 key. Barcode images (`barcode/…` keys) are a
+    global shared resource and cannot be deleted — they are only ever replaced (override), so such
+    requests are rejected with 403. For list-scoped keys (`article/`, `catalog/`, `pantry/`,
+    `supermarket/`) the caller must be a member of the list embedded in the key; trusted server callers
+    (shared-secret API key, no user identity) bypass this check. If `ownerType` and `ownerId` are
     provided, the named row is excluded from the reference-count check so its own surviving `imageUrl`
     does not block the delete; the file is kept only when another row still references it. When the
     owner params are omitted, the file is deleted unconditionally.
@@ -107,7 +111,11 @@ async def asyncio_detailed(
 ) -> Response[Any]:
     """Delete a file from storage
 
-     Deletes the object (and its thumbnail) at the given S3 key. If `ownerType` and `ownerId` are
+     Deletes the object (and its thumbnail) at the given S3 key. Barcode images (`barcode/…` keys) are a
+    global shared resource and cannot be deleted — they are only ever replaced (override), so such
+    requests are rejected with 403. For list-scoped keys (`article/`, `catalog/`, `pantry/`,
+    `supermarket/`) the caller must be a member of the list embedded in the key; trusted server callers
+    (shared-secret API key, no user identity) bypass this check. If `ownerType` and `ownerId` are
     provided, the named row is excluded from the reference-count check so its own surviving `imageUrl`
     does not block the delete; the file is kept only when another row still references it. When the
     owner params are omitted, the file is deleted unconditionally.

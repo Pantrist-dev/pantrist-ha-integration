@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -27,10 +27,13 @@ class UserDto:
         uid (str):
         display_name (str):
         email (str):
+        profile_image (str | Unset): Public profile picture key/URL. Safe to expose so members of a shared list can
+            render each other’s avatars.
         forced_premium_tariff (UserDtoForcedPremiumTariff | Unset):
         language (str | Unset):
+        email_verified (bool | Unset): Whether the email address has been confirmed (verification link, or inherited
+            from the Firebase account on import).
         is_test_user (bool | Unset):
-        profile_image (str | Unset):
         provider_id (str | Unset):
         provider_uuid (str | Unset):
         subscription (UserSubscriptionDto | Unset):
@@ -42,15 +45,23 @@ class UserDto:
         user_country_source (UserDtoUserCountrySource | Unset):
         premium_invitation (PremiumInvitationDataDto | Unset):
         notification_settings (NotificationSettingsDto | Unset):
+        last_seen (str | Unset): ISO timestamp of the last `/me/last-seen` ping. Used by analytics to track user
+            activity (NOT the auto-reduce cursor — see `autoReduceCursor`).
+        auto_reduce_cursor (str | Unset): ISO timestamp the app uses as the `since` parameter for the cold-start auto-
+            reduce modal. Bumped via PATCH /me/auto-reduce-cursor after each modal presentation so accrual accumulates
+            across sessions and stays in sync across devices.
+        seen_tips (list[str] | Unset): The one-time tips (coach marks) this person has seen, on any device. Added via
+            PUT /me/seen-tips/:tip.
     """
 
     uid: str
     display_name: str
     email: str
+    profile_image: str | Unset = UNSET
     forced_premium_tariff: UserDtoForcedPremiumTariff | Unset = UNSET
     language: str | Unset = UNSET
+    email_verified: bool | Unset = UNSET
     is_test_user: bool | Unset = UNSET
-    profile_image: str | Unset = UNSET
     provider_id: str | Unset = UNSET
     provider_uuid: str | Unset = UNSET
     subscription: UserSubscriptionDto | Unset = UNSET
@@ -62,6 +73,9 @@ class UserDto:
     user_country_source: UserDtoUserCountrySource | Unset = UNSET
     premium_invitation: PremiumInvitationDataDto | Unset = UNSET
     notification_settings: NotificationSettingsDto | Unset = UNSET
+    last_seen: str | Unset = UNSET
+    auto_reduce_cursor: str | Unset = UNSET
+    seen_tips: list[str] | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -71,15 +85,17 @@ class UserDto:
 
         email = self.email
 
+        profile_image = self.profile_image
+
         forced_premium_tariff: str | Unset = UNSET
         if not isinstance(self.forced_premium_tariff, Unset):
             forced_premium_tariff = self.forced_premium_tariff.value
 
         language = self.language
 
-        is_test_user = self.is_test_user
+        email_verified = self.email_verified
 
-        profile_image = self.profile_image
+        is_test_user = self.is_test_user
 
         provider_id = self.provider_id
 
@@ -113,6 +129,14 @@ class UserDto:
         if not isinstance(self.notification_settings, Unset):
             notification_settings = self.notification_settings.to_dict()
 
+        last_seen = self.last_seen
+
+        auto_reduce_cursor = self.auto_reduce_cursor
+
+        seen_tips: list[str] | Unset = UNSET
+        if not isinstance(self.seen_tips, Unset):
+            seen_tips = self.seen_tips
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -122,14 +146,16 @@ class UserDto:
                 "email": email,
             }
         )
+        if profile_image is not UNSET:
+            field_dict["profileImage"] = profile_image
         if forced_premium_tariff is not UNSET:
             field_dict["forcedPremiumTariff"] = forced_premium_tariff
         if language is not UNSET:
             field_dict["language"] = language
+        if email_verified is not UNSET:
+            field_dict["emailVerified"] = email_verified
         if is_test_user is not UNSET:
             field_dict["isTestUser"] = is_test_user
-        if profile_image is not UNSET:
-            field_dict["profileImage"] = profile_image
         if provider_id is not UNSET:
             field_dict["providerId"] = provider_id
         if provider_uuid is not UNSET:
@@ -152,15 +178,21 @@ class UserDto:
             field_dict["premiumInvitation"] = premium_invitation
         if notification_settings is not UNSET:
             field_dict["notificationSettings"] = notification_settings
+        if last_seen is not UNSET:
+            field_dict["lastSeen"] = last_seen
+        if auto_reduce_cursor is not UNSET:
+            field_dict["autoReduceCursor"] = auto_reduce_cursor
+        if seen_tips is not UNSET:
+            field_dict["seenTips"] = seen_tips
 
         return field_dict
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.notification_settings_dto import NotificationSettingsDto
-        from ..models.premium_invitation_data_dto import PremiumInvitationDataDto
-        from ..models.user_permissions_dto import UserPermissionsDto
-        from ..models.user_subscription_dto import UserSubscriptionDto
+        from ..models.notification_settings_dto import NotificationSettingsDto  # noqa: PLC0415
+        from ..models.premium_invitation_data_dto import PremiumInvitationDataDto  # noqa: PLC0415
+        from ..models.user_permissions_dto import UserPermissionsDto  # noqa: PLC0415
+        from ..models.user_subscription_dto import UserSubscriptionDto  # noqa: PLC0415
 
         d = dict(src_dict)
         uid = d.pop("uid")
@@ -168,6 +200,8 @@ class UserDto:
         display_name = d.pop("displayName")
 
         email = d.pop("email")
+
+        profile_image = d.pop("profileImage", UNSET)
 
         _forced_premium_tariff = d.pop("forcedPremiumTariff", UNSET)
         forced_premium_tariff: UserDtoForcedPremiumTariff | Unset
@@ -178,9 +212,9 @@ class UserDto:
 
         language = d.pop("language", UNSET)
 
-        is_test_user = d.pop("isTestUser", UNSET)
+        email_verified = d.pop("emailVerified", UNSET)
 
-        profile_image = d.pop("profileImage", UNSET)
+        is_test_user = d.pop("isTestUser", UNSET)
 
         provider_id = d.pop("providerId", UNSET)
 
@@ -229,14 +263,21 @@ class UserDto:
         else:
             notification_settings = NotificationSettingsDto.from_dict(_notification_settings)
 
+        last_seen = d.pop("lastSeen", UNSET)
+
+        auto_reduce_cursor = d.pop("autoReduceCursor", UNSET)
+
+        seen_tips = cast(list[str], d.pop("seenTips", UNSET))
+
         user_dto = cls(
             uid=uid,
             display_name=display_name,
             email=email,
+            profile_image=profile_image,
             forced_premium_tariff=forced_premium_tariff,
             language=language,
+            email_verified=email_verified,
             is_test_user=is_test_user,
-            profile_image=profile_image,
             provider_id=provider_id,
             provider_uuid=provider_uuid,
             subscription=subscription,
@@ -248,6 +289,9 @@ class UserDto:
             user_country_source=user_country_source,
             premium_invitation=premium_invitation,
             notification_settings=notification_settings,
+            last_seen=last_seen,
+            auto_reduce_cursor=auto_reduce_cursor,
+            seen_tips=seen_tips,
         )
 
         user_dto.additional_properties = d

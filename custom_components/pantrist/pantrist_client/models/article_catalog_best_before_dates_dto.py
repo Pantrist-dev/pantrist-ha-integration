@@ -56,7 +56,7 @@ class ArticleCatalogBestBeforeDatesDto:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.value_with_metric_and_opening_dto import ValueWithMetricAndOpeningDto
+        from ..models.value_with_metric_and_opening_dto import ValueWithMetricAndOpeningDto  # noqa: PLC0415
 
         d = dict(src_dict)
         _pantry = d.pop("pantry", UNSET)

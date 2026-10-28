@@ -33,7 +33,7 @@ class MergedPantryDto:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.merged_pantry_dto_name_type_1 import MergedPantryDtoNameType1
+        from ..models.merged_pantry_dto_name_type_1 import MergedPantryDtoNameType1  # noqa: PLC0415
 
         name: dict[str, Any] | str
         if isinstance(self.name, MergedPantryDtoNameType1):
@@ -72,8 +72,8 @@ class MergedPantryDto:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.merged_pantry_dto_list_pantry_ids import MergedPantryDtoListPantryIds
-        from ..models.merged_pantry_dto_name_type_1 import MergedPantryDtoNameType1
+        from ..models.merged_pantry_dto_list_pantry_ids import MergedPantryDtoListPantryIds  # noqa: PLC0415
+        from ..models.merged_pantry_dto_name_type_1 import MergedPantryDtoNameType1  # noqa: PLC0415
 
         d = dict(src_dict)
 

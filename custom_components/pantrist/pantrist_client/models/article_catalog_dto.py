@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, TypeVar, cast
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..models.allergen import Allergen
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
@@ -31,13 +32,19 @@ class ArticleCatalogDto:
         barcode (list[str] | None | Unset):
         supermarket_id (list[str] | None | Unset):
         tags (list[str] | None | Unset):
+        allergens (list[Allergen] | None | Unset): Allergens (EU 14) this catalog item carries. Propagated onto created
+            articles as best-effort defaults.
         favourite (bool | None | Unset):
         deposit (float | None | Unset):
         image_url (None | str | Unset):
+        additional_image_urls (list[str] | None | Unset): Additional product photo URLs, ordered. imageUrl is the
+            primary photo.
         predefined_pantry (None | str | Unset):
         notes (None | str | Unset):
         default_best_before_days (float | None | Unset):
         manage_minimum_amount (bool | None | Unset):
+        merge_different_content (bool | None | Unset): Whether two entries of this product that differ only in
+            contentVolume count as the same thing. null means the user has not been asked yet.
         minimum_amount (float | None | Unset):
         amount_to_buy (float | None | Unset):
         price (PriceWithDateDto | Unset):
@@ -55,13 +62,16 @@ class ArticleCatalogDto:
     barcode: list[str] | None | Unset = UNSET
     supermarket_id: list[str] | None | Unset = UNSET
     tags: list[str] | None | Unset = UNSET
+    allergens: list[Allergen] | None | Unset = UNSET
     favourite: bool | None | Unset = UNSET
     deposit: float | None | Unset = UNSET
     image_url: None | str | Unset = UNSET
+    additional_image_urls: list[str] | None | Unset = UNSET
     predefined_pantry: None | str | Unset = UNSET
     notes: None | str | Unset = UNSET
     default_best_before_days: float | None | Unset = UNSET
     manage_minimum_amount: bool | None | Unset = UNSET
+    merge_different_content: bool | None | Unset = UNSET
     minimum_amount: float | None | Unset = UNSET
     amount_to_buy: float | None | Unset = UNSET
     price: PriceWithDateDto | Unset = UNSET
@@ -71,7 +81,7 @@ class ArticleCatalogDto:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.article_catalog_dto_price_per_market_type_0 import ArticleCatalogDtoPricePerMarketType0
+        from ..models.article_catalog_dto_price_per_market_type_0 import ArticleCatalogDtoPricePerMarketType0  # noqa: PLC0415
 
         uuid = self.uuid
 
@@ -120,6 +130,18 @@ class ArticleCatalogDto:
         else:
             tags = self.tags
 
+        allergens: list[str] | None | Unset
+        if isinstance(self.allergens, Unset):
+            allergens = UNSET
+        elif isinstance(self.allergens, list):
+            allergens = []
+            for allergens_type_0_item_data in self.allergens:
+                allergens_type_0_item = allergens_type_0_item_data.value
+                allergens.append(allergens_type_0_item)
+
+        else:
+            allergens = self.allergens
+
         favourite: bool | None | Unset
         if isinstance(self.favourite, Unset):
             favourite = UNSET
@@ -137,6 +159,15 @@ class ArticleCatalogDto:
             image_url = UNSET
         else:
             image_url = self.image_url
+
+        additional_image_urls: list[str] | None | Unset
+        if isinstance(self.additional_image_urls, Unset):
+            additional_image_urls = UNSET
+        elif isinstance(self.additional_image_urls, list):
+            additional_image_urls = self.additional_image_urls
+
+        else:
+            additional_image_urls = self.additional_image_urls
 
         predefined_pantry: None | str | Unset
         if isinstance(self.predefined_pantry, Unset):
@@ -161,6 +192,12 @@ class ArticleCatalogDto:
             manage_minimum_amount = UNSET
         else:
             manage_minimum_amount = self.manage_minimum_amount
+
+        merge_different_content: bool | None | Unset
+        if isinstance(self.merge_different_content, Unset):
+            merge_different_content = UNSET
+        else:
+            merge_different_content = self.merge_different_content
 
         minimum_amount: float | None | Unset
         if isinstance(self.minimum_amount, Unset):
@@ -214,12 +251,16 @@ class ArticleCatalogDto:
             field_dict["supermarketId"] = supermarket_id
         if tags is not UNSET:
             field_dict["tags"] = tags
+        if allergens is not UNSET:
+            field_dict["allergens"] = allergens
         if favourite is not UNSET:
             field_dict["favourite"] = favourite
         if deposit is not UNSET:
             field_dict["deposit"] = deposit
         if image_url is not UNSET:
             field_dict["imageUrl"] = image_url
+        if additional_image_urls is not UNSET:
+            field_dict["additionalImageUrls"] = additional_image_urls
         if predefined_pantry is not UNSET:
             field_dict["predefinedPantry"] = predefined_pantry
         if notes is not UNSET:
@@ -228,6 +269,8 @@ class ArticleCatalogDto:
             field_dict["defaultBestBeforeDays"] = default_best_before_days
         if manage_minimum_amount is not UNSET:
             field_dict["manageMinimumAmount"] = manage_minimum_amount
+        if merge_different_content is not UNSET:
+            field_dict["mergeDifferentContent"] = merge_different_content
         if minimum_amount is not UNSET:
             field_dict["minimumAmount"] = minimum_amount
         if amount_to_buy is not UNSET:
@@ -245,10 +288,10 @@ class ArticleCatalogDto:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.article_catalog_best_before_dates_dto import ArticleCatalogBestBeforeDatesDto
-        from ..models.article_catalog_dto_price_per_market_type_0 import ArticleCatalogDtoPricePerMarketType0
-        from ..models.article_nutriments_dto import ArticleNutrimentsDto
-        from ..models.price_with_date_dto import PriceWithDateDto
+        from ..models.article_catalog_best_before_dates_dto import ArticleCatalogBestBeforeDatesDto  # noqa: PLC0415
+        from ..models.article_catalog_dto_price_per_market_type_0 import ArticleCatalogDtoPricePerMarketType0  # noqa: PLC0415
+        from ..models.article_nutriments_dto import ArticleNutrimentsDto  # noqa: PLC0415
+        from ..models.price_with_date_dto import PriceWithDateDto  # noqa: PLC0415
 
         d = dict(src_dict)
         uuid = d.pop("uuid")
@@ -328,6 +371,28 @@ class ArticleCatalogDto:
 
         tags = _parse_tags(d.pop("tags", UNSET))
 
+        def _parse_allergens(data: object) -> list[Allergen] | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, list):
+                    raise TypeError()
+                allergens_type_0 = []
+                _allergens_type_0 = data
+                for allergens_type_0_item_data in _allergens_type_0:
+                    allergens_type_0_item = Allergen(allergens_type_0_item_data)
+
+                    allergens_type_0.append(allergens_type_0_item)
+
+                return allergens_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(list[Allergen] | None | Unset, data)
+
+        allergens = _parse_allergens(d.pop("allergens", UNSET))
+
         def _parse_favourite(data: object) -> bool | None | Unset:
             if data is None:
                 return data
@@ -354,6 +419,23 @@ class ArticleCatalogDto:
             return cast(None | str | Unset, data)
 
         image_url = _parse_image_url(d.pop("imageUrl", UNSET))
+
+        def _parse_additional_image_urls(data: object) -> list[str] | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            try:
+                if not isinstance(data, list):
+                    raise TypeError()
+                additional_image_urls_type_0 = cast(list[str], data)
+
+                return additional_image_urls_type_0
+            except (TypeError, ValueError, AttributeError, KeyError):
+                pass
+            return cast(list[str] | None | Unset, data)
+
+        additional_image_urls = _parse_additional_image_urls(d.pop("additionalImageUrls", UNSET))
 
         def _parse_predefined_pantry(data: object) -> None | str | Unset:
             if data is None:
@@ -390,6 +472,15 @@ class ArticleCatalogDto:
             return cast(bool | None | Unset, data)
 
         manage_minimum_amount = _parse_manage_minimum_amount(d.pop("manageMinimumAmount", UNSET))
+
+        def _parse_merge_different_content(data: object) -> bool | None | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(bool | None | Unset, data)
+
+        merge_different_content = _parse_merge_different_content(d.pop("mergeDifferentContent", UNSET))
 
         def _parse_minimum_amount(data: object) -> float | None | Unset:
             if data is None:
@@ -457,13 +548,16 @@ class ArticleCatalogDto:
             barcode=barcode,
             supermarket_id=supermarket_id,
             tags=tags,
+            allergens=allergens,
             favourite=favourite,
             deposit=deposit,
             image_url=image_url,
+            additional_image_urls=additional_image_urls,
             predefined_pantry=predefined_pantry,
             notes=notes,
             default_best_before_days=default_best_before_days,
             manage_minimum_amount=manage_minimum_amount,
+            merge_different_content=merge_different_content,
             minimum_amount=minimum_amount,
             amount_to_buy=amount_to_buy,
             price=price,

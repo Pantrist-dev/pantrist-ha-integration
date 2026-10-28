@@ -15,26 +15,18 @@ T = TypeVar("T", bound="AnalysisShoppingSettingsDto")
 class AnalysisShoppingSettingsDto:
     """
     Attributes:
-        always_add_to_cart (bool):
         budget (float | Unset):
     """
 
-    always_add_to_cart: bool
     budget: float | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        always_add_to_cart = self.always_add_to_cart
-
         budget = self.budget
 
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
-        field_dict.update(
-            {
-                "alwaysAddToCart": always_add_to_cart,
-            }
-        )
+        field_dict.update({})
         if budget is not UNSET:
             field_dict["budget"] = budget
 
@@ -43,12 +35,9 @@ class AnalysisShoppingSettingsDto:
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
         d = dict(src_dict)
-        always_add_to_cart = d.pop("alwaysAddToCart")
-
         budget = d.pop("budget", UNSET)
 
         analysis_shopping_settings_dto = cls(
-            always_add_to_cart=always_add_to_cart,
             budget=budget,
         )
 

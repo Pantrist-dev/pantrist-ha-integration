@@ -22,11 +22,15 @@ class StepDto:
         text (str): Instruction text for this step Example: Mix all dry ingredients together..
         ingredients (list[IngredientDto]): Ingredients used in this step
         partial_step_uid (str | Unset): Optional reference to a partial step
+        timer_minutes (float | Unset): Optional explicit timer duration for this step, in minutes. Set by the recipe
+            author (or extracted from the step text) and used to pre-fill the cooking-mode timer instead of relying on text
+            parsing. Example: 5.
     """
 
     text: str
     ingredients: list[IngredientDto]
     partial_step_uid: str | Unset = UNSET
+    timer_minutes: float | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -39,6 +43,8 @@ class StepDto:
 
         partial_step_uid = self.partial_step_uid
 
+        timer_minutes = self.timer_minutes
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -49,12 +55,14 @@ class StepDto:
         )
         if partial_step_uid is not UNSET:
             field_dict["partialStepUid"] = partial_step_uid
+        if timer_minutes is not UNSET:
+            field_dict["timerMinutes"] = timer_minutes
 
         return field_dict
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.ingredient_dto import IngredientDto
+        from ..models.ingredient_dto import IngredientDto  # noqa: PLC0415
 
         d = dict(src_dict)
         text = d.pop("text")
@@ -68,10 +76,13 @@ class StepDto:
 
         partial_step_uid = d.pop("partialStepUid", UNSET)
 
+        timer_minutes = d.pop("timerMinutes", UNSET)
+
         step_dto = cls(
             text=text,
             ingredients=ingredients,
             partial_step_uid=partial_step_uid,
+            timer_minutes=timer_minutes,
         )
 
         step_dto.additional_properties = d

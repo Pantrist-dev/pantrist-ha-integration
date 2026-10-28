@@ -21,6 +21,7 @@ def _get_kwargs(
     code_challenge: str | Unset = UNSET,
     code_challenge_method: AccessTokenControllerAuthorizeCodeChallengeMethod | Unset = UNSET,
     list_id: str | Unset = UNSET,
+    scope: str | Unset = UNSET,
 ) -> dict[str, Any]:
 
     params: dict[str, Any] = {}
@@ -42,6 +43,8 @@ def _get_kwargs(
     params["code_challenge_method"] = json_code_challenge_method
 
     params["list_id"] = list_id
+
+    params["scope"] = scope
 
     params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
 
@@ -93,6 +96,7 @@ def sync_detailed(
     code_challenge: str | Unset = UNSET,
     code_challenge_method: AccessTokenControllerAuthorizeCodeChallengeMethod | Unset = UNSET,
     list_id: str | Unset = UNSET,
+    scope: str | Unset = UNSET,
 ) -> Response[AccessTokenControllerAuthorizeResponse200 | Any]:
     """
     Args:
@@ -103,6 +107,7 @@ def sync_detailed(
         code_challenge (str | Unset):
         code_challenge_method (AccessTokenControllerAuthorizeCodeChallengeMethod | Unset):
         list_id (str | Unset):
+        scope (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -120,6 +125,7 @@ def sync_detailed(
         code_challenge=code_challenge,
         code_challenge_method=code_challenge_method,
         list_id=list_id,
+        scope=scope,
     )
 
     response = client.get_httpx_client().request(
@@ -139,6 +145,7 @@ def sync(
     code_challenge: str | Unset = UNSET,
     code_challenge_method: AccessTokenControllerAuthorizeCodeChallengeMethod | Unset = UNSET,
     list_id: str | Unset = UNSET,
+    scope: str | Unset = UNSET,
 ) -> AccessTokenControllerAuthorizeResponse200 | Any | None:
     """
     Args:
@@ -149,6 +156,7 @@ def sync(
         code_challenge (str | Unset):
         code_challenge_method (AccessTokenControllerAuthorizeCodeChallengeMethod | Unset):
         list_id (str | Unset):
+        scope (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -167,6 +175,7 @@ def sync(
         code_challenge=code_challenge,
         code_challenge_method=code_challenge_method,
         list_id=list_id,
+        scope=scope,
     ).parsed
 
 
@@ -180,6 +189,7 @@ async def asyncio_detailed(
     code_challenge: str | Unset = UNSET,
     code_challenge_method: AccessTokenControllerAuthorizeCodeChallengeMethod | Unset = UNSET,
     list_id: str | Unset = UNSET,
+    scope: str | Unset = UNSET,
 ) -> Response[AccessTokenControllerAuthorizeResponse200 | Any]:
     """
     Args:
@@ -190,6 +200,7 @@ async def asyncio_detailed(
         code_challenge (str | Unset):
         code_challenge_method (AccessTokenControllerAuthorizeCodeChallengeMethod | Unset):
         list_id (str | Unset):
+        scope (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -207,6 +218,7 @@ async def asyncio_detailed(
         code_challenge=code_challenge,
         code_challenge_method=code_challenge_method,
         list_id=list_id,
+        scope=scope,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -224,6 +236,7 @@ async def asyncio(
     code_challenge: str | Unset = UNSET,
     code_challenge_method: AccessTokenControllerAuthorizeCodeChallengeMethod | Unset = UNSET,
     list_id: str | Unset = UNSET,
+    scope: str | Unset = UNSET,
 ) -> AccessTokenControllerAuthorizeResponse200 | Any | None:
     """
     Args:
@@ -234,6 +247,7 @@ async def asyncio(
         code_challenge (str | Unset):
         code_challenge_method (AccessTokenControllerAuthorizeCodeChallengeMethod | Unset):
         list_id (str | Unset):
+        scope (str | Unset):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -253,5 +267,6 @@ async def asyncio(
             code_challenge=code_challenge,
             code_challenge_method=code_challenge_method,
             list_id=list_id,
+            scope=scope,
         )
     ).parsed

@@ -15,8 +15,6 @@ T = TypeVar("T", bound="ArticleCatalogDtoPricePerMarketType0")
 
 @_attrs_define
 class ArticleCatalogDtoPricePerMarketType0:
-    """ """
-
     additional_properties: dict[str, PriceWithDateDto] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -29,7 +27,7 @@ class ArticleCatalogDtoPricePerMarketType0:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.price_with_date_dto import PriceWithDateDto
+        from ..models.price_with_date_dto import PriceWithDateDto  # noqa: PLC0415
 
         d = dict(src_dict)
         article_catalog_dto_price_per_market_type_0 = cls()

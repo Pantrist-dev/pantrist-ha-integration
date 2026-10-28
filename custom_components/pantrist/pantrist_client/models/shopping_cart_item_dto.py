@@ -48,7 +48,7 @@ class ShoppingCartItemDto:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.article_dto import ArticleDto
+        from ..models.article_dto import ArticleDto  # noqa: PLC0415
 
         d = dict(src_dict)
         uuid = d.pop("uuid")

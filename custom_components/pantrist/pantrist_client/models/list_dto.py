@@ -80,8 +80,8 @@ class ListDto:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.block_settings_dto import BlockSettingsDto
-        from ..models.list_user_dto import ListUserDto
+        from ..models.block_settings_dto import BlockSettingsDto  # noqa: PLC0415
+        from ..models.list_user_dto import ListUserDto  # noqa: PLC0415
 
         d = dict(src_dict)
         id = d.pop("id")

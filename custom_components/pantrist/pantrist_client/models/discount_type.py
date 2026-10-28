@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class DiscountType(str, Enum):
+class DiscountType(StrEnum):
     CURRENCY = "currency"
     PERCENT = "percent"
 

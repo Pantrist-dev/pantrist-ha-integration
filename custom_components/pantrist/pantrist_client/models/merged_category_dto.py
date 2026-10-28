@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, TypeVar, cast
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
+from ..models.category_item_type import CategoryItemType
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
@@ -24,16 +25,19 @@ class MergedCategoryDto:
         list_category_ids (MergedCategoryDtoListCategoryIds): Map of listId → categoryUuid
         color (str | Unset):
         default_best_before_days (float | None | Unset):
+        item_type (CategoryItemType | Unset): 'non-food' when the category is non-food in any of the lists merged into
+            this entry; absent means food.
     """
 
     name: MergedCategoryDtoNameType1 | str
     list_category_ids: MergedCategoryDtoListCategoryIds
     color: str | Unset = UNSET
     default_best_before_days: float | None | Unset = UNSET
+    item_type: CategoryItemType | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.merged_category_dto_name_type_1 import MergedCategoryDtoNameType1
+        from ..models.merged_category_dto_name_type_1 import MergedCategoryDtoNameType1  # noqa: PLC0415
 
         name: dict[str, Any] | str
         if isinstance(self.name, MergedCategoryDtoNameType1):
@@ -51,6 +55,10 @@ class MergedCategoryDto:
         else:
             default_best_before_days = self.default_best_before_days
 
+        item_type: str | Unset = UNSET
+        if not isinstance(self.item_type, Unset):
+            item_type = self.item_type.value
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -63,13 +71,15 @@ class MergedCategoryDto:
             field_dict["color"] = color
         if default_best_before_days is not UNSET:
             field_dict["defaultBestBeforeDays"] = default_best_before_days
+        if item_type is not UNSET:
+            field_dict["itemType"] = item_type
 
         return field_dict
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.merged_category_dto_list_category_ids import MergedCategoryDtoListCategoryIds
-        from ..models.merged_category_dto_name_type_1 import MergedCategoryDtoNameType1
+        from ..models.merged_category_dto_list_category_ids import MergedCategoryDtoListCategoryIds  # noqa: PLC0415
+        from ..models.merged_category_dto_name_type_1 import MergedCategoryDtoNameType1  # noqa: PLC0415
 
         d = dict(src_dict)
 
@@ -99,11 +109,19 @@ class MergedCategoryDto:
 
         default_best_before_days = _parse_default_best_before_days(d.pop("defaultBestBeforeDays", UNSET))
 
+        _item_type = d.pop("itemType", UNSET)
+        item_type: CategoryItemType | Unset
+        if isinstance(_item_type, Unset) or _item_type is None or _item_type == "":
+            item_type = UNSET
+        else:
+            item_type = CategoryItemType(_item_type)
+
         merged_category_dto = cls(
             name=name,
             list_category_ids=list_category_ids,
             color=color,
             default_best_before_days=default_best_before_days,
+            item_type=item_type,
         )
 
         merged_category_dto.additional_properties = d

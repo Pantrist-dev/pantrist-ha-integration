@@ -64,10 +64,10 @@ def sync_detailed(
     body: AddPantryByNameDto,
     x_socket_id: str | Unset = UNSET,
 ) -> Response[ArticleDto]:
-    r"""Add an item to the pantry list by name
+    """Add an item to the pantry list by name
 
      Categorises the item via the AI service and stores it on the given list. amount defaults to 1,
-    unitId defaults to \"pieces\".
+    unitId defaults to "pieces".
 
     Args:
         list_id (str):
@@ -102,10 +102,10 @@ def sync(
     body: AddPantryByNameDto,
     x_socket_id: str | Unset = UNSET,
 ) -> ArticleDto | None:
-    r"""Add an item to the pantry list by name
+    """Add an item to the pantry list by name
 
      Categorises the item via the AI service and stores it on the given list. amount defaults to 1,
-    unitId defaults to \"pieces\".
+    unitId defaults to "pieces".
 
     Args:
         list_id (str):
@@ -135,10 +135,10 @@ async def asyncio_detailed(
     body: AddPantryByNameDto,
     x_socket_id: str | Unset = UNSET,
 ) -> Response[ArticleDto]:
-    r"""Add an item to the pantry list by name
+    """Add an item to the pantry list by name
 
      Categorises the item via the AI service and stores it on the given list. amount defaults to 1,
-    unitId defaults to \"pieces\".
+    unitId defaults to "pieces".
 
     Args:
         list_id (str):
@@ -171,10 +171,10 @@ async def asyncio(
     body: AddPantryByNameDto,
     x_socket_id: str | Unset = UNSET,
 ) -> ArticleDto | None:
-    r"""Add an item to the pantry list by name
+    """Add an item to the pantry list by name
 
      Categorises the item via the AI service and stores it on the given list. amount defaults to 1,
-    unitId defaults to \"pieces\".
+    unitId defaults to "pieces".
 
     Args:
         list_id (str):

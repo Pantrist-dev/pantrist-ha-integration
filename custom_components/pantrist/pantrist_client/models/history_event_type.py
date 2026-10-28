@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class HistoryEventType(str, Enum):
+class HistoryEventType(StrEnum):
     CREATED = "created"
     DELETED = "deleted"
     UPDATED = "updated"

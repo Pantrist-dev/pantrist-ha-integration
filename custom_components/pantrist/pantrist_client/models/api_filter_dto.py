@@ -7,7 +7,10 @@ from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 from ..models.api_filter_dto_categories_item import ApiFilterDtoCategoriesItem
+from ..models.api_filter_dto_dietary_styles_item import ApiFilterDtoDietaryStylesItem
+from ..models.api_filter_dto_exclude_allergens_item import ApiFilterDtoExcludeAllergensItem
 from ..models.api_filter_dto_language import ApiFilterDtoLanguage
+from ..models.api_filter_dto_pantry_filter import ApiFilterDtoPantryFilter
 from ..models.api_filter_dto_sort_by import ApiFilterDtoSortBy
 from ..types import UNSET, Unset
 
@@ -29,12 +32,37 @@ class ApiFilterDto:
         language (ApiFilterDtoLanguage | Unset):  Example: en-US.
         favorite_receipts (list[str] | Unset): Filter by favorite recipe UUIDs
         categories (list[ApiFilterDtoCategoriesItem] | Unset): Filter by categories
-        ingredients (list[str] | Unset): Filter by ingredient names
+        ingredients (list[str] | Unset): Legacy: the pantry as ingredient names. Use `pantryFilter` (plus `listIds`)
+            instead, which reads the pantry server-side with its already-resolved ingredient ids. Every name sent here is
+            resolved per request, and the resolver ends in a language model, so a pantry of a thousand items costs a
+            thousand resolves on every call. Still honoured for app versions in the field and for local-only users, who have
+            no server-side pantry. When set, it wins over `pantryFilter`.
+        pantry_filter (ApiFilterDtoPantryFilter | Unset): Opt-in to server-side pantry matching. Setting this field
+            tells the server to hydrate the authenticated user's pantry items (across all of their lists) and score recipes
+            against them — the app does not need to ship a 50–200 item array on every request. `all` uses every pantry item
+            the user currently has. `expiring` keeps only items whose earliest best-before date is at most 14 days away
+            (already expired or close to it), so the match prioritises ingredients the user should use up next. Mutually
+            exclusive with `ingredients` — an explicit ingredients array always wins, and this field is ignored when no user
+            is attached. Example: all.
+        list_ids (list[str] | Unset): Restrict the `pantryFilter` hydration to a subset of the user's lists. When the
+            app is showing a single household list, send `[currentListId]` so "fitting recipes" / "use-up-soon" only
+            consider that household's pantry; in all-lists mode send every list id (or omit to fall back to all). Ignored
+            when `pantryFilter` is unset or no user is attached. Ids the caller does not own are silently dropped server-
+            side.
         author_uuid (list[str] | str | Unset): Filter by author UUID(s)
         favorites_range (OptionalRangeDto | Unset):
         total_time_range (OptionalRangeDto | Unset):
         preparation_time_range (OptionalRangeDto | Unset):
         collection_id (str | Unset): Filter by assigned collection
+        dietary_styles (list[ApiFilterDtoDietaryStylesItem] | Unset): Only recipes that match EVERY selected dietary
+            style (AND). Dietary styles are a subset of the recipe categories (e.g. Vegan, Vegetarian, Keto, GlutenFree,
+            HighProtein). The user setting "vegan + high protein" should surface vegan recipes that are also high-protein —
+            a match-any filter here would leak non-vegan recipes whenever any other style happened to match.
+        exclude_allergens (list[ApiFilterDtoExcludeAllergensItem] | Unset): Exclude recipes that contain ANY of these
+            allergens. Recipes whose allergens are unknown (null) are NOT excluded.
+        main_courses_only (bool | Unset): Leave out recipes whose categories say they are not a meal of their own
+            (dessert, breakfast, snack, drink, side, …), unless they also carry a meal category (lunch, dinner, soup, …). A
+            recipe without categories is kept.
     """
 
     current_page: float | Unset = UNSET
@@ -45,11 +73,16 @@ class ApiFilterDto:
     favorite_receipts: list[str] | Unset = UNSET
     categories: list[ApiFilterDtoCategoriesItem] | Unset = UNSET
     ingredients: list[str] | Unset = UNSET
+    pantry_filter: ApiFilterDtoPantryFilter | Unset = UNSET
+    list_ids: list[str] | Unset = UNSET
     author_uuid: list[str] | str | Unset = UNSET
     favorites_range: OptionalRangeDto | Unset = UNSET
     total_time_range: OptionalRangeDto | Unset = UNSET
     preparation_time_range: OptionalRangeDto | Unset = UNSET
     collection_id: str | Unset = UNSET
+    dietary_styles: list[ApiFilterDtoDietaryStylesItem] | Unset = UNSET
+    exclude_allergens: list[ApiFilterDtoExcludeAllergensItem] | Unset = UNSET
+    main_courses_only: bool | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -82,6 +115,14 @@ class ApiFilterDto:
         if not isinstance(self.ingredients, Unset):
             ingredients = self.ingredients
 
+        pantry_filter: str | Unset = UNSET
+        if not isinstance(self.pantry_filter, Unset):
+            pantry_filter = self.pantry_filter.value
+
+        list_ids: list[str] | Unset = UNSET
+        if not isinstance(self.list_ids, Unset):
+            list_ids = self.list_ids
+
         author_uuid: list[str] | str | Unset
         if isinstance(self.author_uuid, Unset):
             author_uuid = UNSET
@@ -105,6 +146,22 @@ class ApiFilterDto:
 
         collection_id = self.collection_id
 
+        dietary_styles: list[str] | Unset = UNSET
+        if not isinstance(self.dietary_styles, Unset):
+            dietary_styles = []
+            for dietary_styles_item_data in self.dietary_styles:
+                dietary_styles_item = dietary_styles_item_data.value
+                dietary_styles.append(dietary_styles_item)
+
+        exclude_allergens: list[str] | Unset = UNSET
+        if not isinstance(self.exclude_allergens, Unset):
+            exclude_allergens = []
+            for exclude_allergens_item_data in self.exclude_allergens:
+                exclude_allergens_item = exclude_allergens_item_data.value
+                exclude_allergens.append(exclude_allergens_item)
+
+        main_courses_only = self.main_courses_only
+
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
@@ -124,6 +181,10 @@ class ApiFilterDto:
             field_dict["categories"] = categories
         if ingredients is not UNSET:
             field_dict["ingredients"] = ingredients
+        if pantry_filter is not UNSET:
+            field_dict["pantryFilter"] = pantry_filter
+        if list_ids is not UNSET:
+            field_dict["listIds"] = list_ids
         if author_uuid is not UNSET:
             field_dict["authorUuid"] = author_uuid
         if favorites_range is not UNSET:
@@ -134,12 +195,18 @@ class ApiFilterDto:
             field_dict["preparationTimeRange"] = preparation_time_range
         if collection_id is not UNSET:
             field_dict["collectionId"] = collection_id
+        if dietary_styles is not UNSET:
+            field_dict["dietaryStyles"] = dietary_styles
+        if exclude_allergens is not UNSET:
+            field_dict["excludeAllergens"] = exclude_allergens
+        if main_courses_only is not UNSET:
+            field_dict["mainCoursesOnly"] = main_courses_only
 
         return field_dict
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.optional_range_dto import OptionalRangeDto
+        from ..models.optional_range_dto import OptionalRangeDto  # noqa: PLC0415
 
         d = dict(src_dict)
         current_page = d.pop("currentPage", UNSET)
@@ -174,6 +241,15 @@ class ApiFilterDto:
                 categories.append(categories_item)
 
         ingredients = cast(list[str], d.pop("ingredients", UNSET))
+
+        _pantry_filter = d.pop("pantryFilter", UNSET)
+        pantry_filter: ApiFilterDtoPantryFilter | Unset
+        if isinstance(_pantry_filter, Unset) or _pantry_filter is None or _pantry_filter == "":
+            pantry_filter = UNSET
+        else:
+            pantry_filter = ApiFilterDtoPantryFilter(_pantry_filter)
+
+        list_ids = cast(list[str], d.pop("listIds", UNSET))
 
         def _parse_author_uuid(data: object) -> list[str] | str | Unset:
             if isinstance(data, Unset):
@@ -213,6 +289,26 @@ class ApiFilterDto:
 
         collection_id = d.pop("collectionId", UNSET)
 
+        _dietary_styles = d.pop("dietaryStyles", UNSET)
+        dietary_styles: list[ApiFilterDtoDietaryStylesItem] | Unset = UNSET
+        if _dietary_styles is not UNSET:
+            dietary_styles = []
+            for dietary_styles_item_data in _dietary_styles:
+                dietary_styles_item = ApiFilterDtoDietaryStylesItem(dietary_styles_item_data)
+
+                dietary_styles.append(dietary_styles_item)
+
+        _exclude_allergens = d.pop("excludeAllergens", UNSET)
+        exclude_allergens: list[ApiFilterDtoExcludeAllergensItem] | Unset = UNSET
+        if _exclude_allergens is not UNSET:
+            exclude_allergens = []
+            for exclude_allergens_item_data in _exclude_allergens:
+                exclude_allergens_item = ApiFilterDtoExcludeAllergensItem(exclude_allergens_item_data)
+
+                exclude_allergens.append(exclude_allergens_item)
+
+        main_courses_only = d.pop("mainCoursesOnly", UNSET)
+
         api_filter_dto = cls(
             current_page=current_page,
             sort_by=sort_by,
@@ -222,11 +318,16 @@ class ApiFilterDto:
             favorite_receipts=favorite_receipts,
             categories=categories,
             ingredients=ingredients,
+            pantry_filter=pantry_filter,
+            list_ids=list_ids,
             author_uuid=author_uuid,
             favorites_range=favorites_range,
             total_time_range=total_time_range,
             preparation_time_range=preparation_time_range,
             collection_id=collection_id,
+            dietary_styles=dietary_styles,
+            exclude_allergens=exclude_allergens,
+            main_courses_only=main_courses_only,
         )
 
         api_filter_dto.additional_properties = d

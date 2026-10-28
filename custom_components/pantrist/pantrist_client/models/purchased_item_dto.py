@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 from collections.abc import Mapping
 from typing import Any, TypeVar, cast
 
@@ -30,6 +31,10 @@ class PurchasedItemDto:
         brand (str | Unset):
         barcode (list[str] | str | Unset):
         supermarket_id (str | Unset):
+        purchased_at (datetime.datetime | Unset): ISO timestamp of the check-off. Orders the purchases within one
+            shopping trip; the server sets it when a new purchase arrives without one.
+        ingredient_id (None | str | Unset): Canonical ingredient id of the checked-off list item
+            (ArticleDto.ingredientId). Identifies the product for the learned aisle order.
         price (float | Unset):
         deposit (float | Unset):
         discount (float | Unset):
@@ -50,6 +55,8 @@ class PurchasedItemDto:
     brand: str | Unset = UNSET
     barcode: list[str] | str | Unset = UNSET
     supermarket_id: str | Unset = UNSET
+    purchased_at: datetime.datetime | Unset = UNSET
+    ingredient_id: None | str | Unset = UNSET
     price: float | Unset = UNSET
     deposit: float | Unset = UNSET
     discount: float | Unset = UNSET
@@ -91,6 +98,16 @@ class PurchasedItemDto:
 
         supermarket_id = self.supermarket_id
 
+        purchased_at: str | Unset = UNSET
+        if not isinstance(self.purchased_at, Unset):
+            purchased_at = self.purchased_at.isoformat()
+
+        ingredient_id: None | str | Unset
+        if isinstance(self.ingredient_id, Unset):
+            ingredient_id = UNSET
+        else:
+            ingredient_id = self.ingredient_id
+
         price = self.price
 
         deposit = self.deposit
@@ -124,6 +141,10 @@ class PurchasedItemDto:
             field_dict["barcode"] = barcode
         if supermarket_id is not UNSET:
             field_dict["supermarketId"] = supermarket_id
+        if purchased_at is not UNSET:
+            field_dict["purchasedAt"] = purchased_at
+        if ingredient_id is not UNSET:
+            field_dict["ingredientId"] = ingredient_id
         if price is not UNSET:
             field_dict["price"] = price
         if deposit is not UNSET:
@@ -179,6 +200,22 @@ class PurchasedItemDto:
 
         supermarket_id = d.pop("supermarketId", UNSET)
 
+        _purchased_at = d.pop("purchasedAt", UNSET)
+        purchased_at: datetime.datetime | Unset
+        if isinstance(_purchased_at, Unset):
+            purchased_at = UNSET
+        else:
+            purchased_at = datetime.datetime.fromisoformat(_purchased_at)
+
+        def _parse_ingredient_id(data: object) -> None | str | Unset:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(None | str | Unset, data)
+
+        ingredient_id = _parse_ingredient_id(d.pop("ingredientId", UNSET))
+
         price = d.pop("price", UNSET)
 
         deposit = d.pop("deposit", UNSET)
@@ -203,6 +240,8 @@ class PurchasedItemDto:
             brand=brand,
             barcode=barcode,
             supermarket_id=supermarket_id,
+            purchased_at=purchased_at,
+            ingredient_id=ingredient_id,
             price=price,
             deposit=deposit,
             discount=discount,

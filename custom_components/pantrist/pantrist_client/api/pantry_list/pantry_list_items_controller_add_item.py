@@ -14,17 +14,25 @@ def _get_kwargs(
     list_id: str,
     *,
     body: ArticleDto,
+    auto_restock: bool | Unset = UNSET,
     x_socket_id: str | Unset = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
     if not isinstance(x_socket_id, Unset):
         headers["x-socket-id"] = x_socket_id
 
+    params: dict[str, Any] = {}
+
+    params["autoRestock"] = auto_restock
+
+    params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
+
     _kwargs: dict[str, Any] = {
         "method": "post",
         "url": "/list/{list_id}/pantryList".format(
             list_id=quote(str(list_id), safe=""),
         ),
+        "params": params,
     }
 
     _kwargs["json"] = body.to_dict()
@@ -61,12 +69,14 @@ def sync_detailed(
     *,
     client: AuthenticatedClient,
     body: ArticleDto,
+    auto_restock: bool | Unset = UNSET,
     x_socket_id: str | Unset = UNSET,
 ) -> Response[ArticleDto]:
     """Add a new pantry list item with a client UUID
 
     Args:
         list_id (str):
+        auto_restock (bool | Unset):
         x_socket_id (str | Unset):
         body (ArticleDto):
 
@@ -81,6 +91,7 @@ def sync_detailed(
     kwargs = _get_kwargs(
         list_id=list_id,
         body=body,
+        auto_restock=auto_restock,
         x_socket_id=x_socket_id,
     )
 
@@ -96,12 +107,14 @@ def sync(
     *,
     client: AuthenticatedClient,
     body: ArticleDto,
+    auto_restock: bool | Unset = UNSET,
     x_socket_id: str | Unset = UNSET,
 ) -> ArticleDto | None:
     """Add a new pantry list item with a client UUID
 
     Args:
         list_id (str):
+        auto_restock (bool | Unset):
         x_socket_id (str | Unset):
         body (ArticleDto):
 
@@ -117,6 +130,7 @@ def sync(
         list_id=list_id,
         client=client,
         body=body,
+        auto_restock=auto_restock,
         x_socket_id=x_socket_id,
     ).parsed
 
@@ -126,12 +140,14 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
     body: ArticleDto,
+    auto_restock: bool | Unset = UNSET,
     x_socket_id: str | Unset = UNSET,
 ) -> Response[ArticleDto]:
     """Add a new pantry list item with a client UUID
 
     Args:
         list_id (str):
+        auto_restock (bool | Unset):
         x_socket_id (str | Unset):
         body (ArticleDto):
 
@@ -146,6 +162,7 @@ async def asyncio_detailed(
     kwargs = _get_kwargs(
         list_id=list_id,
         body=body,
+        auto_restock=auto_restock,
         x_socket_id=x_socket_id,
     )
 
@@ -159,12 +176,14 @@ async def asyncio(
     *,
     client: AuthenticatedClient,
     body: ArticleDto,
+    auto_restock: bool | Unset = UNSET,
     x_socket_id: str | Unset = UNSET,
 ) -> ArticleDto | None:
     """Add a new pantry list item with a client UUID
 
     Args:
         list_id (str):
+        auto_restock (bool | Unset):
         x_socket_id (str | Unset):
         body (ArticleDto):
 
@@ -181,6 +200,7 @@ async def asyncio(
             list_id=list_id,
             client=client,
             body=body,
+            auto_restock=auto_restock,
             x_socket_id=x_socket_id,
         )
     ).parsed

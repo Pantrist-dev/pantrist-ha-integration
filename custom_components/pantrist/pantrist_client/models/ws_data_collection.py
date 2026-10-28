@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class WsDataCollection(str, Enum):
+class WsDataCollection(StrEnum):
     ANALYSISSETTINGS = "analysisSettings"
     ARTICLECATALOG = "articleCatalog"
     ARTICLECATALOGITEMREMOVED = "articleCatalog:itemRemoved"
@@ -14,6 +14,9 @@ class WsDataCollection(str, Enum):
     CATEGORIESITEMADDED = "categories:itemAdded"
     CATEGORIESITEMREMOVED = "categories:itemRemoved"
     CATEGORIESITEMUPDATED = "categories:itemUpdated"
+    LOYALTYCARDSITEMADDED = "loyaltyCards:itemAdded"
+    LOYALTYCARDSITEMREMOVED = "loyaltyCards:itemRemoved"
+    LOYALTYCARDSITEMUPDATED = "loyaltyCards:itemUpdated"
     PANTRIES = "pantries"
     PANTRIESITEMREMOVED = "pantries:itemRemoved"
     PANTRIESITEMUPDATED = "pantries:itemUpdated"

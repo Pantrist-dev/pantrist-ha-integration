@@ -1,7 +1,8 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class IngredientDtoVolumeUnit(str, Enum):
+class IngredientDtoVolumeUnit(StrEnum):
+    CUP = "cup"
     FL_OZ = "fl-oz"
     G = "g"
     GAL = "gal"

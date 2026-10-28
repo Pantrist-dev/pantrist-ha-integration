@@ -59,13 +59,13 @@ def sync_detailed(
     client: AuthenticatedClient | Client,
     body: ClientLogBatchDto,
 ) -> Response[ClientLogIngestResultDto]:
-    r"""Ingest a batch of client log entries.
+    """Ingest a batch of client log entries.
 
      Accepts up to 50 log entries per batch from the web app and SSR process. Entries are written as JSON
-    lines to the API pod stdout, where the Promtail DaemonSet ships them to Loki under
-    context=\"WebApp\". Authenticated via the standard FirebaseAuthGuard — Firebase ID token for logged-
-    in users, or the time-signed x-api-key header for anonymous app flows (sign-up, marketing pages,
-    local-only users). Per-IP rate limited; abuse buckets out independently of other API routes.
+    lines to the API pod stdout, where the Promtail DaemonSet ships them to Loki under context="WebApp".
+    Authenticated via the standard FirebaseAuthGuard — Firebase ID token for logged-in users, or the
+    time-signed x-api-key header for anonymous app flows (sign-up, marketing pages, local-only users).
+    Per-IP rate limited; abuse buckets out independently of other API routes.
 
     Args:
         body (ClientLogBatchDto):
@@ -94,13 +94,13 @@ def sync(
     client: AuthenticatedClient | Client,
     body: ClientLogBatchDto,
 ) -> ClientLogIngestResultDto | None:
-    r"""Ingest a batch of client log entries.
+    """Ingest a batch of client log entries.
 
      Accepts up to 50 log entries per batch from the web app and SSR process. Entries are written as JSON
-    lines to the API pod stdout, where the Promtail DaemonSet ships them to Loki under
-    context=\"WebApp\". Authenticated via the standard FirebaseAuthGuard — Firebase ID token for logged-
-    in users, or the time-signed x-api-key header for anonymous app flows (sign-up, marketing pages,
-    local-only users). Per-IP rate limited; abuse buckets out independently of other API routes.
+    lines to the API pod stdout, where the Promtail DaemonSet ships them to Loki under context="WebApp".
+    Authenticated via the standard FirebaseAuthGuard — Firebase ID token for logged-in users, or the
+    time-signed x-api-key header for anonymous app flows (sign-up, marketing pages, local-only users).
+    Per-IP rate limited; abuse buckets out independently of other API routes.
 
     Args:
         body (ClientLogBatchDto):
@@ -124,13 +124,13 @@ async def asyncio_detailed(
     client: AuthenticatedClient | Client,
     body: ClientLogBatchDto,
 ) -> Response[ClientLogIngestResultDto]:
-    r"""Ingest a batch of client log entries.
+    """Ingest a batch of client log entries.
 
      Accepts up to 50 log entries per batch from the web app and SSR process. Entries are written as JSON
-    lines to the API pod stdout, where the Promtail DaemonSet ships them to Loki under
-    context=\"WebApp\". Authenticated via the standard FirebaseAuthGuard — Firebase ID token for logged-
-    in users, or the time-signed x-api-key header for anonymous app flows (sign-up, marketing pages,
-    local-only users). Per-IP rate limited; abuse buckets out independently of other API routes.
+    lines to the API pod stdout, where the Promtail DaemonSet ships them to Loki under context="WebApp".
+    Authenticated via the standard FirebaseAuthGuard — Firebase ID token for logged-in users, or the
+    time-signed x-api-key header for anonymous app flows (sign-up, marketing pages, local-only users).
+    Per-IP rate limited; abuse buckets out independently of other API routes.
 
     Args:
         body (ClientLogBatchDto):
@@ -157,13 +157,13 @@ async def asyncio(
     client: AuthenticatedClient | Client,
     body: ClientLogBatchDto,
 ) -> ClientLogIngestResultDto | None:
-    r"""Ingest a batch of client log entries.
+    """Ingest a batch of client log entries.
 
      Accepts up to 50 log entries per batch from the web app and SSR process. Entries are written as JSON
-    lines to the API pod stdout, where the Promtail DaemonSet ships them to Loki under
-    context=\"WebApp\". Authenticated via the standard FirebaseAuthGuard — Firebase ID token for logged-
-    in users, or the time-signed x-api-key header for anonymous app flows (sign-up, marketing pages,
-    local-only users). Per-IP rate limited; abuse buckets out independently of other API routes.
+    lines to the API pod stdout, where the Promtail DaemonSet ships them to Loki under context="WebApp".
+    Authenticated via the standard FirebaseAuthGuard — Firebase ID token for logged-in users, or the
+    time-signed x-api-key header for anonymous app flows (sign-up, marketing pages, local-only users).
+    Per-IP rate limited; abuse buckets out independently of other API routes.
 
     Args:
         body (ClientLogBatchDto):

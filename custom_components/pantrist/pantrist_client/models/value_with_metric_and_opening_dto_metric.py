@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class ValueWithMetricAndOpeningDtoMetric(str, Enum):
+class ValueWithMetricAndOpeningDtoMetric(StrEnum):
     DAYS = "days"
     MONTHS = "months"
     WEEKS = "weeks"

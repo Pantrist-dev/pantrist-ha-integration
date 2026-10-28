@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class NutriScore(str, Enum):
+class NutriScore(StrEnum):
     A = "A"
     B = "B"
     C = "C"

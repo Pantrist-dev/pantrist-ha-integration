@@ -70,7 +70,8 @@ def sync_detailed(
     from_: str,
     to: str,
 ) -> Response[ListPurchasesControllerGetPurchasesResponse200]:
-    """Get all purchases for a list. Optionally filter by from/to ISO dates.
+    """Get the purchases of a list in a date range (from/to as YYYY-MM-DD, both inclusive), newest first.
+    Without both, every purchase. For the history use `/purchases/recent`.
 
     Args:
         list_id (str):
@@ -105,7 +106,8 @@ def sync(
     from_: str,
     to: str,
 ) -> ListPurchasesControllerGetPurchasesResponse200 | None:
-    """Get all purchases for a list. Optionally filter by from/to ISO dates.
+    """Get the purchases of a list in a date range (from/to as YYYY-MM-DD, both inclusive), newest first.
+    Without both, every purchase. For the history use `/purchases/recent`.
 
     Args:
         list_id (str):
@@ -135,7 +137,8 @@ async def asyncio_detailed(
     from_: str,
     to: str,
 ) -> Response[ListPurchasesControllerGetPurchasesResponse200]:
-    """Get all purchases for a list. Optionally filter by from/to ISO dates.
+    """Get the purchases of a list in a date range (from/to as YYYY-MM-DD, both inclusive), newest first.
+    Without both, every purchase. For the history use `/purchases/recent`.
 
     Args:
         list_id (str):
@@ -168,7 +171,8 @@ async def asyncio(
     from_: str,
     to: str,
 ) -> ListPurchasesControllerGetPurchasesResponse200 | None:
-    """Get all purchases for a list. Optionally filter by from/to ISO dates.
+    """Get the purchases of a list in a date range (from/to as YYYY-MM-DD, both inclusive), newest first.
+    Without both, every purchase. For the history use `/purchases/recent`.
 
     Args:
         list_id (str):

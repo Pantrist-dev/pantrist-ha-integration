@@ -48,7 +48,7 @@ class NextFeatureWithVotesDto:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.localization_dto import LocalizationDto
+        from ..models.localization_dto import LocalizationDto  # noqa: PLC0415
 
         d = dict(src_dict)
         id = d.pop("id")

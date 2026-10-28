@@ -6,7 +6,6 @@ from typing import Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
-from dateutil.parser import isoparse
 
 from ..models.role import Role
 from ..types import UNSET, Unset
@@ -85,9 +84,9 @@ class ListInviteDto:
 
         created_by = d.pop("createdBy")
 
-        created_at = isoparse(d.pop("createdAt"))
+        created_at = datetime.datetime.fromisoformat(d.pop("createdAt"))
 
-        expires_at = isoparse(d.pop("expiresAt"))
+        expires_at = datetime.datetime.fromisoformat(d.pop("expiresAt"))
 
         def _parse_revoked_at(data: object) -> datetime.datetime | None | Unset:
             if data is None:
@@ -97,7 +96,7 @@ class ListInviteDto:
             try:
                 if not isinstance(data, str):
                     raise TypeError()
-                revoked_at_type_0 = isoparse(data)
+                revoked_at_type_0 = datetime.datetime.fromisoformat(data)
 
                 return revoked_at_type_0
             except (TypeError, ValueError, AttributeError, KeyError):
