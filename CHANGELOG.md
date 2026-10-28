@@ -4,6 +4,12 @@ All notable changes to the Pantrist HA Integration are recorded here.
 Generated from Conventional Commits by [standard-version](https://github.com/conventional-changelog/standard-version).
 
 
+## [0.1.7](https://github.com/Pantrist-dev/pantrist-ha-integration/compare/v0.1.6...v0.1.7) (2026-10-28)
+
+### Features
+
+* **low-stock:** count a minimum in content ([25592d0](https://github.com/Pantrist-dev/pantrist-ha-integration/commit/25592d08625ba8730dfbf8bcc3c28100344b83b0))
+
 ## [0.1.6](https://github.com/Pantrist-dev/pantrist-ha-integration/compare/v0.1.5...v0.1.6) (2026-10-02)
 
 ### Bug Fixes
