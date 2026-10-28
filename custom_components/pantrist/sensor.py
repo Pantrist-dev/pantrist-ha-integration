@@ -25,6 +25,7 @@ from .const import (
 from .coordinator import PantristCoordinator, PantristData
 from .entity import PantristEntity
 from .list_manager import PantristListManager, signal_new_list
+from .stock import is_low_stock
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -196,12 +197,7 @@ class PantristPantrySensor(_PantristBaseSensor):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         items = self.data.pantry.get("items", [])
-        low_stock = [
-            _format_item(i)
-            for i in items
-            if i.get("manageMinimumAmount")
-            and i.get("amount", 0) <= i.get("minimumAmount", 0)
-        ]
+        low_stock = [_format_item(i) for i in items if is_low_stock(i)]
         return {
             "list_id": self.coordinator.list_id,
             "items": [_format_item(i) for i in items],

@@ -25,6 +25,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .coordinator import PantristCoordinator
 from .entity import PantristEntity
 from .list_manager import PantristListManager, signal_new_list
+from .stock import is_low_stock
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -84,11 +85,7 @@ class PantristLowStockBinarySensor(_PantristBinarySensorBase):
     @property
     def is_on(self) -> bool:
         items = (self.coordinator.data.pantry or {}).get("items", [])
-        return any(
-            item.get("manageMinimumAmount")
-            and item.get("amount", 0) <= item.get("minimumAmount", 0)
-            for item in items
-        )
+        return any(is_low_stock(item) for item in items)
 
 
 class PantristHasExpiredBinarySensor(_PantristBinarySensorBase):
