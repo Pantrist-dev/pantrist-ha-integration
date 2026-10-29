@@ -4,6 +4,14 @@ All notable changes to the Pantrist HA Integration are recorded here.
 Generated from Conventional Commits by [standard-version](https://github.com/conventional-changelog/standard-version).
 
 
+## [0.1.8](https://github.com/Pantrist-dev/pantrist-ha-integration/compare/v0.1.7...v0.1.8) (2026-10-29)
+
+### Features
+
+* **pantry:** expose each item's minimum stock ([fab12cc](https://github.com/Pantrist-dev/pantrist-ha-integration/commit/fab12cc0b2a56e33af136652fcb04208b80bdd41)), closes [#30](https://github.com/Pantrist-dev/pantrist-ha-integration/issues/30)
+* **services:** add update_pantry_item ([bcbee31](https://github.com/Pantrist-dev/pantrist-ha-integration/commit/bcbee316b44ae1685583474c5af18b7dd9fc60a2))
+* **units:** show amounts with the list's units, like the app ([03a39d0](https://github.com/Pantrist-dev/pantrist-ha-integration/commit/03a39d04e4446a9a17f56e3bcba403de95e60c19))
+
 ## [0.1.7](https://github.com/Pantrist-dev/pantrist-ha-integration/compare/v0.1.6...v0.1.7) (2026-10-28)
 
 ### Features
