@@ -119,6 +119,18 @@ additionally exposes `low_stock_count` + `low_stock_items` for items at or below
 the configured minimum; the expiring-soon sensor splits its payload into
 `expiring_items` and `expired_items` with a `best_before` field per entry.
 
+Each pantry item (in `items` and `low_stock_items`) also carries its minimum:
+`min_amount` and `min_amount_mode`, both `null` when the item has no minimum
+set. `min_amount_mode` is `packages`, or `content` when the minimum counts the
+content in the item's unit (3 rolls out of packs of 8). A "have / minimum"
+line for a dashboard:
+
+```jinja
+{% for i in state_attr('sensor.<list>_pantry', 'low_stock_items') %}
+- {{ i.name }}: {{ i.amount }} / {{ i.min_amount }}
+{% endfor %}
+```
+
 ### Binary sensors (per list)
 
 | Entity | Description |
@@ -187,7 +199,7 @@ language model.
 | `pantrist.add_to_pantry` | `name`, `amount`, `unit_id`, `list_id`* | Add a pantry item by name |
 | `pantrist.delete_pantry_item` | `item_id`, `list_id`* | Remove from pantry |
 | `pantrist.change_pantry_item_amount` | `name` **or** `item_id`, `change`, `auto_restock`, `list_id`* | Increment/decrement pantry amount |
-| `pantrist.search_pantry_items` | `query`, `list_id`* | Returns matching pantry items + their UUIDs (response action) |
+| `pantrist.search_pantry_items` | `query`, `list_id`* | Returns matching pantry items + their UUIDs and minimums (response action) |
 
 `*` `list_id` is optional — omit it on single-list accounts. With multiple lists,
 pass the list UUID (visible in **Settings → Devices & Services → Pantrist → device

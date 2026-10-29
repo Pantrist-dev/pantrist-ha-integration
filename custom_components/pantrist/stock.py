@@ -31,3 +31,17 @@ def is_low_stock(item: dict[str, Any]) -> bool:
         content = round(_effective_packages(item) * content_volume, 6)
         return content <= minimum
     return (item.get("amount") or 0) <= minimum
+
+
+def minimum_fields(item: dict[str, Any]) -> dict[str, Any]:
+    """The item's minimum as HA attributes, both None when it isn't tracked.
+
+    ``min_amount_mode`` says what ``min_amount`` counts: ``packages``, or
+    ``content`` in the item's unit (see ``is_low_stock``).
+    """
+    if not item.get("manageMinimumAmount"):
+        return {"min_amount": None, "min_amount_mode": None}
+    return {
+        "min_amount": item.get("minimumAmount") or 0,
+        "min_amount_mode": item.get("minimumAmountMode") or "packages",
+    }

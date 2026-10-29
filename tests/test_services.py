@@ -237,6 +237,8 @@ async def test_search_pantry_items_with_query(
                 "contentVolume": 1.5,
                 "unitId": "L",
                 "brand": "Acme",
+                "manageMinimumAmount": True,
+                "minimumAmount": 3,
             },
             {"uuid": "eggs-uuid", "name": "Eggs", "amount": 6},
         ],
@@ -259,6 +261,8 @@ async def test_search_pantry_items_with_query(
                 "content_volume": 1.5,
                 "unit": "L",
                 "brand": "Acme",
+                "min_amount": 3,
+                "min_amount_mode": "packages",
             }
         ],
     }

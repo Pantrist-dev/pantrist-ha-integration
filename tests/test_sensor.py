@@ -132,6 +132,38 @@ async def test_pantry_sensor_reports_low_stock(hass: HomeAssistant) -> None:
     attrs = sensor.extra_state_attributes
     assert attrs["low_stock_count"] == 1
     assert attrs["low_stock_items"][0]["name"] == "Pasta"
+    # The configured minimum travels with each item (issue #30).
+    assert attrs["low_stock_items"][0]["min_amount"] == 1
+    assert attrs["low_stock_items"][0]["min_amount_mode"] == "packages"
+    by_name = {i["name"]: i for i in attrs["items"]}
+    assert by_name["Rice"]["min_amount"] == 1
+    assert by_name["Salt"]["min_amount"] is None
+    assert by_name["Salt"]["min_amount_mode"] is None
+
+
+async def test_pantry_sensor_minimum_in_content(hass: HomeAssistant) -> None:
+    """A minimum counted in content says so, so templates read it right."""
+    coord = _make_coordinator(
+        hass,
+        PantristData(
+            pantry={
+                "items": [
+                    {
+                        "uuid": "p1",
+                        "name": "Toilet paper",
+                        "amount": 1,
+                        "contentVolume": 8,
+                        "minimumAmount": 3,
+                        "minimumAmountMode": "content",
+                        "manageMinimumAmount": True,
+                    }
+                ]
+            }
+        ),
+    )
+    item = PantristPantrySensor(coord).extra_state_attributes["items"][0]
+    assert item["min_amount"] == 3
+    assert item["min_amount_mode"] == "content"
 
 
 async def test_pantry_sensor_bulky_attrs_not_recorded(hass: HomeAssistant) -> None:

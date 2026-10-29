@@ -46,6 +46,7 @@ from .const import (
 )
 from .coordinator import PantristCoordinator
 from .list_manager import PantristListManager
+from .stock import minimum_fields
 from .units import async_load_unit_labels
 
 # Bronze (runtime-data): the entry holds the per-list coordinator manager.
@@ -367,6 +368,7 @@ def _register_services(hass: HomeAssistant) -> None:
                     "content_volume": item.get("contentVolume"),
                     "unit": item.get("unitId"),
                     "brand": item.get("brand"),
+                    **minimum_fields(item),
                 }
                 for item in items
             ],
