@@ -64,6 +64,12 @@
     },
     "pantry_item_ambiguous": {
       "message": "Several pantry items match \"{name}\": {matches}. Re-run with the Item UUID to pick one."
+    },
+    "missing_update_field": {
+      "message": "Say what to change — give at least one field besides the item."
+    },
+    "unknown_unit": {
+      "message": "Unknown unit \"{unit}\". Use one of: {available}."
     }
   },
   "entity": {

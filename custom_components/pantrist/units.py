@@ -146,3 +146,8 @@ def format_amount(
                 label = unit.singular if unit.differentiation else unit.name
                 out += f"{_num(count)} {label}"
     return out.strip() or None
+
+
+def known_unit_ids(list_units: dict[str, dict[str, Any]] | None) -> list[str]:
+    """Unit ids an item can use: the list's saved ones plus the built-in ones."""
+    return sorted({*(list_units or {}), *_BUILT_IN})

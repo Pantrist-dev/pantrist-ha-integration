@@ -38,7 +38,9 @@ from .pantrist_client.api.pantry_list import (
     pantry_list_items_controller_add_by_name,
     pantry_list_items_controller_change_amount,
     pantry_list_items_controller_delete_item,
+    pantry_list_items_controller_get_item as _pantry_get_item,
     pantry_list_items_controller_get_items as _pantry_get_items,
+    pantry_list_items_controller_upsert_item as _pantry_upsert_item,
 )
 from .pantrist_client.api.shopping_cart import (
     shopping_cart_items_controller_get_items as _cart_get_items,
@@ -54,10 +56,64 @@ from .pantrist_client.models import (
     AddByBarcodeDto,
     AddByNameDto,
     AddPantryByNameDto,
+    ArticleDto,
     ChangeAmountOfItemDto,
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+
+_UNSET: Any = object()
+
+
+def apply_pantry_item_changes(
+    current: dict[str, Any], changes: dict[str, Any]
+) -> dict[str, Any]:
+    """Merge ``changes`` into an article dict for the full-upsert PUT.
+
+    Plain fields (``name``, ``brand``, ``notes``, ``unitId``,
+    ``contentVolume``, ``minimumAmountMode``) are copied over; None clears
+    the nullable ones. Setting ``minimumAmount`` also switches tracking on
+    unless ``manageMinimumAmount`` says otherwise. ``bestBefore`` lives per
+    stock batch in ``pantrySettings.articleList``, so a new date goes to
+    every batch and into ``earliestBestBefore``, and counts as user-set from
+    then on. Same rules as ``applyPantryItemChanges`` in the Pantrist MCP.
+    """
+    changes = dict(changes)
+    best_before = changes.pop("bestBefore", _UNSET)
+    minimum = changes.pop("minimumAmount", _UNSET)
+    manage = changes.pop("manageMinimumAmount", _UNSET)
+    merged = {**current, **changes}
+
+    if minimum is not _UNSET:
+        merged["minimumAmount"] = minimum
+        merged["manageMinimumAmount"] = True if manage is _UNSET else manage
+    elif manage is not _UNSET:
+        merged["manageMinimumAmount"] = manage
+
+    if best_before is not _UNSET:
+        settings = dict(current.get("pantrySettings") or {})
+        # No batch yet: '1' is the default pantry every item lands in.
+        batches = settings.get("articleList") or [
+            {"pantryUuid": "1", "count": current.get("amount") or 0}
+        ]
+        article_list = []
+        for batch in batches:
+            rest = {
+                k: v
+                for k, v in batch.items()
+                if k not in ("bestBefore", "calculatedBestBeforeDate")
+            }
+            if best_before is not None:
+                rest.update(bestBefore=best_before, calculatedBestBeforeDate=False)
+            article_list.append(rest)
+        settings.pop("earliestBestBefore", None)
+        settings["articleList"] = article_list
+        if best_before is not None:
+            settings["earliestBestBefore"] = best_before
+        merged["pantrySettings"] = settings
+
+    return merged
 
 
 class PantristApiError(Exception):
@@ -262,6 +318,51 @@ class PantristApi:
                 client=client, list_id=list_id, item_id=item_id
             )
         )
+
+    async def update_pantry_item(
+        self,
+        list_id: str,
+        item_id: str,
+        changes: dict[str, Any],
+        *,
+        amount: float | None = None,
+    ) -> dict[str, Any]:
+        """Change a pantry item and leave everything else as it is.
+
+        ``changes`` holds ArticleDto fields (see ``apply_pantry_item_changes``).
+        The API only takes whole articles, so the item is read and PUT back
+        with them applied, the same round-trip the Pantrist MCP's
+        ``update_pantry_item`` does; a change made in the app between the two
+        calls is lost. A new ``amount`` goes through the amount endpoint as a
+        delta instead, like the number entities, because the stock batches in
+        ``pantrySettings`` have to add up to it.
+        """
+        client = await self._client()
+        article = await self._call(
+            _pantry_get_item.asyncio(client=client, list_id=list_id, item_id=item_id)
+        )
+        if article is None:
+            raise PantristApiError(f"Pantry item {item_id} was not found")
+        current: dict[str, Any] = article.to_dict()
+        result = current
+        if changes:
+            merged = apply_pantry_item_changes(current, changes)
+            saved = await self._call(
+                _pantry_upsert_item.asyncio(
+                    client=client,
+                    list_id=list_id,
+                    item_id=item_id,
+                    body=ArticleDto.from_dict(merged),
+                )
+            )
+            result = self._wrap(saved) or merged
+        if amount is not None:
+            delta = amount - float(current.get("amount") or 0)
+            if delta:
+                result = await self.change_pantry_item_amount(
+                    list_id, item_id, change=delta
+                )
+        return result
 
     async def change_pantry_item_amount(
         self,

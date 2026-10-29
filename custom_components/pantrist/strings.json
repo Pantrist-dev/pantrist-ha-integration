@@ -64,6 +64,12 @@
     },
     "pantry_item_ambiguous": {
       "message": "Several pantry items match \"{name}\": {matches}. Re-run with the Item UUID to pick one."
+    },
+    "missing_update_field": {
+      "message": "Say what to change — give at least one field besides the item."
+    },
+    "unknown_unit": {
+      "message": "Unknown unit \"{unit}\". Use one of: {available}."
     }
   },
   "entity": {
@@ -219,6 +225,60 @@
         "query": {
           "name": "Search query",
           "description": "Name (or part of a name) to match, case-insensitively. Leave empty to return the whole pantry."
+        }
+      }
+    },
+    "update_pantry_item": {
+      "name": "Update pantry item",
+      "description": "Change a pantry item: its amount, content, unit, name, brand, notes, best-before date or minimum stock. Fields you leave out stay as they are.",
+      "fields": {
+        "name": {
+          "name": "Item name",
+          "description": "Name of the pantry item (e.g. \"Milk\"), looked up like in Change pantry item amount. Provide either this or the Item UUID."
+        },
+        "item_id": {
+          "name": "Item UUID",
+          "description": "The uuid attribute of the item (from sensor.pantrist_pantry). Optional — prefer the Item name unless two items share a name."
+        },
+        "amount": {
+          "name": "Amount",
+          "description": "How many packages are in stock."
+        },
+        "content_volume": {
+          "name": "Content per package",
+          "description": "How much one package holds, in the item's unit (e.g. 500 for 500 g)."
+        },
+        "unit_id": {
+          "name": "Unit",
+          "description": "Unit of the content, e.g. g, kg, ml, l, pieces, packet, or the uid of a unit you created in the app."
+        },
+        "new_name": {
+          "name": "New name",
+          "description": "Rename the item."
+        },
+        "brand": {
+          "name": "Brand",
+          "description": "The item's brand. Set to null to clear it."
+        },
+        "notes": {
+          "name": "Notes",
+          "description": "Free-text notes. Set to null to clear them."
+        },
+        "best_before": {
+          "name": "Best before",
+          "description": "Best-before date for all of the item's stock; it shows up in the expiry calendar. Set to null to clear it."
+        },
+        "min_amount": {
+          "name": "Minimum amount",
+          "description": "At or below this the item counts as low on stock. Setting it also switches minimum tracking on for the item."
+        },
+        "min_amount_mode": {
+          "name": "Minimum counts",
+          "description": "packages: whole packages. content: the content in the item's unit, e.g. 3 rolls out of packs of 8."
+        },
+        "manage_min_amount": {
+          "name": "Track minimum",
+          "description": "Switch low-stock tracking for this item on or off."
         }
       }
     }

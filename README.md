@@ -200,6 +200,7 @@ language model.
 | `pantrist.delete_pantry_item` | `item_id`, `list_id`* | Remove from pantry |
 | `pantrist.change_pantry_item_amount` | `name` **or** `item_id`, `change`, `auto_restock`, `list_id`* | Increment/decrement pantry amount |
 | `pantrist.search_pantry_items` | `query`, `list_id`* | Returns matching pantry items + their UUIDs and minimums (response action) |
+| `pantrist.update_pantry_item` | `name` **or** `item_id`, `amount`, `content_volume`, `unit_id`, `new_name`, `brand`, `notes`, `best_before`, `min_amount`, `min_amount_mode`, `manage_min_amount`, `list_id`* | Change a pantry item; fields left out stay as they are, `null` clears brand, notes or best-before date |
 
 `*` `list_id` is optional — omit it on single-list accounts. With multiple lists,
 pass the list UUID (visible in **Settings → Devices & Services → Pantrist → device

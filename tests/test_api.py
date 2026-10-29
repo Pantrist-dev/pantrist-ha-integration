@@ -352,3 +352,172 @@ async def test_lookup_barcode_unknown(api: PantristApi) -> None:
         new=AsyncMock(return_value=None),
     ):
         assert await api.lookup_barcode("xx") is None
+
+
+# A pantry item as the API returns it, open package and best-before included.
+_ARTICLE = {
+    "uuid": "b3e36141-4031-4681-95b1-5c0bd9a68895",
+    "name": "Basmatireis",
+    "brand": None,
+    "categoryUuid": "23",
+    "amount": 1,
+    "contentVolume": 1,
+    "unitId": "pieces",
+    "manageMinimumAmount": False,
+    "minimumAmount": 1,
+    "minimumAmountMode": "packages",
+    "amountToBuy": 1,
+    "priceType": "perUnit",
+    "discountType": "currency",
+    "discountPerUnitOrTotal": "total",
+    "notes": "Vorratsschrank oben",
+    "lastModified": 1793191110828,
+    "pantrySettings": {
+        "articleList": [
+            {"pantryUuid": "1", "count": 1, "bestBefore": "2027-03-01",
+             "articleIsOpen": True, "remainingAmount": 40}
+        ],
+        "earliestBestBefore": "2027-03-01",
+    },
+}
+
+
+def _patched(article):
+    """Patch the get/put/change endpoints around a real ArticleDto."""
+    from contextlib import ExitStack
+
+    stack = ExitStack()
+    stack.enter_context(patch(
+        "custom_components.pantrist.api._pantry_get_item.asyncio",
+        new=AsyncMock(return_value=article),
+    ))
+    upsert = stack.enter_context(patch(
+        "custom_components.pantrist.api._pantry_upsert_item.asyncio",
+        new=AsyncMock(side_effect=lambda **kw: kw["body"]),
+    ))
+    return stack, upsert
+
+
+async def test_update_pantry_item_keeps_the_rest(api: PantristApi) -> None:
+    """Only the given fields change; everything else goes back as it came."""
+    from custom_components.pantrist.pantrist_client.models import ArticleDto
+
+    article = ArticleDto.from_dict(_ARTICLE)
+    before = article.to_dict()
+    stack, upsert = _patched(article)
+    with stack:
+        result = await api.update_pantry_item(
+            LIST_ID,
+            _ARTICLE["uuid"],
+            {"contentVolume": 500, "unitId": "g", "minimumAmount": 2},
+        )
+    kwargs = upsert.await_args.kwargs
+    assert kwargs["list_id"] == LIST_ID
+    assert kwargs["item_id"] == _ARTICLE["uuid"]
+    # Setting a minimum switches tracking on, as in the app.
+    assert kwargs["body"].to_dict() == {
+        **before,
+        "contentVolume": 500,
+        "unitId": "g",
+        "minimumAmount": 2,
+        "manageMinimumAmount": True,
+    }
+    assert result["contentVolume"] == 500
+
+
+async def test_update_pantry_item_amount_goes_through_the_delta(
+    api: PantristApi,
+) -> None:
+    """A new amount is sent as a change, so the stock batches stay right."""
+    from custom_components.pantrist.pantrist_client.models import ArticleDto
+
+    stack, upsert = _patched(ArticleDto.from_dict({**_ARTICLE, "amount": 1}))
+    with stack, patch.object(
+        api, "change_pantry_item_amount", new=AsyncMock(return_value={"amount": 4})
+    ) as change:
+        result = await api.update_pantry_item(LIST_ID, _ARTICLE["uuid"], {}, amount=4)
+    upsert.assert_not_awaited()
+    change.assert_awaited_once_with(LIST_ID, _ARTICLE["uuid"], change=3)
+    assert result == {"amount": 4}
+
+
+async def test_update_pantry_item_unchanged_amount_sends_nothing(
+    api: PantristApi,
+) -> None:
+    from custom_components.pantrist.pantrist_client.models import ArticleDto
+
+    stack, upsert = _patched(ArticleDto.from_dict(_ARTICLE))
+    with stack, patch.object(api, "change_pantry_item_amount", new=AsyncMock()) as change:
+        await api.update_pantry_item(LIST_ID, _ARTICLE["uuid"], {}, amount=1)
+    upsert.assert_not_awaited()
+    change.assert_not_awaited()
+
+
+async def test_update_pantry_item_missing_item(api: PantristApi) -> None:
+    with patch(
+        "custom_components.pantrist.api._pantry_get_item.asyncio",
+        new=AsyncMock(return_value=None),
+    ), pytest.raises(PantristApiError):
+        await api.update_pantry_item(LIST_ID, "gone", {"name": "x"})
+
+
+def test_apply_changes_best_before_goes_to_every_batch() -> None:
+    from custom_components.pantrist.api import apply_pantry_item_changes
+
+    current = {
+        "amount": 3,
+        "pantrySettings": {
+            "articleList": [
+                {"pantryUuid": "1", "count": 2, "bestBefore": "2026-01-01",
+                 "calculatedBestBeforeDate": True},
+                {"pantryUuid": "2", "count": 1},
+            ],
+            "earliestBestBefore": "2026-01-01",
+        },
+    }
+    merged = apply_pantry_item_changes(current, {"bestBefore": "2026-12-24"})
+    assert merged["pantrySettings"] == {
+        "articleList": [
+            {"pantryUuid": "1", "count": 2, "bestBefore": "2026-12-24",
+             "calculatedBestBeforeDate": False},
+            {"pantryUuid": "2", "count": 1, "bestBefore": "2026-12-24",
+             "calculatedBestBeforeDate": False},
+        ],
+        "earliestBestBefore": "2026-12-24",
+    }
+    # The input is left alone.
+    assert current["pantrySettings"]["earliestBestBefore"] == "2026-01-01"
+
+
+def test_apply_changes_clears_and_creates_a_batch() -> None:
+    from custom_components.pantrist.api import apply_pantry_item_changes
+
+    dated = {"amount": 1, "brand": "Acme", "pantrySettings": {
+        "articleList": [{"pantryUuid": "1", "count": 1, "bestBefore": "2026-01-01"}],
+        "earliestBestBefore": "2026-01-01",
+    }}
+    cleared = apply_pantry_item_changes(dated, {"bestBefore": None, "brand": None})
+    assert cleared["brand"] is None
+    assert cleared["pantrySettings"] == {
+        "articleList": [{"pantryUuid": "1", "count": 1}]
+    }
+    # No batch yet: the date lands on one in the default pantry.
+    undated = {"amount": 2, "pantrySettings": {"articleList": []}}
+    merged = apply_pantry_item_changes(undated, {"bestBefore": "2027-01-01"})
+    assert merged["pantrySettings"]["articleList"] == [
+        {"pantryUuid": "1", "count": 2, "bestBefore": "2027-01-01",
+         "calculatedBestBeforeDate": False}
+    ]
+
+
+def test_apply_changes_tracking_off_keeps_the_minimum() -> None:
+    from custom_components.pantrist.api import apply_pantry_item_changes
+
+    current = {"minimumAmount": 2, "manageMinimumAmount": True}
+    merged = apply_pantry_item_changes(current, {"manageMinimumAmount": False})
+    assert merged == {"minimumAmount": 2, "manageMinimumAmount": False}
+    # An explicit "off" wins over the implied "on".
+    merged = apply_pantry_item_changes(
+        current, {"minimumAmount": 3, "manageMinimumAmount": False}
+    )
+    assert merged == {"minimumAmount": 3, "manageMinimumAmount": False}

@@ -5,6 +5,7 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+import voluptuous as vol
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
 from pytest_homeassistant_custom_component.common import MockConfigEntry
@@ -21,6 +22,7 @@ from custom_components.pantrist.const import (
     SERVICE_DELETE_PANTRY_ITEM,
     SERVICE_DELETE_SHOPPING_LIST_ITEM,
     SERVICE_SEARCH_PANTRY_ITEMS,
+    SERVICE_UPDATE_PANTRY_ITEM,
 )
 
 from .conftest import LIST_ID
@@ -373,4 +375,111 @@ async def test_async_setup_registers_services_before_entry(
     with pytest.raises(HomeAssistantError):
         await hass.services.async_call(
             DOMAIN, SERVICE_ADD_TO_SHOPPING_LIST, {"name": "X"}, blocking=True
+        )
+
+
+async def test_update_pantry_item_by_name(
+    hass: HomeAssistant, config_entry: MockConfigEntry, mock_api: MagicMock
+) -> None:
+    """Fields map to the article's; only the given ones are sent."""
+    _seed_pantry(mock_api, [{"uuid": "rice-uuid", "name": "Basmatireis"}])
+    await _setup(hass, config_entry)
+    await hass.services.async_call(
+        DOMAIN,
+        SERVICE_UPDATE_PANTRY_ITEM,
+        {
+            "name": "basmatireis",
+            "amount": 3,
+            "content_volume": 500,
+            "unit_id": "g",
+            "new_name": "Reis",
+            "best_before": "2027-03-01",
+            "brand": None,
+            "min_amount": 2,
+        },
+        blocking=True,
+    )
+    mock_api.update_pantry_item.assert_awaited_with(
+        LIST_ID,
+        item_id="rice-uuid",
+        changes={
+            "contentVolume": 500.0,
+            "unitId": "g",
+            "name": "Reis",
+            "bestBefore": "2027-03-01",
+            "brand": None,
+            "minimumAmount": 2.0,
+        },
+        amount=3.0,
+    )
+
+
+async def test_update_pantry_item_accepts_the_lists_own_unit(
+    hass: HomeAssistant, config_entry: MockConfigEntry, mock_api: MagicMock
+) -> None:
+    mock_api.get_list_units.return_value = [{"uid": "u-tuete", "name": "Tüte"}]
+    await _setup(hass, config_entry)
+    await hass.services.async_call(
+        DOMAIN,
+        SERVICE_UPDATE_PANTRY_ITEM,
+        {"item_id": "p1", "unit_id": "u-tuete"},
+        blocking=True,
+    )
+    mock_api.update_pantry_item.assert_awaited_with(
+        LIST_ID, item_id="p1", changes={"unitId": "u-tuete"}, amount=None
+    )
+
+
+async def test_update_pantry_item_rejects_an_unknown_unit(
+    hass: HomeAssistant, config_entry: MockConfigEntry, mock_api: MagicMock
+) -> None:
+    await _setup(hass, config_entry)
+    with pytest.raises(HomeAssistantError) as err:
+        await hass.services.async_call(
+            DOMAIN,
+            SERVICE_UPDATE_PANTRY_ITEM,
+            {"item_id": "p1", "unit_id": "Gramm"},
+            blocking=True,
+        )
+    assert err.value.translation_key == "unknown_unit"
+    assert "kg" in err.value.translation_placeholders["available"]
+    mock_api.update_pantry_item.assert_not_awaited()
+
+
+async def test_update_pantry_item_needs_a_field(
+    hass: HomeAssistant, config_entry: MockConfigEntry, mock_api: MagicMock
+) -> None:
+    """Naming only the item is a mistake, not a silent no-op."""
+    await _setup(hass, config_entry)
+    with pytest.raises(HomeAssistantError) as err:
+        await hass.services.async_call(
+            DOMAIN, SERVICE_UPDATE_PANTRY_ITEM, {"item_id": "p1"}, blocking=True
+        )
+    assert err.value.translation_key == "missing_update_field"
+    mock_api.update_pantry_item.assert_not_awaited()
+
+
+@pytest.mark.parametrize(
+    "data",
+    [
+        {"min_amount": -1},
+        {"amount": -1},
+        {"content_volume": 0},
+        {"new_name": ""},
+        {"min_amount_mode": "boxes"},
+    ],
+)
+async def test_update_pantry_item_rejects_bad_values(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+    mock_api: MagicMock,
+    data: dict,
+) -> None:
+    await _setup(hass, config_entry)
+    with pytest.raises(vol.Invalid):
+        await hass.services.async_call(
+            DOMAIN,
+            SERVICE_UPDATE_PANTRY_ITEM,
+            {"item_id": "p1", **data},
+            blocking=True,
         )

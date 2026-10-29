@@ -64,6 +64,12 @@
         },
         "pantry_item_ambiguous": {
             "message": "Kilka produktów w Spiżarni pasuje do „{name}”: {matches}. Uruchom akcję ponownie z UUID produktu, aby wybrać właściwy."
+        },
+        "missing_update_field": {
+            "message": "Podaj, co zmienić — co najmniej jedno pole oprócz produktu."
+        },
+        "unknown_unit": {
+            "message": "Nieznana jednostka „{unit}”. Dostępne: {available}."
         }
     },
     "entity": {

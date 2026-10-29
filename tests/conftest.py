@@ -102,6 +102,7 @@ def mock_api() -> Generator[MagicMock, None, None]:
         api.add_to_pantry_by_name = AsyncMock(return_value={})
         api.delete_pantry_item = AsyncMock(return_value=None)
         api.change_pantry_item_amount = AsyncMock(return_value={})
+        api.update_pantry_item = AsyncMock(return_value={})
         api.lookup_barcode = AsyncMock(return_value=None)
         yield api
 

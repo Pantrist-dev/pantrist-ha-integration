@@ -64,6 +64,12 @@
     },
     "pantry_item_ambiguous": {
       "message": "Mehrere Vorratsartikel passen zu „{name}“: {matches}. Führe die Aktion erneut mit der Item-UUID aus, um einen auszuwählen."
+    },
+    "missing_update_field": {
+      "message": "Gib an, was geändert werden soll — mindestens ein Feld außer dem Artikel."
+    },
+    "unknown_unit": {
+      "message": "Unbekannte Einheit „{unit}“. Möglich sind: {available}."
     }
   },
   "entity": {
@@ -219,6 +225,60 @@
         "query": {
           "name": "Suchbegriff",
           "description": "Name (oder Namensteil), groß-/kleinschreibungsunabhängig. Leer lassen, um die gesamte Vorratskammer zurückzugeben."
+        }
+      }
+    },
+    "update_pantry_item": {
+      "name": "Vorratsartikel bearbeiten",
+      "description": "Ändert einen Vorratsartikel: Menge, Inhalt, Einheit, Name, Marke, Notizen, Haltbarkeitsdatum oder Mindestmenge. Felder, die du weglässt, bleiben unverändert.",
+      "fields": {
+        "name": {
+          "name": "Artikelname",
+          "description": "Name des Vorratsartikels (z. B. „Milch“), nachgeschlagen wie bei „Vorratsmenge ändern“. Gib entweder dies oder die Artikel-UUID an."
+        },
+        "item_id": {
+          "name": "Artikel-UUID",
+          "description": "Das uuid-Attribut des Artikels (aus sensor.pantrist_pantry). Optional – nimm lieber den Artikelnamen, außer zwei Artikel heißen gleich."
+        },
+        "amount": {
+          "name": "Menge",
+          "description": "Wie viele Packungen vorrätig sind."
+        },
+        "content_volume": {
+          "name": "Inhalt pro Packung",
+          "description": "Wie viel eine Packung enthält, in der Einheit des Artikels (z. B. 500 für 500 g)."
+        },
+        "unit_id": {
+          "name": "Einheit",
+          "description": "Einheit des Inhalts, z. B. g, kg, ml, l, pieces, packet, oder die uid einer Einheit, die du in der App angelegt hast."
+        },
+        "new_name": {
+          "name": "Neuer Name",
+          "description": "Benennt den Artikel um."
+        },
+        "brand": {
+          "name": "Marke",
+          "description": "Die Marke des Artikels. Mit null leeren."
+        },
+        "notes": {
+          "name": "Notizen",
+          "description": "Freitext-Notizen. Mit null leeren."
+        },
+        "best_before": {
+          "name": "Mindesthaltbarkeitsdatum",
+          "description": "Gilt für den ganzen Bestand des Artikels und erscheint im Ablaufkalender. Mit null leeren."
+        },
+        "min_amount": {
+          "name": "Mindestmenge",
+          "description": "Ab dieser Menge oder darunter gilt der Artikel als knapp. Setzt du sie, wird die Mindestmenge für den Artikel auch verwaltet."
+        },
+        "min_amount_mode": {
+          "name": "Mindestmenge zählt",
+          "description": "packages: ganze Packungen. content: den Inhalt in der Einheit des Artikels, z. B. 3 Rollen aus 8er-Packungen."
+        },
+        "manage_min_amount": {
+          "name": "Mindestmenge verwalten",
+          "description": "Schaltet die Bestandswarnung für diesen Artikel ein oder aus."
         }
       }
     }

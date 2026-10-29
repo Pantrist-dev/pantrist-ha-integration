@@ -43,11 +43,12 @@ from .const import (
     SERVICE_DELETE_PANTRY_ITEM,
     SERVICE_DELETE_SHOPPING_LIST_ITEM,
     SERVICE_SEARCH_PANTRY_ITEMS,
+    SERVICE_UPDATE_PANTRY_ITEM,
 )
 from .coordinator import PantristCoordinator
 from .list_manager import PantristListManager
 from .stock import minimum_fields
-from .units import async_load_unit_labels
+from .units import async_load_unit_labels, known_unit_ids
 
 # Bronze (runtime-data): the entry holds the per-list coordinator manager.
 type PantristConfigEntry = ConfigEntry[PantristListManager]
@@ -229,7 +230,7 @@ def _match_pantry_items(
 
 
 def _resolve_pantry_item_id(hass: HomeAssistant, call: ServiceCall) -> str:
-    """Resolve a pantry item to its UUID for change_pantry_item_amount.
+    """Resolve a pantry item to its UUID for the pantry item actions.
 
     Accepts either an explicit ``item_id`` (UUID, wins if given) or a
     human-friendly ``name`` that we look up against the live pantry — so
@@ -271,6 +272,21 @@ def _resolve_pantry_item_id(hass: HomeAssistant, call: ServiceCall) -> str:
         translation_key="pantry_item_ambiguous",
         translation_placeholders={"name": name, "matches": options},
     )
+
+
+# update_pantry_item fields → the ArticleDto fields they change. ``amount``
+# is handled apart, as a delta (see PantristApi.update_pantry_item).
+_UPDATE_FIELDS: dict[str, str] = {
+    "new_name": "name",
+    "brand": "brand",
+    "notes": "notes",
+    "unit_id": "unitId",
+    "content_volume": "contentVolume",
+    "best_before": "bestBefore",
+    "min_amount": "minimumAmount",
+    "min_amount_mode": "minimumAmountMode",
+    "manage_min_amount": "manageMinimumAmount",
+}
 
 
 def _register_services(hass: HomeAssistant) -> None:
@@ -343,6 +359,42 @@ def _register_services(hass: HomeAssistant) -> None:
             item_id=item_id,
             change=float(call.data["change"]),
             auto_restock=bool(call.data.get("auto_restock", True)),
+        )
+
+    async def update_pantry_item(call: ServiceCall) -> None:
+        changes = {
+            field: call.data[key]
+            for key, field in _UPDATE_FIELDS.items()
+            if key in call.data
+        }
+        if "bestBefore" in changes and changes["bestBefore"] is not None:
+            changes["bestBefore"] = changes["bestBefore"].isoformat()
+        amount = call.data.get("amount")
+        if not changes and amount is None:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="missing_update_field",
+            )
+        coordinator = _coordinator_for_call(hass, call.data.get("list_id"))
+        unit_id = changes.get("unitId")
+        if unit_id is not None:
+            known = known_unit_ids(coordinator.data.units)
+            if unit_id not in known:
+                raise HomeAssistantError(
+                    translation_domain=DOMAIN,
+                    translation_key="unknown_unit",
+                    translation_placeholders={
+                        "unit": unit_id,
+                        "available": ", ".join(known),
+                    },
+                )
+        item_id = _resolve_pantry_item_id(hass, call)
+        await _call_api(
+            call,
+            "update_pantry_item",
+            item_id=item_id,
+            changes=changes,
+            amount=amount,
         )
 
     async def search_pantry_items(call: ServiceCall) -> ServiceResponse:
@@ -440,6 +492,35 @@ def _register_services(hass: HomeAssistant) -> None:
                 # whole point. Callers who want bare decrement (e.g.
                 # inventory-mode dashboards) pass ``auto_restock: false``.
                 vol.Optional("auto_restock", default=True): cv.boolean,
+            }
+        ),
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_UPDATE_PANTRY_ITEM,
+        update_pantry_item,
+        schema=vol.Schema(
+            {
+                **common,
+                # Same name-or-UUID lookup as change_pantry_item_amount; at
+                # least one of the fields below is checked in the handler.
+                vol.Optional("name"): cv.string,
+                vol.Optional("item_id"): cv.string,
+                vol.Optional("new_name"): vol.All(cv.string, vol.Length(min=1)),
+                vol.Optional("amount"): vol.All(vol.Coerce(float), vol.Range(min=0)),
+                vol.Optional("content_volume"): vol.All(
+                    vol.Coerce(float), vol.Range(min=0, min_included=False)
+                ),
+                vol.Optional("unit_id"): cv.string,
+                # None clears these three.
+                vol.Optional("brand"): vol.Any(None, cv.string),
+                vol.Optional("notes"): vol.Any(None, cv.string),
+                vol.Optional("best_before"): vol.Any(None, cv.date),
+                vol.Optional("min_amount"): vol.All(
+                    vol.Coerce(float), vol.Range(min=0)
+                ),
+                vol.Optional("min_amount_mode"): vol.In(["packages", "content"]),
+                vol.Optional("manage_min_amount"): cv.boolean,
             }
         ),
     )
