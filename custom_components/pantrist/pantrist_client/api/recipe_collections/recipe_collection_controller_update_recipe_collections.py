@@ -39,6 +39,9 @@ def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Res
     if response.status_code == 401:
         return None
 
+    if response.status_code == 403:
+        return None
+
     if response.status_code == 404:
         return None
 
@@ -60,7 +63,7 @@ def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 def sync_detailed(
     recipe_uuid: str,
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
     body: UpdateCollectionAssignmentDto,
 ) -> Response[Any]:
     """Update recipe → collection assignments
@@ -94,7 +97,7 @@ def sync_detailed(
 async def asyncio_detailed(
     recipe_uuid: str,
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
     body: UpdateCollectionAssignmentDto,
 ) -> Response[Any]:
     """Update recipe → collection assignments

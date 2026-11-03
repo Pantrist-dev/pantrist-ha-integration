@@ -15,18 +15,24 @@ T = TypeVar("T", bound="SavedForRecipeDto")
 class SavedForRecipeDto:
     """
     Attributes:
-        recipe_uuid (str):
+        recipe_uuid (str): Groups the reservations of one recipe. A Pantrist recipe uuid, or an id of the caller's
+            choosing for a recipe that only exists outside of Pantrist.
+        recipe_name (str | Unset): Display name for a recipe that only exists outside of Pantrist, where `recipeUuid`
+            has no recipe to look the name up in.
         amount_saved (float | Unset):
         content_saved (float | Unset):
     """
 
     recipe_uuid: str
+    recipe_name: str | Unset = UNSET
     amount_saved: float | Unset = UNSET
     content_saved: float | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         recipe_uuid = self.recipe_uuid
+
+        recipe_name = self.recipe_name
 
         amount_saved = self.amount_saved
 
@@ -39,6 +45,8 @@ class SavedForRecipeDto:
                 "recipeUuid": recipe_uuid,
             }
         )
+        if recipe_name is not UNSET:
+            field_dict["recipeName"] = recipe_name
         if amount_saved is not UNSET:
             field_dict["amountSaved"] = amount_saved
         if content_saved is not UNSET:
@@ -51,12 +59,15 @@ class SavedForRecipeDto:
         d = dict(src_dict)
         recipe_uuid = d.pop("recipeUuid")
 
+        recipe_name = d.pop("recipeName", UNSET)
+
         amount_saved = d.pop("amountSaved", UNSET)
 
         content_saved = d.pop("contentSaved", UNSET)
 
         saved_for_recipe_dto = cls(
             recipe_uuid=recipe_uuid,
+            recipe_name=recipe_name,
             amount_saved=amount_saved,
             content_saved=content_saved,
         )

@@ -61,7 +61,7 @@ def _build_response(
 def sync_detailed(
     recipe_id: str,
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
 ) -> Response[Any | list[CollectionWithRecipeFlag]]:
     """Get recipe collections of the current user with flag for the recipe
 
@@ -93,7 +93,7 @@ def sync_detailed(
 def sync(
     recipe_id: str,
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
 ) -> Any | list[CollectionWithRecipeFlag] | None:
     """Get recipe collections of the current user with flag for the recipe
 
@@ -120,7 +120,7 @@ def sync(
 async def asyncio_detailed(
     recipe_id: str,
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
 ) -> Response[Any | list[CollectionWithRecipeFlag]]:
     """Get recipe collections of the current user with flag for the recipe
 
@@ -150,7 +150,7 @@ async def asyncio_detailed(
 async def asyncio(
     recipe_id: str,
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
 ) -> Any | list[CollectionWithRecipeFlag] | None:
     """Get recipe collections of the current user with flag for the recipe
 

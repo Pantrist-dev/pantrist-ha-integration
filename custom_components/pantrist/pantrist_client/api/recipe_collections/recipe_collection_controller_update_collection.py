@@ -68,7 +68,7 @@ def _build_response(
 def sync_detailed(
     uuid: str,
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
     body: AddRecipeCollection,
 ) -> Response[AddRecipeCollection | Any]:
     """Update an existing recipe collection
@@ -100,7 +100,7 @@ def sync_detailed(
 def sync(
     uuid: str,
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
     body: AddRecipeCollection,
 ) -> AddRecipeCollection | Any | None:
     """Update an existing recipe collection
@@ -127,7 +127,7 @@ def sync(
 async def asyncio_detailed(
     uuid: str,
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
     body: AddRecipeCollection,
 ) -> Response[AddRecipeCollection | Any]:
     """Update an existing recipe collection
@@ -157,7 +157,7 @@ async def asyncio_detailed(
 async def asyncio(
     uuid: str,
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
     body: AddRecipeCollection,
 ) -> AddRecipeCollection | Any | None:
     """Update an existing recipe collection

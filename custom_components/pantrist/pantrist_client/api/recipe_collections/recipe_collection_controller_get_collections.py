@@ -73,7 +73,7 @@ def _build_response(
 
 def sync_detailed(
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
     search_text: str | Unset = UNSET,
     type_: RecipeCollectionControllerGetCollectionsType | Unset = UNSET,
 ) -> Response[Any | list[GetRecipeCollectionsWithImagesDto]]:
@@ -108,7 +108,7 @@ def sync_detailed(
 
 def sync(
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
     search_text: str | Unset = UNSET,
     type_: RecipeCollectionControllerGetCollectionsType | Unset = UNSET,
 ) -> Any | list[GetRecipeCollectionsWithImagesDto] | None:
@@ -138,7 +138,7 @@ def sync(
 
 async def asyncio_detailed(
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
     search_text: str | Unset = UNSET,
     type_: RecipeCollectionControllerGetCollectionsType | Unset = UNSET,
 ) -> Response[Any | list[GetRecipeCollectionsWithImagesDto]]:
@@ -171,7 +171,7 @@ async def asyncio_detailed(
 
 async def asyncio(
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
     search_text: str | Unset = UNSET,
     type_: RecipeCollectionControllerGetCollectionsType | Unset = UNSET,
 ) -> Any | list[GetRecipeCollectionsWithImagesDto] | None:

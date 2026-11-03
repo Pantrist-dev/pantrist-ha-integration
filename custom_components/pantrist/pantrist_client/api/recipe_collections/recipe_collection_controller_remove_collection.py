@@ -51,7 +51,7 @@ def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 def sync_detailed(
     uuid: str,
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
 ) -> Response[Any]:
     """Delete a recipe collection
 
@@ -80,7 +80,7 @@ def sync_detailed(
 async def asyncio_detailed(
     uuid: str,
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
 ) -> Response[Any]:
     """Delete a recipe collection
 

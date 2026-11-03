@@ -83,6 +83,8 @@ from .client_log_entry_dto_data import ClientLogEntryDtoData
 from .client_log_entry_dto_level import ClientLogEntryDtoLevel
 from .client_log_ingest_result_dto import ClientLogIngestResultDto
 from .collection_with_recipe_flag import CollectionWithRecipeFlag
+from .cook_recipe_reservation_dto import CookRecipeReservationDto
+from .cooked_recipe_reservation_dto import CookedRecipeReservationDto
 from .create_barcode_dto import CreateBarcodeDto
 from .create_barcode_dto_language_specific import CreateBarcodeDtoLanguageSpecific
 from .create_billing_session_dto import CreateBillingSessionDto
@@ -98,6 +100,11 @@ from .dietary_preferences_dto import DietaryPreferencesDto
 from .dietary_preferences_dto_allergens_item import DietaryPreferencesDtoAllergensItem
 from .dietary_preferences_dto_dietary_styles_item import DietaryPreferencesDtoDietaryStylesItem
 from .discount_type import DiscountType
+from .emergency_supply_dto import EmergencySupplyDto
+from .emergency_supply_dto_standard import EmergencySupplyDtoStandard
+from .emergency_supply_group_dto import EmergencySupplyGroupDto
+from .emergency_supply_group_dto_status import EmergencySupplyGroupDtoStatus
+from .emergency_supply_group_dto_unit import EmergencySupplyGroupDtoUnit
 from .firebase_exchange_dto import FirebaseExchangeDto
 from .forgot_password_dto import ForgotPasswordDto
 from .general_nutriments_dto import GeneralNutrimentsDto
@@ -242,6 +249,7 @@ from .register_market_arrival_device_dto import RegisterMarketArrivalDeviceDto
 from .report_substitution_dto import ReportSubstitutionDto
 from .report_substitution_result_dto import ReportSubstitutionResultDto
 from .report_substitution_result_dto_status import ReportSubstitutionResultDtoStatus
+from .reserve_for_recipe_dto import ReserveForRecipeDto
 from .reset_password_dto import ResetPasswordDto
 from .role import Role
 from .s3_controller_delete_file_owner_type import S3ControllerDeleteFileOwnerType
@@ -273,6 +281,7 @@ from .swipe_decision_dto import SwipeDecisionDto
 from .swipe_decision_dto_decision import SwipeDecisionDtoDecision
 from .swipe_week_plan_target_dto import SwipeWeekPlanTargetDto
 from .sync_firebase_invitation_dto import SyncFirebaseInvitationDto
+from .unbooked_recipe_content_dto import UnbookedRecipeContentDto
 from .unit_dto import UnitDto
 from .update_collection_assignment_dto import UpdateCollectionAssignmentDto
 from .update_item_dto import UpdateItemDto
@@ -387,6 +396,8 @@ __all__ = (
     "ClientLogEntryDtoLevel",
     "ClientLogIngestResultDto",
     "CollectionWithRecipeFlag",
+    "CookedRecipeReservationDto",
+    "CookRecipeReservationDto",
     "CreateBarcodeDto",
     "CreateBarcodeDtoLanguageSpecific",
     "CreateBillingSessionDto",
@@ -402,6 +413,11 @@ __all__ = (
     "DietaryPreferencesDtoAllergensItem",
     "DietaryPreferencesDtoDietaryStylesItem",
     "DiscountType",
+    "EmergencySupplyDto",
+    "EmergencySupplyDtoStandard",
+    "EmergencySupplyGroupDto",
+    "EmergencySupplyGroupDtoStatus",
+    "EmergencySupplyGroupDtoUnit",
     "FirebaseExchangeDto",
     "ForgotPasswordDto",
     "GeneralNutrimentsDto",
@@ -540,6 +556,7 @@ __all__ = (
     "ReportSubstitutionDto",
     "ReportSubstitutionResultDto",
     "ReportSubstitutionResultDtoStatus",
+    "ReserveForRecipeDto",
     "ResetPasswordDto",
     "Role",
     "S3ControllerDeleteFileOwnerType",
@@ -571,6 +588,7 @@ __all__ = (
     "SwipeDecisionDtoDecision",
     "SwipeWeekPlanTargetDto",
     "SyncFirebaseInvitationDto",
+    "UnbookedRecipeContentDto",
     "UnitDto",
     "UpdateCollectionAssignmentDto",
     "UpdateItemDto",

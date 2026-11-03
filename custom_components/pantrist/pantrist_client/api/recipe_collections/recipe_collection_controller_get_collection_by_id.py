@@ -60,7 +60,7 @@ def _build_response(
 def sync_detailed(
     uuid: str,
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
 ) -> Response[Any | RecipeCollectionDto]:
     """Get recipe collection by id
 
@@ -91,7 +91,7 @@ def sync_detailed(
 def sync(
     uuid: str,
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
 ) -> Any | RecipeCollectionDto | None:
     """Get recipe collection by id
 
@@ -117,7 +117,7 @@ def sync(
 async def asyncio_detailed(
     uuid: str,
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
 ) -> Response[Any | RecipeCollectionDto]:
     """Get recipe collection by id
 
@@ -146,7 +146,7 @@ async def asyncio_detailed(
 async def asyncio(
     uuid: str,
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
 ) -> Any | RecipeCollectionDto | None:
     """Get recipe collection by id
 

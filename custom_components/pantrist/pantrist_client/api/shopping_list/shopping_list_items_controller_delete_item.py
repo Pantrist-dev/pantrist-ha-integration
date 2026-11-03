@@ -13,11 +13,18 @@ def _get_kwargs(
     list_id: str,
     item_id: str,
     *,
+    deleted_at: float | Unset = UNSET,
     x_socket_id: str | Unset = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
     if not isinstance(x_socket_id, Unset):
         headers["x-socket-id"] = x_socket_id
+
+    params: dict[str, Any] = {}
+
+    params["deletedAt"] = deleted_at
+
+    params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
 
     _kwargs: dict[str, Any] = {
         "method": "delete",
@@ -25,6 +32,7 @@ def _get_kwargs(
             list_id=quote(str(list_id), safe=""),
             item_id=quote(str(item_id), safe=""),
         ),
+        "params": params,
     }
 
     _kwargs["headers"] = headers
@@ -33,6 +41,9 @@ def _get_kwargs(
 
 def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> Any | None:
     if response.status_code == 204:
+        return None
+
+    if response.status_code == 409:
         return None
 
     if client.raise_on_unexpected_status:
@@ -55,6 +66,7 @@ def sync_detailed(
     item_id: str,
     *,
     client: AuthenticatedClient,
+    deleted_at: float | Unset = UNSET,
     x_socket_id: str | Unset = UNSET,
 ) -> Response[Any]:
     """Remove a shopping list item
@@ -62,6 +74,7 @@ def sync_detailed(
     Args:
         list_id (str):
         item_id (str):
+        deleted_at (float | Unset):
         x_socket_id (str | Unset):
 
     Raises:
@@ -75,6 +88,7 @@ def sync_detailed(
     kwargs = _get_kwargs(
         list_id=list_id,
         item_id=item_id,
+        deleted_at=deleted_at,
         x_socket_id=x_socket_id,
     )
 
@@ -90,6 +104,7 @@ async def asyncio_detailed(
     item_id: str,
     *,
     client: AuthenticatedClient,
+    deleted_at: float | Unset = UNSET,
     x_socket_id: str | Unset = UNSET,
 ) -> Response[Any]:
     """Remove a shopping list item
@@ -97,6 +112,7 @@ async def asyncio_detailed(
     Args:
         list_id (str):
         item_id (str):
+        deleted_at (float | Unset):
         x_socket_id (str | Unset):
 
     Raises:
@@ -110,6 +126,7 @@ async def asyncio_detailed(
     kwargs = _get_kwargs(
         list_id=list_id,
         item_id=item_id,
+        deleted_at=deleted_at,
         x_socket_id=x_socket_id,
     )
 

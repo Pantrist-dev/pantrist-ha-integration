@@ -40,6 +40,10 @@ def _parse_response(
         response_401 = cast(Any, None)
         return response_401
 
+    if response.status_code == 403:
+        response_403 = cast(Any, None)
+        return response_403
+
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:
@@ -59,7 +63,7 @@ def _build_response(
 
 def sync_detailed(
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
     body: AddRecipeCollection,
 ) -> Response[AddRecipeCollection | Any]:
     """Create a new recipe collection
@@ -88,7 +92,7 @@ def sync_detailed(
 
 def sync(
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
     body: AddRecipeCollection,
 ) -> AddRecipeCollection | Any | None:
     """Create a new recipe collection
@@ -112,7 +116,7 @@ def sync(
 
 async def asyncio_detailed(
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
     body: AddRecipeCollection,
 ) -> Response[AddRecipeCollection | Any]:
     """Create a new recipe collection
@@ -139,7 +143,7 @@ async def asyncio_detailed(
 
 async def asyncio(
     *,
-    client: AuthenticatedClient | Client,
+    client: AuthenticatedClient,
     body: AddRecipeCollection,
 ) -> AddRecipeCollection | Any | None:
     """Create a new recipe collection

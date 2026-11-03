@@ -1,0 +1,93 @@
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any, TypeVar
+
+from attrs import define as _attrs_define
+from attrs import field as _attrs_field
+
+if TYPE_CHECKING:
+    from ..models.article_dto import ArticleDto
+    from ..models.unbooked_recipe_content_dto import UnbookedRecipeContentDto
+
+
+T = TypeVar("T", bound="CookedRecipeReservationDto")
+
+
+@_attrs_define
+class CookedRecipeReservationDto:
+    """
+    Attributes:
+        items (list[ArticleDto]): The pantry items as they stand after booking.
+        unbooked (list[UnbookedRecipeContentDto]):
+    """
+
+    items: list[ArticleDto]
+    unbooked: list[UnbookedRecipeContentDto]
+    additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        items = []
+        for items_item_data in self.items:
+            items_item = items_item_data.to_dict()
+            items.append(items_item)
+
+        unbooked = []
+        for unbooked_item_data in self.unbooked:
+            unbooked_item = unbooked_item_data.to_dict()
+            unbooked.append(unbooked_item)
+
+        field_dict: dict[str, Any] = {}
+        field_dict.update(self.additional_properties)
+        field_dict.update(
+            {
+                "items": items,
+                "unbooked": unbooked,
+            }
+        )
+
+        return field_dict
+
+    @classmethod
+    def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
+        from ..models.article_dto import ArticleDto  # noqa: PLC0415
+        from ..models.unbooked_recipe_content_dto import UnbookedRecipeContentDto  # noqa: PLC0415
+
+        d = dict(src_dict)
+        items = []
+        _items = d.pop("items")
+        for items_item_data in _items:
+            items_item = ArticleDto.from_dict(items_item_data)
+
+            items.append(items_item)
+
+        unbooked = []
+        _unbooked = d.pop("unbooked")
+        for unbooked_item_data in _unbooked:
+            unbooked_item = UnbookedRecipeContentDto.from_dict(unbooked_item_data)
+
+            unbooked.append(unbooked_item)
+
+        cooked_recipe_reservation_dto = cls(
+            items=items,
+            unbooked=unbooked,
+        )
+
+        cooked_recipe_reservation_dto.additional_properties = d
+        return cooked_recipe_reservation_dto
+
+    @property
+    def additional_keys(self) -> list[str]:
+        return list(self.additional_properties.keys())
+
+    def __getitem__(self, key: str) -> Any:
+        return self.additional_properties[key]
+
+    def __setitem__(self, key: str, value: Any) -> None:
+        self.additional_properties[key] = value
+
+    def __delitem__(self, key: str) -> None:
+        del self.additional_properties[key]
+
+    def __contains__(self, key: str) -> bool:
+        return key in self.additional_properties
