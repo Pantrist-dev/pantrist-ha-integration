@@ -19,5 +19,5 @@
   "requirements": [
     "python-socketio[asyncio_client]==5.18.0"
   ],
-  "version": "0.1.8"
+  "version": "0.1.9"
 }

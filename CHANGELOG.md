@@ -4,6 +4,21 @@ All notable changes to the Pantrist HA Integration are recorded here.
 Generated from Conventional Commits by [standard-version](https://github.com/conventional-changelog/standard-version).
 
 
+## [0.1.9](https://github.com/Pantrist-dev/pantrist-ha-integration/compare/v0.1.8...v0.1.9) (2026-11-03)
+
+### Features
+
+* **pantry:** expose stock batches and category names ([8342b9c](https://github.com/Pantrist-dev/pantrist-ha-integration/commit/8342b9c9569722e2bd669cf3b03ebb855870b3e0)), closes [#32](https://github.com/Pantrist-dev/pantrist-ha-integration/issues/32), references [#31](https://github.com/Pantrist-dev/pantrist-ha-integration/issues/31)
+* **sensor:** show the emergency supply ([15d7d35](https://github.com/Pantrist-dev/pantrist-ha-integration/commit/15d7d35dd41dee33e541bf1d971f9016db7b2876)), closes [#31](https://github.com/Pantrist-dev/pantrist-ha-integration/issues/31)
+
+### Bug Fixes
+
+* **auth:** ask to sign in again when Pantrist refuses the refresh token ([65aaf7e](https://github.com/Pantrist-dev/pantrist-ha-integration/commit/65aaf7ee7fa2b663bf6a6624bd0222f23b0fc67b))
+
+### Documentation
+
+* show the dashboard at the top of the README ([1902143](https://github.com/Pantrist-dev/pantrist-ha-integration/commit/190214349af856fa57932ecf0058ee5fa105a30c))
+
 ## [0.1.8](https://github.com/Pantrist-dev/pantrist-ha-integration/compare/v0.1.7...v0.1.8) (2026-10-29)
 
 ### Features
