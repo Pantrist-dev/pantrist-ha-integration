@@ -202,14 +202,22 @@ class PantristListManager:
     async def async_reconcile(self) -> None:
         """Pull the current list inventory and apply add/remove diffs.
 
-        Network / auth errors are *swallowed* here — the coordinator's
-        own poll surfaces backend availability through entity state; we
-        don't want a transient reconcile failure to bubble up as a
-        config-entry error and tear everything down.
+        Network errors are *swallowed* here — the coordinator's own poll
+        surfaces backend availability through entity state; we don't want
+        a transient reconcile failure to bubble up as a config-entry error
+        and tear everything down. A refused sign-in starts the reauth flow.
         """
         try:
             lists = await self._api.get_lists()
-        except (PantristApiError, PantristAuthError) as err:
+        except PantristAuthError as err:
+            # Nothing else will notice in time: the coordinators only fetch
+            # on socket events, and the socket is down for the same reason.
+            _LOGGER.warning(
+                "Pantrist refused the sign-in, asking to sign in again: %s", err
+            )
+            self._entry.async_start_reauth(self._hass)
+            return
+        except PantristApiError as err:
             _LOGGER.debug("Skipping list reconcile: %s", err)
             return
         await self._apply(lists, fire_signals=True)

@@ -19,9 +19,11 @@ reauth via HA's standard `ConfigEntryAuthFailed` flow.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import Any
 
+import aiohttp
 import httpx
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.config_entry_oauth2_flow import OAuth2Session
@@ -159,10 +161,35 @@ class PantristApi:
             )
         return self._httpx_client
 
+    async def async_access_token(self) -> str:
+        """A valid access token, refreshed first when it is about to expire.
+
+        Raises:
+            PantristAuthError: the token endpoint refused the refresh token
+                (400 ``invalid_grant`` or 401); only a new sign-in helps.
+            PantristApiError: the refresh failed for any other reason (no
+                connection, a 5xx); worth retrying later.
+
+        HA raises ``OAuth2TokenRequestReauthError`` and friends here, older
+        versions a plain ``aiohttp.ClientResponseError``; both are
+        ``aiohttp`` errors, so this covers either.
+        """
+        try:
+            await self._session.async_ensure_token_valid()
+        except aiohttp.ClientResponseError as err:
+            if err.status in (400, 401):
+                raise PantristAuthError(
+                    f"Refresh token refused ({err.status})"
+                ) from err
+            raise PantristApiError(f"Token refresh failed: {err.status}") from err
+        except (aiohttp.ClientError, asyncio.TimeoutError) as err:
+            raise PantristApiError(f"Token refresh failed: {err}") from err
+        token: str = self._session.token["access_token"]
+        return token
+
     async def _client(self) -> AuthenticatedClient:
         """Return an AuthenticatedClient with a freshly-refreshed token."""
-        await self._session.async_ensure_token_valid()
-        token = self._session.token["access_token"]
+        token = await self.async_access_token()
         httpx_client = await self._async_httpx_client()
         # The generated client only stamps the auth header while *constructing*
         # its own httpx client; since we inject a pre-built one, set the bearer

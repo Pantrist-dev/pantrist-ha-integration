@@ -81,6 +81,26 @@ async def test_initial_setup_translates_auth_error(
 
 
 @pytest.mark.usefixtures("mock_oauth_session", "mock_socketio")
+async def test_reconcile_asks_to_sign_in_again_when_the_token_is_refused(
+    hass: HomeAssistant, manager_entry: MockConfigEntry, mock_api: MagicMock
+) -> None:
+    """The hourly reconcile notices a dead refresh token and starts reauth."""
+    manager_entry.add_to_hass(hass)
+    mock_api.get_lists = AsyncMock(return_value=[{"id": LIST_ID, "name": LIST_NAME}])
+    manager = PantristListManager(hass, manager_entry, mock_api)
+    await manager.async_initial_setup()
+
+    mock_api.get_lists = AsyncMock(side_effect=PantristAuthError("401"))
+    with patch.object(manager_entry, "async_start_reauth") as start_reauth:
+        await manager.async_reconcile()
+
+    start_reauth.assert_called_once_with(hass)
+    # The lists stay; a sign-in problem says nothing about them.
+    assert set(manager) == {LIST_ID}
+    await manager.async_shutdown()
+
+
+@pytest.mark.usefixtures("mock_oauth_session", "mock_socketio")
 async def test_reconcile_fires_signal_on_new_list(
     hass: HomeAssistant, manager_entry: MockConfigEntry, mock_api: MagicMock
 ) -> None:

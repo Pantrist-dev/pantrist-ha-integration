@@ -6,6 +6,7 @@ from collections.abc import AsyncGenerator
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import aiohttp
 import httpx
 import pytest
 
@@ -42,6 +43,38 @@ async def test_client_refreshes_token(api: PantristApi) -> None:
     session: Any = api._session
     session.async_ensure_token_valid.assert_awaited_once()
     assert client.token == "tok"
+
+
+def _token_error(status: int) -> aiohttp.ClientResponseError:
+    return aiohttp.ClientResponseError(MagicMock(), (), status=status)
+
+
+@pytest.mark.parametrize("status", [400, 401])
+async def test_refused_refresh_token_is_an_auth_error(
+    api: PantristApi, status: int
+) -> None:
+    """invalid_grant from the token endpoint: only a new sign-in helps."""
+    session: Any = api._session
+    session.async_ensure_token_valid.side_effect = _token_error(status)
+    with pytest.raises(PantristAuthError):
+        await api.async_access_token()
+    with pytest.raises(PantristAuthError):
+        await api.get_lists()
+
+
+@pytest.mark.parametrize(
+    "error",
+    [_token_error(502), aiohttp.ClientConnectionError("no route"), TimeoutError()],
+)
+async def test_failed_refresh_is_worth_retrying(
+    api: PantristApi, error: Exception
+) -> None:
+    """A 5xx, no connection or a timeout says nothing about the token."""
+    session: Any = api._session
+    session.async_ensure_token_valid.side_effect = error
+    with pytest.raises(PantristApiError) as raised:
+        await api.async_access_token()
+    assert not isinstance(raised.value, PantristAuthError)
 
 
 async def test_client_injects_shared_httpx_client(api: PantristApi) -> None:

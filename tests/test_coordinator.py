@@ -241,6 +241,22 @@ async def test_sio_loop_handles_cancellation(hass: HomeAssistant) -> None:
         await coord._sio_loop()  # returns without raising
 
 
+async def test_sio_loop_asks_to_sign_in_again_when_the_token_is_refused(
+    hass: HomeAssistant,
+) -> None:
+    """A refused refresh token ends the loop and starts reauth, no retrying."""
+    entry = MagicMock()
+    coord = PantristCoordinator(hass, entry, MagicMock(), LIST_ID, LIST_NAME)
+    connect = AsyncMock(side_effect=PantristAuthError("Refresh token refused (401)"))
+
+    with patch.object(coord, "_sio_connect_and_wait", new=connect):
+        coord._stop_sio.clear()
+        await coord._sio_loop()
+
+    connect.assert_awaited_once()
+    entry.async_start_reauth.assert_called_once_with(hass)
+
+
 async def test_start_socketio_creates_task(hass: HomeAssistant) -> None:
     coord = _build(hass)
     with patch.object(coord, "_sio_loop", new=AsyncMock()):
@@ -259,6 +275,7 @@ async def test_sio_connect_and_wait_registers_handlers(hass: HomeAssistant) -> N
     api._session = MagicMock()
     api._session.async_ensure_token_valid = AsyncMock()
     api._session.token = {"access_token": "tok"}
+    api.async_access_token = AsyncMock(return_value="tok")
 
     coord = _build(hass, api)
 
@@ -287,6 +304,7 @@ async def test_sio_connect_disconnect_swallows_errors(hass: HomeAssistant) -> No
     api._session = MagicMock()
     api._session.async_ensure_token_valid = AsyncMock()
     api._session.token = {"access_token": "tok"}
+    api.async_access_token = AsyncMock(return_value="tok")
 
     coord = _build(hass, api)
 
@@ -319,6 +337,7 @@ async def test_sio_connect_failure_closes_leaked_session(
     api._session = MagicMock()
     api._session.async_ensure_token_valid = AsyncMock()
     api._session.token = {"access_token": "tok"}
+    api.async_access_token = AsyncMock(return_value="tok")
 
     coord = _build(hass, api)
 
@@ -358,6 +377,7 @@ async def test_sio_event_callbacks_invoked(hass: HomeAssistant) -> None:
     api._session = MagicMock()
     api._session.async_ensure_token_valid = AsyncMock()
     api._session.token = {"access_token": "tok"}
+    api.async_access_token = AsyncMock(return_value="tok")
 
     coord = _build(hass, api)
 
@@ -430,6 +450,7 @@ async def test_sio_list_lifecycle_callbacks_fire_dispatcher_signals(
     api._session = MagicMock()
     api._session.async_ensure_token_valid = AsyncMock()
     api._session.token = {"access_token": "tok"}
+    api.async_access_token = AsyncMock(return_value="tok")
 
     entry = MockConfigEntry(domain=DOMAIN, unique_id=LIST_ID)
     entry.add_to_hass(hass)
@@ -537,6 +558,7 @@ async def test_sio_user_room_callbacks_fire_dispatcher_signals(
     api._session = MagicMock()
     api._session.async_ensure_token_valid = AsyncMock()
     api._session.token = {"access_token": "tok"}
+    api.async_access_token = AsyncMock(return_value="tok")
 
     entry = MockConfigEntry(domain=DOMAIN, unique_id=LIST_ID)
     entry.add_to_hass(hass)
@@ -637,6 +659,7 @@ async def test_sio_user_room_callbacks_ignore_missing_runtime_data(
     api._session = MagicMock()
     api._session.async_ensure_token_valid = AsyncMock()
     api._session.token = {"access_token": "tok"}
+    api.async_access_token = AsyncMock(return_value="tok")
 
     entry = MockConfigEntry(domain=DOMAIN, unique_id=LIST_ID)
     entry.add_to_hass(hass)

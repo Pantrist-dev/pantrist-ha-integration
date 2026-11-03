@@ -230,6 +230,18 @@ class PantristCoordinator(DataUpdateCoordinator[PantristData]):
                 backoff = _RECONNECT_BACKOFF_START
             except asyncio.CancelledError:
                 return
+            except PantristAuthError as err:
+                # The refresh token is dead; retrying with it can't succeed.
+                # Ask for a new sign-in instead; it reloads the entry, which
+                # starts a fresh loop.
+                _LOGGER.warning(
+                    "Pantrist refused the sign-in for %s, asking to sign in "
+                    "again: %s",
+                    self._list_name or self._list_id,
+                    err,
+                )
+                self._async_start_reauth()
+                return
             except Exception:  # noqa: BLE001
                 _LOGGER.exception("Socket.IO loop error")
             if not self._stop_sio.is_set():
@@ -278,9 +290,14 @@ class PantristCoordinator(DataUpdateCoordinator[PantristData]):
             self.hass, DOMAIN, self._disconnect_issue_id()
         )
 
+    def _async_start_reauth(self) -> None:
+        """Start the reauth flow (a no-op while one is already running)."""
+        entry = self.config_entry
+        if entry is not None:
+            entry.async_start_reauth(self.hass)
+
     async def _sio_connect_and_wait(self) -> None:
-        await self._api._session.async_ensure_token_valid()  # noqa: SLF001
-        token = self._api._session.token["access_token"]  # noqa: SLF001
+        token = await self._api.async_access_token()
 
         # Forward python-socketio / engineio logs into our own HA logger so
         # connection-failure root causes (e.g. the server-side "Unauthorized"
@@ -295,7 +312,7 @@ class PantristCoordinator(DataUpdateCoordinator[PantristData]):
         # forever with the original (now-expired) ``auth`` dict it captured
         # at ``.connect()`` time. By disabling the internal reconnect, the
         # outer ``_sio_loop`` owns retries — each iteration calls
-        # ``async_ensure_token_valid()`` so the handshake uses a fresh token.
+        # ``async_access_token()`` so the handshake uses a fresh token.
         sio = socketio.AsyncClient(
             logger=_LOGGER,
             engineio_logger=_LOGGER,
