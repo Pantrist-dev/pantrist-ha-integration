@@ -11,6 +11,11 @@ households get separate sensors / todo entities for each list out of a single OA
 > This is a **Custom Integration** (Python, in-process). An earlier Docker Add-on has
 > been retired.
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Pantrist-dev/pantrist-ha-integration/main/docs/images/dashboard.png" width="560"
+       alt="A Home Assistant dashboard built from the integration's entities: pantry count, next expiry, items expiring soon, items running low against their minimum, the shopping list as a to-do card, a stock control for milk and a calendar of best-before dates">
+</p>
+
 ## Install via HACS
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Pantrist-dev&repository=pantrist-ha-integration&category=integration)
