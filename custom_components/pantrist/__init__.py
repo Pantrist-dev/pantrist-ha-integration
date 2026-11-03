@@ -30,6 +30,7 @@ from homeassistant.helpers.typing import ConfigType
 import homeassistant.helpers.config_validation as cv
 
 from .api import PantristApi, PantristApiError, PantristAuthError
+from .categories import category_name
 from .const import (
     CLIENT_ID,
     DOMAIN,
@@ -47,7 +48,7 @@ from .const import (
 )
 from .coordinator import PantristCoordinator
 from .list_manager import PantristListManager
-from .stock import minimum_fields
+from .stock import batch_fields, batch_index, minimum_fields
 from .units import async_load_unit_labels, known_unit_ids
 
 # Bronze (runtime-data): the entry holds the per-list coordinator manager.
@@ -274,6 +275,36 @@ def _resolve_pantry_item_id(hass: HomeAssistant, call: ServiceCall) -> str:
     )
 
 
+def _resolve_batch_index(
+    hass: HomeAssistant, call: ServiceCall, item_id: str, best_before: str
+) -> int:
+    """Index of the item's stock batch with ``best_before``, for the API.
+
+    The API addresses a batch by its position in ``articleList``, which the
+    coordinator snapshot has; raise a translatable error listing the dates
+    the item does have when none matches.
+    """
+    coordinator = _coordinator_for_call(hass, call.data.get("list_id"))
+    item = next(
+        (i for i in _pantry_items(coordinator) if str(i["uuid"]) == item_id), {}
+    )
+    index = batch_index(item, best_before)
+    if index is None:
+        dates = dict.fromkeys(
+            b["best_before"] for b in batch_fields(item)["batches"] if b["best_before"]
+        )
+        raise HomeAssistantError(
+            translation_domain=DOMAIN,
+            translation_key="batch_not_found",
+            translation_placeholders={
+                "best_before": best_before,
+                "name": str(item.get("name") or item_id),
+                "available": ", ".join(dates) or "(none)",
+            },
+        )
+    return index
+
+
 # update_pantry_item fields → the ArticleDto fields they change. ``amount``
 # is handled apart, as a delta (see PantristApi.update_pantry_item).
 _UPDATE_FIELDS: dict[str, str] = {
@@ -353,12 +384,19 @@ def _register_services(hass: HomeAssistant) -> None:
 
     async def change_pantry_amount(call: ServiceCall) -> None:
         item_id = _resolve_pantry_item_id(hass, call)
+        batch: dict[str, Any] = {}
+        best_before = call.data.get("best_before")
+        if best_before is not None:
+            batch["product_group_index"] = _resolve_batch_index(
+                hass, call, item_id, best_before.isoformat()
+            )
         await _call_api(
             call,
             "change_pantry_item_amount",
             item_id=item_id,
             change=float(call.data["change"]),
             auto_restock=bool(call.data.get("auto_restock", True)),
+            **batch,
         )
 
     async def update_pantry_item(call: ServiceCall) -> None:
@@ -420,7 +458,12 @@ def _register_services(hass: HomeAssistant) -> None:
                     "content_volume": item.get("contentVolume"),
                     "unit": item.get("unitId"),
                     "brand": item.get("brand"),
+                    "category_uuid": item.get("categoryUuid"),
+                    "category_name": category_name(
+                        hass, coordinator.data.categories, item.get("categoryUuid")
+                    ),
                     **minimum_fields(item),
+                    **batch_fields(item),
                 }
                 for item in items
             ],
@@ -486,6 +529,9 @@ def _register_services(hass: HomeAssistant) -> None:
                 vol.Optional("name"): cv.string,
                 vol.Optional("item_id"): cv.string,
                 vol.Required("change"): vol.Coerce(float),
+                # Picks the stock batch; without it the API consumes the one
+                # that expires first.
+                vol.Optional("best_before"): cv.date,
                 # Defaults to True here even though the underlying API
                 # defaults to False — the HA service is the automation
                 # surface; a "consume + auto-reorder" round-trip is the

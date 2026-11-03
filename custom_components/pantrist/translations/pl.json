@@ -70,6 +70,9 @@
         },
         "unknown_unit": {
             "message": "Nieznana jednostka „{unit}”. Dostępne: {available}."
+        },
+        "batch_not_found": {
+            "message": "„{name}” nie ma partii z datą minimalnej trwałości {best_before}. Dostępne daty: {available}."
         }
     },
     "entity": {
@@ -180,6 +183,45 @@
                 "qt": "kwarty",
                 "tbsp": "łyżki",
                 "tsp": "łyżeczki"
+            }
+        },
+        "category_name": {
+            "options": {
+                "1": "Bez kategorii",
+                "2": "Alkohol i tytoń",
+                "3": "Pieczywo i wyroby piekarnicze",
+                "4": "Kosmetyki i środki higieny",
+                "5": "Napoje",
+                "6": "Wędliny",
+                "7": "Kosmetyki do pielęgnacji ciała",
+                "8": "Konserwy",
+                "9": "Chłodzone",
+                "10": "Delikatesy",
+                "11": "Jaja i produkty mleczne",
+                "12": "Ryby",
+                "13": "Produkty instant",
+                "14": "Mrożonki",
+                "15": "Owoce i warzywa",
+                "16": "Pielęgnacja włosów",
+                "17": "Dla domu",
+                "18": "Mięso",
+                "19": "Produkty medyczne",
+                "20": "Artykuły biurowe",
+                "21": "Makarony i produkty zbożowe",
+                "22": "Dla zwierząt",
+                "23": "Rośliny strączkowe i zboża",
+                "24": "Sosy",
+                "25": "Przekąski",
+                "26": "Przyprawy i dodatki",
+                "27": "Pasty kanapkowe",
+                "28": "Słodycze",
+                "29": "Środki do czyszczenia",
+                "30": "Ocet i olej",
+                "31": "Wegańskie",
+                "32": "Desery",
+                "33": "Żywność dla niemowląt",
+                "34": "Dom i ogród",
+                "35": "Inne"
             }
         }
     }

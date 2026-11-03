@@ -70,6 +70,9 @@
     },
     "unknown_unit": {
       "message": "Unbekannte Einheit „{unit}“. Möglich sind: {available}."
+    },
+    "batch_not_found": {
+      "message": "„{name}“ hat keine Charge mit Mindesthaltbarkeitsdatum {best_before}. Vorhandene Daten: {available}."
     }
   },
   "entity": {
@@ -215,6 +218,10 @@
         "auto_restock": {
           "name": "Automatisch nachbestellen, wenn unter Minimum",
           "description": "Serverseitig: legt den Artikel auch auf die Einkaufsliste, wenn die Menge beim Verringern das Minimum erreicht oder unterschreitet. Standardmäßig aktiv für HA-Auslöser; auf „false“ setzen, wenn nur die Menge verringert werden soll."
+        },
+        "best_before": {
+          "name": "Mindesthaltbarkeitsdatum",
+          "description": "Nimmt die Änderung von der Charge mit diesem Datum. Ohne Angabe wird die Charge verbraucht, die zuerst abläuft."
         }
       }
     },
@@ -336,6 +343,45 @@
         "qt": "qt",
         "tbsp": "EL",
         "tsp": "TL"
+      }
+    },
+    "category_name": {
+      "options": {
+        "1": "Nicht kategorisiert",
+        "2": "Alkohol & Tabak",
+        "3": "Brot & Backwaren",
+        "4": "Badartikel",
+        "5": "Getränke",
+        "6": "Brotaufschnitt",
+        "7": "Körperpflege",
+        "8": "Konserven",
+        "9": "Gekühltes",
+        "10": "Feinkost",
+        "11": "Eier & Molkereiprodukte",
+        "12": "Fisch",
+        "13": "Fixprodukte",
+        "14": "Tiefkühl",
+        "15": "Obst & Gemüse",
+        "16": "Haarpflege",
+        "17": "Haushalt",
+        "18": "Fleisch",
+        "19": "Medizinische Produkte",
+        "20": "Büromaterial",
+        "21": "Nudeln & Getreideprodukte",
+        "22": "Haustier",
+        "23": "Hülsenfrüchte & Getreide",
+        "24": "Soßen",
+        "25": "Snacks",
+        "26": "Gewürze & Zutaten",
+        "27": "Brotaufstrich",
+        "28": "Süßigkeiten",
+        "29": "Putzmittel",
+        "30": "Essig und Öl",
+        "31": "Vegan",
+        "32": "Dessert",
+        "33": "Babynahrung",
+        "34": "Baumarkt & Garten",
+        "35": "Sonstiges"
       }
     }
   }

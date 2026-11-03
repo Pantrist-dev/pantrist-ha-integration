@@ -69,6 +69,45 @@
         "tbsp": "colheres de sopa",
         "tsp": "colheres de chá"
       }
+    },
+    "category_name": {
+      "options": {
+        "1": "Sem categoria",
+        "2": "Álcool e tabaco",
+        "3": "Pão e produtos de pastelaria",
+        "4": "Produtos de banho",
+        "5": "Bebidas",
+        "6": "Frios",
+        "7": "Cuidados para o corpo",
+        "8": "Enlatados",
+        "9": "Refrigerados",
+        "10": "Aperitivos",
+        "11": "Ovos e produtos lácteos",
+        "12": "Peixe",
+        "13": "Produtos diversos",
+        "14": "Congelados",
+        "15": "Frutas e legumes",
+        "16": "Cuidados com o cabelo",
+        "17": "Para o lar",
+        "18": "Carne",
+        "19": "Cuidados de saúde",
+        "20": "Material de escritório",
+        "21": "Massas e cereais",
+        "22": "Animais de estimação",
+        "23": "Leguminosas e cereais",
+        "24": "Molhos",
+        "25": "Lanches",
+        "26": "Especiarias e ingredientes",
+        "27": "Pastas para barrar",
+        "28": "Doces",
+        "29": "Limpeza",
+        "30": "Vinagre e óleo",
+        "31": "Vegan",
+        "32": "Sobremesas",
+        "33": "Alimentos para bebés",
+        "34": "Casa e jardim",
+        "35": "Outros"
+      }
     }
   }
 }

@@ -264,6 +264,26 @@ async def test_get_pantry_list(api: PantristApi) -> None:
     assert result == {"listId": LIST_ID, "items": [{"uuid": "p1", "name": "Rice"}]}
 
 
+async def test_get_list_categories(api: PantristApi) -> None:
+    categories = [_make_dto(uuid="24", name={"translationKey": "categories.24.name"})]
+    with patch(
+        "custom_components.pantrist.api._categories_get.asyncio",
+        new=AsyncMock(return_value=categories),
+    ):
+        result = await api.get_list_categories(LIST_ID)
+    assert result == [{"uuid": "24", "name": {"translationKey": "categories.24.name"}}]
+
+
+async def test_get_list_categories_raises_when_the_endpoint_did_not_answer(
+    api: PantristApi,
+) -> None:
+    with patch(
+        "custom_components.pantrist.api._categories_get.asyncio",
+        new=AsyncMock(return_value=None),
+    ), pytest.raises(PantristApiError):
+        await api.get_list_categories(LIST_ID)
+
+
 async def test_get_pantry_list_empty(api: PantristApi) -> None:
     with patch(
         "custom_components.pantrist.api._pantry_get_items.asyncio",

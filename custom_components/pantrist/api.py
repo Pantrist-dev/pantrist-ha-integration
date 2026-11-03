@@ -31,6 +31,9 @@ from .const import API_BASE
 from .pantrist_client import AuthenticatedClient
 from .pantrist_client.api.barcode import barcode_controller_find_one
 from .pantrist_client.api.list_ import list_controller_get_list
+from .pantrist_client.api.list_categories import (
+    list_categories_controller_get_categories as _categories_get,
+)
 from .pantrist_client.api.list_units import (
     list_units_controller_get_units as _units_get,
 )
@@ -229,6 +232,20 @@ class PantristApi:
         result = await self._call(_units_get.asyncio(client=client, list_id=list_id))
         if result is None:
             raise PantristApiError("The units endpoint did not return a list")
+        return self._wrap(result) or []
+
+    async def get_list_categories(self, list_id: str) -> list[dict[str, Any]]:
+        """GET /list/{list_id}/categories — the categories the list has saved.
+
+        Built-in categories carry a ``{"translationKey": …}`` name rather than
+        a string (see ``categories.py``).
+        """
+        client = await self._client()
+        result = await self._call(
+            _categories_get.asyncio(client=client, list_id=list_id)
+        )
+        if result is None:
+            raise PantristApiError("The categories endpoint did not return a list")
         return self._wrap(result) or []
 
     # ------------------------------------------------------------------

@@ -114,7 +114,10 @@ automatically when the connection is restored.
 | `sensor.<list>_next_expiration` | Timestamp sensor — soonest best-before date across the pantry (drives Lovelace countdowns and the calendar card) |
 
 All count sensors carry an `items` attribute with the full per-item payload (uuid,
-name, amount, unit, brand, category, image URL, notes). The pantry sensor
+name, amount, unit, brand, category, image URL, notes). The category comes as
+`category_uuid` and `category_name`, the name as the app shows it (built-in
+categories translated); the pantry sensor's `categories` attribute maps every
+category of the list from uuid to name. The pantry sensor
 additionally exposes `low_stock_count` + `low_stock_items` for items at or below
 the configured minimum; the expiring-soon sensor splits its payload into
 `expiring_items` and `expired_items` with a `best_before` field per entry.
@@ -129,6 +132,32 @@ line for a dashboard:
 {% for i in state_attr('sensor.<list>_pantry', 'low_stock_items') %}
 - {{ i.name }}: {{ i.amount }} / {{ i.min_amount }}
 {% endfor %}
+```
+
+Packages of one item often have different best-before dates. Each pantry item
+lists them in `batches`, the batch that expires first first, with
+`earliest_best_before` next to it:
+
+```yaml
+batches:
+  - count: 1
+    best_before: "2028-10-11"
+    open: false
+  - count: 2
+    best_before: "2029-05-31"
+    open: false
+earliest_best_before: "2028-10-11"
+```
+
+Batches without a date come last, with `best_before: null`. "2 of 5 packages
+expire this month" as a template:
+
+```jinja
+{% set item = state_attr('sensor.<list>_pantry', 'items')
+   | selectattr('name', 'eq', 'Tomato paste') | first %}
+{{ item.batches | selectattr('best_before')
+   | selectattr('best_before', 'lt', (now() + timedelta(days=30)).date() | string)
+   | sum(attribute='count') }} of {{ item.amount }}
 ```
 
 ### Binary sensors (per list)
@@ -198,8 +227,8 @@ language model.
 | `pantrist.delete_shopping_list_item` | `item_id`, `list_id`* | Remove from shopping list |
 | `pantrist.add_to_pantry` | `name`, `amount`, `unit_id`, `list_id`* | Add a pantry item by name |
 | `pantrist.delete_pantry_item` | `item_id`, `list_id`* | Remove from pantry |
-| `pantrist.change_pantry_item_amount` | `name` **or** `item_id`, `change`, `auto_restock`, `list_id`* | Increment/decrement pantry amount |
-| `pantrist.search_pantry_items` | `query`, `list_id`* | Returns matching pantry items + their UUIDs and minimums (response action) |
+| `pantrist.change_pantry_item_amount` | `name` **or** `item_id`, `change`, `best_before`, `auto_restock`, `list_id`* | Increment/decrement pantry amount |
+| `pantrist.search_pantry_items` | `query`, `list_id`* | Returns matching pantry items + their UUIDs, categories, minimums and batches (response action) |
 | `pantrist.update_pantry_item` | `name` **or** `item_id`, `amount`, `content_volume`, `unit_id`, `new_name`, `brand`, `notes`, `best_before`, `min_amount`, `min_amount_mode`, `manage_min_amount`, `list_id`* | Change a pantry item; fields left out stay as they are, `null` clears brand, notes or best-before date |
 
 `*` `list_id` is optional — omit it on single-list accounts. With multiple lists,
@@ -212,6 +241,19 @@ UUID. Pass `item_id` instead only when two items share a name. To find a UUID, r
 `pantrist.search_pantry_items` (**Developer Tools → Actions**, which shows the
 returned items + UUIDs) or read the `items` attribute of `sensor.pantrist_pantry`
 (**Developer Tools → States**).
+
+When you consume packages without saying which, Pantrist finishes an open
+package first, then takes the batch that expires first; batches without a date go
+last. To take from a particular batch, pass its date as `best_before`, as listed
+in the item's `batches`:
+
+```yaml
+action: pantrist.change_pantry_item_amount
+data:
+  name: Tomato paste
+  change: -1
+  best_before: "2029-05-31"
+```
 
 ### Diagnostics
 

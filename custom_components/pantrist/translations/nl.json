@@ -69,6 +69,45 @@
         "tbsp": "el.",
         "tsp": "tl."
       }
+    },
+    "category_name": {
+      "options": {
+        "1": "Ongecategoriseerd",
+        "2": "Alcohol & Tabak",
+        "3": "Brood & Gebak",
+        "4": "Badproducten",
+        "5": "Dranken",
+        "6": "Koude Gerechten",
+        "7": "Lichaamsverzorging",
+        "8": "Ingeblikt voedsel",
+        "9": "Afgekoeld",
+        "10": "Delicatessen",
+        "11": "Eieren & zuivelproducten",
+        "12": "Vis",
+        "13": "Vaste producten",
+        "14": "Bevroren voedsel",
+        "15": "Fruit & groenten",
+        "16": "Haarverzorging",
+        "17": "Huishouding",
+        "18": "Vlees",
+        "19": "Medische producten",
+        "20": "Kantoorartikelen",
+        "21": "Pasta & Granen",
+        "22": "Huisdier",
+        "23": "Peulvruchten & Granen",
+        "24": "Sauzen",
+        "25": "Hapjes",
+        "26": "Kruiden & Ingrediënten",
+        "27": "Broodbeleg",
+        "28": "Snoepgoed",
+        "29": "Schoonmaak",
+        "30": "Azijn en olie",
+        "31": "Veganistisch",
+        "32": "Nagerecht",
+        "33": "Babyvoeding",
+        "34": "Huis & Tuin",
+        "35": "Overig"
+      }
     }
   }
 }

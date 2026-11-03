@@ -32,6 +32,9 @@ async def test_update_data_aggregates_three_endpoints(hass: HomeAssistant) -> No
     api.get_pantry_list = AsyncMock(return_value={"items": [{"uuid": "p"}]})
     api.get_shopping_cart = AsyncMock(return_value=[{"uuid": "c"}])
     api.get_list_units = AsyncMock(return_value=[{"uid": "u1", "name": "Tüte"}])
+    api.get_list_categories = AsyncMock(
+        return_value=[{"uuid": "24", "name": "Sauces"}]
+    )
 
     coord = _build(hass, api)
     data = await coord._async_update_data()
@@ -40,6 +43,24 @@ async def test_update_data_aggregates_three_endpoints(hass: HomeAssistant) -> No
     assert data.pantry["items"][0]["uuid"] == "p"
     assert data.shopping_cart[0]["uuid"] == "c"
     assert data.units == {"u1": {"uid": "u1", "name": "Tüte"}}
+    assert data.categories == {"24": {"uuid": "24", "name": "Sauces"}}
+
+
+async def test_update_data_keeps_categories_when_their_fetch_fails(
+    hass: HomeAssistant,
+) -> None:
+    """Categories only label items, so a failed fetch keeps the last ones."""
+    api = MagicMock()
+    api.get_shopping_list = AsyncMock(return_value={"items": []})
+    api.get_pantry_list = AsyncMock(return_value={"items": []})
+    api.get_shopping_cart = AsyncMock(return_value=[])
+    api.get_list_units = AsyncMock(return_value=[])
+    api.get_list_categories = AsyncMock(side_effect=PantristApiError("502"))
+
+    coord = _build(hass, api)
+    coord.data = PantristData(categories={"24": {"uuid": "24", "name": "Sauces"}})
+    data = await coord._async_update_data()
+    assert data.categories == {"24": {"uuid": "24", "name": "Sauces"}}
 
 
 async def test_update_data_translates_auth_error(hass: HomeAssistant) -> None:

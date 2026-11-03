@@ -107,6 +107,28 @@ async def test_get_events_skips_undated_and_invalid(hass: HomeAssistant) -> None
     assert await cal.async_get_events(hass, start, end) == []
 
 
+async def test_event_description_is_never_missing(hass: HomeAssistant) -> None:
+    """An item without amount or brand still gets a description, empty."""
+    today = dt_util.now().date()
+    coord = _make_coordinator(
+        hass,
+        PantristData(
+            pantry={
+                "items": [
+                    {
+                        "uuid": "1",
+                        "name": "Salt",
+                        "pantrySettings": {
+                            "earliestBestBefore": today.strftime("%Y-%m-%d")
+                        },
+                    }
+                ]
+            }
+        ),
+    )
+    assert PantristPantryCalendar(coord).event.description == ""
+
+
 def test_describe_item_returns_none_for_empty() -> None:
     assert _describe_item({}) is None
 

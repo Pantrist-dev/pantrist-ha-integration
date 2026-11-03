@@ -13,6 +13,7 @@ from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from .categories import category_name, category_names
 from .const import (
     DOMAIN,
     SENSOR_EXPIRING_SOON,
@@ -25,7 +26,7 @@ from .const import (
 from .coordinator import PantristCoordinator, PantristData
 from .entity import PantristEntity
 from .list_manager import PantristListManager, signal_new_list
-from .stock import is_low_stock, minimum_fields
+from .stock import batch_fields, is_low_stock, minimum_fields
 from .units import format_amount
 
 _LOGGER = logging.getLogger(__name__)
@@ -75,6 +76,7 @@ def _format_item(
     item: dict[str, Any],
     hass: HomeAssistant | None = None,
     list_units: dict[str, dict[str, Any]] | None = None,
+    categories: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Extract a concise ArticleDto projection for HA attributes.
 
@@ -90,7 +92,8 @@ def _format_item(
     directly. The pre-composed ``display`` field is provided as a
     convenience for ``markdown`` cards and reads like the app's amount
     (labels from the list's units, built-in ones translated); the raw
-    ``unit`` id is kept for templates.
+    ``unit`` id is kept for templates. ``category_name`` is the category as
+    the app names it, built-in ones translated.
     """
     amount = item.get("amount")
     content_volume = item.get("contentVolume")
@@ -105,6 +108,7 @@ def _format_item(
         or (_fmt_num(amount) if amount is not None else None),
         "brand": item.get("brand"),
         "category_uuid": item.get("categoryUuid"),
+        "category_name": category_name(hass, categories, item.get("categoryUuid")),
         "notes": item.get("notes"),
         "image_url": item.get("imageUrl"),
     }
@@ -154,11 +158,12 @@ class PantristShoppingListSensor(_PantristBaseSensor):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        items = self.data.shopping_list.get("items", [])
+        data = self.data
+        items = data.shopping_list.get("items", [])
         return {
             "list_id": self.coordinator.list_id,
             "items": [
-                _format_item(i, self.hass, self.coordinator.data.units) for i in items
+                _format_item(i, self.hass, data.units, data.categories) for i in items
             ],
         }
 
@@ -172,7 +177,7 @@ class PantristPantrySensor(_PantristBaseSensor):
     # the sensor that triggered the "State attributes … exceed maximum size"
     # warning). Don't persist the bulky item lists — the counts remain in
     # history, and the live attributes stay available for cards/automations.
-    _unrecorded_attributes = frozenset({"items", "low_stock_items"})
+    _unrecorded_attributes = frozenset({"items", "low_stock_items", "categories"})
 
     def __init__(self, coordinator: PantristCoordinator) -> None:
         super().__init__(coordinator, SENSOR_PANTRY)
@@ -183,10 +188,15 @@ class PantristPantrySensor(_PantristBaseSensor):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        raw = self.data.pantry.get("items", [])
-        units = self.coordinator.data.units
+        data = self.data
+        raw = data.pantry.get("items", [])
         items = [
-            {**_format_item(i, self.hass, units), **minimum_fields(i)} for i in raw
+            {
+                **_format_item(i, self.hass, data.units, data.categories),
+                **minimum_fields(i),
+                **batch_fields(i),
+            }
+            for i in raw
         ]
         low_stock = [f for f, i in zip(items, raw, strict=True) if is_low_stock(i)]
         return {
@@ -194,6 +204,7 @@ class PantristPantrySensor(_PantristBaseSensor):
             "items": items,
             "low_stock_count": len(low_stock),
             "low_stock_items": low_stock,
+            "categories": category_names(self.hass, data.categories),
         }
 
 
@@ -227,7 +238,9 @@ class PantristExpiringSoonSensor(_PantristBaseSensor):
             except (ValueError, TypeError):
                 continue
             formatted = {
-                **_format_item(item, self.hass, self.coordinator.data.units),
+                **_format_item(
+                    item, self.hass, self.data.units, self.data.categories
+                ),
                 "best_before": earliest,
             }
             if bb < today:
@@ -282,7 +295,10 @@ class PantristShoppingCartSensor(_PantristBaseSensor):
                     "cart_uuid": i.get("uuid"),
                     "moved_at": i.get("movedAt"),
                     **_format_item(
-                        i.get("article") or {}, self.hass, self.coordinator.data.units
+                        i.get("article") or {},
+                        self.hass,
+                        self.data.units,
+                        self.data.categories,
                     ),
                 }
                 for i in items

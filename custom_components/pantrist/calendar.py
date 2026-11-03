@@ -105,9 +105,13 @@ class PantristPantryCalendar(PantristEntity, CalendarEntity):
                     start=bb,
                     end=bb + timedelta(days=1),
                     summary=str(summary),
+                    # An empty string rather than None: HA drops a None
+                    # description from calendar.get_events, and templates
+                    # reading event.description then fail.
                     description=_describe_item(
                         item, self.hass, self.coordinator.data.units
-                    ),
+                    )
+                    or "",
                     uid=str(item.get("uuid") or f"{summary}-{raw}"),
                 )
             )

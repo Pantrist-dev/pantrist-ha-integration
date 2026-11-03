@@ -141,6 +141,42 @@ async def test_pantry_sensor_reports_low_stock(hass: HomeAssistant) -> None:
     assert by_name["Salt"]["min_amount_mode"] is None
 
 
+async def test_pantry_sensor_batches_and_categories(hass: HomeAssistant) -> None:
+    """Each item lists its batches and category name (issues #31, #32)."""
+    coord = _make_coordinator(
+        hass,
+        PantristData(
+            pantry={
+                "items": [
+                    {
+                        "uuid": "p1",
+                        "name": "Tomato paste",
+                        "amount": 3,
+                        "categoryUuid": "c1",
+                        "pantrySettings": {
+                            "earliestBestBefore": "2028-10-11",
+                            "articleList": [
+                                {"count": 2, "bestBefore": "2029-05-31"},
+                                {"count": 1, "bestBefore": "2028-10-11"},
+                            ],
+                        },
+                    }
+                ]
+            },
+            categories={"c1": {"uuid": "c1", "name": "Sauces"}},
+        ),
+    )
+    attrs = PantristPantrySensor(coord).extra_state_attributes
+    item = attrs["items"][0]
+    assert item["category_name"] == "Sauces"
+    assert item["earliest_best_before"] == "2028-10-11"
+    assert [b["best_before"] for b in item["batches"]] == [
+        "2028-10-11",
+        "2029-05-31",
+    ]
+    assert attrs["categories"] == {"c1": "Sauces"}
+
+
 async def test_pantry_sensor_minimum_in_content(hass: HomeAssistant) -> None:
     """A minimum counted in content says so, so templates read it right."""
     coord = _make_coordinator(

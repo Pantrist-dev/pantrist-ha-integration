@@ -70,6 +70,9 @@
     },
     "unknown_unit": {
       "message": "Unknown unit \"{unit}\". Use one of: {available}."
+    },
+    "batch_not_found": {
+      "message": "{name} has no batch with best-before date {best_before}. Its dates: {available}."
     }
   },
   "entity": {
@@ -215,6 +218,10 @@
         "auto_restock": {
           "name": "Auto-restock when below minimum",
           "description": "Server-side: also add the item to the shopping list when the decrement crosses its minimum. On by default for HA-triggered flows; set to false for bare-decrement use cases."
+        },
+        "best_before": {
+          "name": "Best before",
+          "description": "Take the change from the batch with this best-before date. Without it, the batch that expires first is consumed."
         }
       }
     },
@@ -336,6 +343,45 @@
         "qt": "qt",
         "tbsp": "tbsp",
         "tsp": "tsp"
+      }
+    },
+    "category_name": {
+      "options": {
+        "1": "Uncategorized",
+        "2": "Alcohol & Tobacco",
+        "3": "Bread & Baked goods",
+        "4": "Bath products",
+        "5": "Beverages",
+        "6": "Cold Cuts",
+        "7": "Body care",
+        "8": "Canned food",
+        "9": "Cooled",
+        "10": "Delicatessen",
+        "11": "Eggs & dairy products",
+        "12": "Fish",
+        "13": "Fix products",
+        "14": "Frozen food",
+        "15": "Fruit & vegetables",
+        "16": "Hair Care",
+        "17": "Housekeeping",
+        "18": "Meat",
+        "19": "Medical products",
+        "20": "Office supplies",
+        "21": "Pasta & Cereals",
+        "22": "Pet",
+        "23": "Pulses & Cereals",
+        "24": "Sauces",
+        "25": "Snacks",
+        "26": "Spices & Ingredients",
+        "27": "Spread",
+        "28": "Sweets",
+        "29": "Cleaner",
+        "30": "Vinegar and oil",
+        "31": "Vegan",
+        "32": "Dessert",
+        "33": "Baby food",
+        "34": "Home & Garden",
+        "35": "Other"
       }
     }
   }

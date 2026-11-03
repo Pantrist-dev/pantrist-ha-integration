@@ -174,6 +174,86 @@ async def test_change_pantry_amount_by_name(
     )
 
 
+TOMATO_PASTE = {
+    "uuid": "tp-uuid",
+    "name": "Tomato paste",
+    "amount": 3,
+    "categoryUuid": "24",
+    "pantrySettings": {
+        "earliestBestBefore": "2028-10-11",
+        "articleList": [
+            {"pantryUuid": "1", "count": 2, "bestBefore": "2029-05-31"},
+            {"pantryUuid": "1", "count": 1, "bestBefore": "2028-10-11"},
+        ],
+    },
+}
+
+
+async def test_change_pantry_amount_from_a_batch(
+    hass: HomeAssistant, config_entry: MockConfigEntry, mock_api: MagicMock
+) -> None:
+    """best_before picks the batch, by its position in the article list."""
+    _seed_pantry(mock_api, [TOMATO_PASTE])
+    await _setup(hass, config_entry)
+    await hass.services.async_call(
+        DOMAIN,
+        SERVICE_CHANGE_PANTRY_AMOUNT,
+        {"name": "Tomato paste", "change": -1, "best_before": "2028-10-11"},
+        blocking=True,
+    )
+    mock_api.change_pantry_item_amount.assert_awaited_with(
+        LIST_ID,
+        item_id="tp-uuid",
+        change=-1.0,
+        auto_restock=True,
+        product_group_index=1,
+    )
+
+
+async def test_change_pantry_amount_unknown_batch(
+    hass: HomeAssistant, config_entry: MockConfigEntry, mock_api: MagicMock
+) -> None:
+    _seed_pantry(mock_api, [TOMATO_PASTE])
+    await _setup(hass, config_entry)
+    with pytest.raises(HomeAssistantError) as err:
+        await hass.services.async_call(
+            DOMAIN,
+            SERVICE_CHANGE_PANTRY_AMOUNT,
+            {"name": "Tomato paste", "change": -1, "best_before": "2030-01-01"},
+            blocking=True,
+        )
+    assert err.value.translation_key == "batch_not_found"
+    assert err.value.translation_placeholders["available"] == (
+        "2028-10-11, 2029-05-31"
+    )
+    mock_api.change_pantry_item_amount.assert_not_awaited()
+
+
+async def test_search_pantry_items_names_category_and_batches(
+    hass: HomeAssistant, config_entry: MockConfigEntry, mock_api: MagicMock
+) -> None:
+    _seed_pantry(mock_api, [TOMATO_PASTE])
+    mock_api.get_list_categories.return_value = [
+        {"uuid": "24", "name": "Saucen & Pasten"}
+    ]
+    await _setup(hass, config_entry)
+    response = await hass.services.async_call(
+        DOMAIN,
+        SERVICE_SEARCH_PANTRY_ITEMS,
+        {"query": "tomato"},
+        blocking=True,
+        return_response=True,
+    )
+    item = response["items"][0]
+    assert item["category_uuid"] == "24"
+    assert item["category_name"] == "Saucen & Pasten"
+    assert item["earliest_best_before"] == "2028-10-11"
+    assert item["batches"] == [
+        {"count": 1, "best_before": "2028-10-11", "open": False},
+        {"count": 2, "best_before": "2029-05-31", "open": False},
+    ]
+
+
 async def test_change_pantry_amount_name_not_found(
     hass: HomeAssistant, config_entry: MockConfigEntry, mock_api: MagicMock
 ) -> None:
@@ -263,8 +343,12 @@ async def test_search_pantry_items_with_query(
                 "content_volume": 1.5,
                 "unit": "L",
                 "brand": "Acme",
+                "category_uuid": None,
+                "category_name": None,
                 "min_amount": 3,
                 "min_amount_mode": "packages",
+                "batches": [],
+                "earliest_best_before": None,
             }
         ],
     }

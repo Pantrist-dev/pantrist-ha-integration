@@ -69,6 +69,45 @@
         "tbsp": "tbsp",
         "tsp": "tsp"
       }
+    },
+    "category_name": {
+      "options": {
+        "1": "Senza categoria",
+        "2": "Alcolici e Tabacco",
+        "3": "Pane e Prodotti da forno",
+        "4": "Prodotti da bagno",
+        "5": "Bevande",
+        "6": "Salumi",
+        "7": "Cura del corpo",
+        "8": "Cibi in scatola",
+        "9": "Refrigerato",
+        "10": "Gastronomia",
+        "11": "Uova e Latticini",
+        "12": "Pesce",
+        "13": "Prodotti vari",
+        "14": "Surgelati",
+        "15": "Frutta e Verdura",
+        "16": "Cura dei capelli",
+        "17": "Articoli per la casa",
+        "18": "Carne",
+        "19": "Prodotti medici",
+        "20": "Articoli da ufficio",
+        "21": "Pasta e cereali",
+        "22": "Animali domestici",
+        "23": "Legumi e cereali",
+        "24": "Salse",
+        "25": "Snack",
+        "26": "Spezie e ingredienti",
+        "27": "Creme spalmabili",
+        "28": "Dolci",
+        "29": "Detergenti",
+        "30": "Aceto e olio",
+        "31": "Vegano",
+        "32": "Dessert",
+        "33": "Alimenti per neonati",
+        "34": "Casa e giardino",
+        "35": "Altro"
+      }
     }
   }
 }

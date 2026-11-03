@@ -1,6 +1,6 @@
-"""Tests for the low-stock rule."""
+"""Tests for an item's stock: its batches and the low-stock rule."""
 
-from custom_components.pantrist.stock import is_low_stock
+from custom_components.pantrist.stock import batch_fields, batch_index, is_low_stock
 
 
 def _toilet_paper(remaining: float | None) -> dict:
@@ -43,3 +43,37 @@ def test_content_minimum_without_package_size_counts_packages() -> None:
     item = {**_toilet_paper(None), "contentVolume": 0}
     # 1 package against a minimum of 3.
     assert is_low_stock(item) is True
+
+
+def _batches(*entries: dict) -> dict:
+    return {"pantrySettings": {"articleList": list(entries)}}
+
+
+def test_batches_expiring_first_come_first() -> None:
+    item = _batches(
+        {"count": 2, "bestBefore": "2029-05-31"},
+        {"count": 1},
+        {"count": 1, "bestBefore": "2028-10-11", "articleIsOpen": True},
+        {"count": 0, "bestBefore": "2027-01-01"},
+    )
+    assert batch_fields(item)["batches"] == [
+        {"count": 1, "best_before": "2028-10-11", "open": True},
+        {"count": 2, "best_before": "2029-05-31", "open": False},
+        # Undated batches last; an empty one isn't stock.
+        {"count": 1, "best_before": None, "open": False},
+    ]
+
+
+def test_batches_of_an_item_without_any() -> None:
+    assert batch_fields({}) == {"batches": [], "earliest_best_before": None}
+
+
+def test_batch_index_is_the_position_in_the_article_list() -> None:
+    item = _batches(
+        {"count": 0, "bestBefore": "2028-10-11"},
+        {"count": 2, "bestBefore": "2029-05-31"},
+        {"count": 1, "bestBefore": "2028-10-11"},
+    )
+    assert batch_index(item, "2028-10-11") == 2
+    assert batch_index(item, "2029-05-31") == 1
+    assert batch_index(item, "2030-01-01") is None

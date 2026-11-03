@@ -116,6 +116,16 @@ change_pantry_item_amount:
         number:
           step: 0.1
           mode: box
+    best_before:
+      name: Best before
+      description: >
+        Take the change from the batch with this best-before date (see the
+        item's batches attribute on sensor.pantrist_pantry). Without it,
+        Pantrist consumes the batch that expires first.
+      required: false
+      example: "2028-10-11"
+      selector:
+        date:
     auto_restock:
       name: Auto-restock when below minimum
       description: >

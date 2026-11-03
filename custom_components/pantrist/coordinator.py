@@ -40,6 +40,8 @@ class PantristData:
     shopping_cart: list[dict[str, Any]] = field(default_factory=list)
     # The list's saved units by uid; empty means the built-in ones apply.
     units: dict[str, dict[str, Any]] = field(default_factory=dict)
+    # The list's saved categories by uuid; same fallback as the units.
+    categories: dict[str, dict[str, Any]] = field(default_factory=dict)
 
 
 class PantristCoordinator(DataUpdateCoordinator[PantristData]):
@@ -110,6 +112,7 @@ class PantristCoordinator(DataUpdateCoordinator[PantristData]):
             pantry=pantry or {},
             shopping_cart=cart or [],
             units=await self._async_fetch_units(),
+            categories=await self._async_fetch_categories(),
         )
 
         # Notify the ``number`` platform when the pantry inventory shifts so
@@ -141,6 +144,23 @@ class PantristCoordinator(DataUpdateCoordinator[PantristData]):
             _LOGGER.debug("Keeping previous units for %s: %s", self._list_id, err)
             return self.data.units if self.data else {}
         return {str(u["uid"]): u for u in units if u.get("uid")}
+
+    async def _async_fetch_categories(self) -> dict[str, dict[str, Any]]:
+        """The list's categories by uuid, keeping the last known ones on failure.
+
+        Like the units, they only label items; a failed fetch must not fail
+        the whole refresh.
+        """
+        try:
+            categories = await self._api.get_list_categories(self._list_id)
+        except PantristAuthError as err:
+            raise ConfigEntryAuthFailed("Pantrist auth failed") from err
+        except PantristApiError as err:
+            _LOGGER.debug(
+                "Keeping previous categories for %s: %s", self._list_id, err
+            )
+            return self.data.categories if self.data else {}
+        return {str(c["uuid"]): c for c in categories if c.get("uuid")}
 
     @staticmethod
     def _pantry_item_ids(data: PantristData | None) -> frozenset[str]:

@@ -1,4 +1,4 @@
-"""When a pantry item counts as low on stock."""
+"""A pantry item's stock: its batches and when it counts as low."""
 
 from __future__ import annotations
 
@@ -31,6 +31,39 @@ def is_low_stock(item: dict[str, Any]) -> bool:
         content = round(_effective_packages(item) * content_volume, 6)
         return content <= minimum
     return (item.get("amount") or 0) <= minimum
+
+
+def batch_fields(item: dict[str, Any]) -> dict[str, Any]:
+    """The item's stock batches as HA attributes, the one expiring first first.
+
+    A batch is a group of packages in ``pantrySettings.articleList`` that
+    share a best-before date (and storage location). Batches without a date
+    come last; ``best_before`` is None for them.
+    """
+    settings = item.get("pantrySettings") or {}
+    batches = [
+        {
+            "count": entry.get("count"),
+            "best_before": entry.get("bestBefore") or None,
+            "open": bool(entry.get("articleIsOpen")),
+        }
+        for entry in settings.get("articleList") or []
+        if (entry.get("count") or 0) > 0
+    ]
+    batches.sort(key=lambda b: (b["best_before"] is None, b["best_before"] or ""))
+    return {
+        "batches": batches,
+        "earliest_best_before": settings.get("earliestBestBefore") or None,
+    }
+
+
+def batch_index(item: dict[str, Any], best_before: str) -> int | None:
+    """Index in ``articleList`` of the first stocked batch with that date."""
+    entries = (item.get("pantrySettings") or {}).get("articleList") or []
+    for index, entry in enumerate(entries):
+        if entry.get("bestBefore") == best_before and (entry.get("count") or 0) > 0:
+            return index
+    return None
 
 
 def minimum_fields(item: dict[str, Any]) -> dict[str, Any]:
