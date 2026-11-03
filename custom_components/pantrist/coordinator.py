@@ -42,6 +42,9 @@ class PantristData:
     units: dict[str, dict[str, Any]] = field(default_factory=dict)
     # The list's saved categories by uuid; same fallback as the units.
     categories: dict[str, dict[str, Any]] = field(default_factory=dict)
+    # The emergency supply analysis (EmergencySupplyDto); empty until the
+    # API has answered once.
+    emergency_supply: dict[str, Any] = field(default_factory=dict)
 
 
 class PantristCoordinator(DataUpdateCoordinator[PantristData]):
@@ -113,6 +116,7 @@ class PantristCoordinator(DataUpdateCoordinator[PantristData]):
             shopping_cart=cart or [],
             units=await self._async_fetch_units(),
             categories=await self._async_fetch_categories(),
+            emergency_supply=await self._async_fetch_emergency_supply(),
         )
 
         # Notify the ``number`` platform when the pantry inventory shifts so
@@ -161,6 +165,22 @@ class PantristCoordinator(DataUpdateCoordinator[PantristData]):
             )
             return self.data.categories if self.data else {}
         return {str(c["uuid"]): c for c in categories if c.get("uuid")}
+
+    async def _async_fetch_emergency_supply(self) -> dict[str, Any]:
+        """The emergency supply, keeping the last known one on failure.
+
+        It is one sensor among many; an API that can't count it (or doesn't
+        know the endpoint yet) must not take the whole refresh down.
+        """
+        try:
+            return await self._api.get_emergency_supply(self._list_id)
+        except PantristAuthError as err:
+            raise ConfigEntryAuthFailed("Pantrist auth failed") from err
+        except PantristApiError as err:
+            _LOGGER.debug(
+                "Keeping previous emergency supply for %s: %s", self._list_id, err
+            )
+            return self.data.emergency_supply if self.data else {}
 
     @staticmethod
     def _pantry_item_ids(data: PantristData | None) -> frozenset[str]:

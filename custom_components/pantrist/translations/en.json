@@ -98,6 +98,9 @@
       },
       "latest_shopping_item": {
         "name": "Latest shopping item"
+      },
+      "emergency_supply": {
+        "name": "Emergency supplies"
       }
     },
     "binary_sensor": {
@@ -222,6 +225,21 @@
         "33": "Baby food",
         "34": "Home & Garden",
         "35": "Other"
+      }
+    },
+    "emergency_group": {
+      "options": {
+        "beverages": "Beverages",
+        "cereals": "Cereal products",
+        "dairy": "Milk, Dairy",
+        "fats": "Fats, Oils",
+        "fruits": "Fruit, Nuts",
+        "grains": "Grains, Bread, Potatoes",
+        "oil": "Vegetable oil",
+        "protein": "Meat, Fish, Eggs",
+        "pulses": "Pulses",
+        "sugar_salt": "Sugar & Salt",
+        "vegetables": "Vegetables, Legumes"
       }
     }
   }

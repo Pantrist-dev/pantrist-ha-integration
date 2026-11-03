@@ -12,6 +12,9 @@
       },
       "shopping_cart": {
         "unit_of_measurement": "artiklar"
+      },
+      "emergency_supply": {
+        "name": "Nödförråd"
       }
     }
   },

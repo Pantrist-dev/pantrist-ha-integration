@@ -12,6 +12,9 @@
       },
       "shopping_cart": {
         "unit_of_measurement": "itens"
+      },
+      "emergency_supply": {
+        "name": "Reservas de emergência"
       }
     }
   },
@@ -107,6 +110,21 @@
         "33": "Alimentos para bebés",
         "34": "Casa e jardim",
         "35": "Outros"
+      }
+    },
+    "emergency_group": {
+      "options": {
+        "beverages": "Bebidas",
+        "cereals": "Produtos cerealíferos",
+        "dairy": "Leite, laticínios",
+        "fats": "Gorduras, óleos",
+        "fruits": "Frutas, nozes",
+        "grains": "Grãos, pão, batatas",
+        "oil": "Óleo vegetal",
+        "protein": "Carne, peixe, ovos",
+        "pulses": "Leguminosas",
+        "sugar_salt": "Açúcar e sal",
+        "vegetables": "Vegetais, leguminosas"
       }
     }
   }

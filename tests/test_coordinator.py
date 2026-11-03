@@ -35,6 +35,7 @@ async def test_update_data_aggregates_three_endpoints(hass: HomeAssistant) -> No
     api.get_list_categories = AsyncMock(
         return_value=[{"uuid": "24", "name": "Sauces"}]
     )
+    api.get_emergency_supply = AsyncMock(return_value={"enabled": True, "days": 3})
 
     coord = _build(hass, api)
     data = await coord._async_update_data()
@@ -44,6 +45,7 @@ async def test_update_data_aggregates_three_endpoints(hass: HomeAssistant) -> No
     assert data.shopping_cart[0]["uuid"] == "c"
     assert data.units == {"u1": {"uid": "u1", "name": "Tüte"}}
     assert data.categories == {"24": {"uuid": "24", "name": "Sauces"}}
+    assert data.emergency_supply == {"enabled": True, "days": 3}
 
 
 async def test_update_data_keeps_categories_when_their_fetch_fails(
@@ -56,11 +58,17 @@ async def test_update_data_keeps_categories_when_their_fetch_fails(
     api.get_shopping_cart = AsyncMock(return_value=[])
     api.get_list_units = AsyncMock(return_value=[])
     api.get_list_categories = AsyncMock(side_effect=PantristApiError("502"))
+    # An API that doesn't know the endpoint yet answers 404.
+    api.get_emergency_supply = AsyncMock(side_effect=PantristApiError("404"))
 
     coord = _build(hass, api)
-    coord.data = PantristData(categories={"24": {"uuid": "24", "name": "Sauces"}})
+    coord.data = PantristData(
+        categories={"24": {"uuid": "24", "name": "Sauces"}},
+        emergency_supply={"enabled": True, "days": 3},
+    )
     data = await coord._async_update_data()
     assert data.categories == {"24": {"uuid": "24", "name": "Sauces"}}
+    assert data.emergency_supply == {"enabled": True, "days": 3}
 
 
 async def test_update_data_translates_auth_error(hass: HomeAssistant) -> None:

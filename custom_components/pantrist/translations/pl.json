@@ -98,6 +98,9 @@
             },
             "latest_shopping_item": {
                 "name": "Ostatnia pozycja z Listy Zakupów"
+            },
+            "emergency_supply": {
+                "name": "Zapasy na sytuacje kryzysowe"
             }
         },
         "binary_sensor": {
@@ -222,6 +225,21 @@
                 "33": "Żywność dla niemowląt",
                 "34": "Dom i ogród",
                 "35": "Inne"
+            }
+        },
+        "emergency_group": {
+            "options": {
+                "beverages": "Napoje",
+                "cereals": "Produkty zbożowe",
+                "dairy": "Mleko, nabiał",
+                "fats": "Tłuszcze, oleje",
+                "fruits": "Owoce, orzechy",
+                "grains": "Zboża, chleb, ziemniaki",
+                "oil": "Olej roślinny",
+                "protein": "Mięso, ryby, jajka",
+                "pulses": "Rośliny strączkowe",
+                "sugar_salt": "Cukier i sól",
+                "vegetables": "Warzywa, rośliny strączkowe"
             }
         }
     }

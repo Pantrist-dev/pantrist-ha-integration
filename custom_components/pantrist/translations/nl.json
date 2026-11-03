@@ -12,6 +12,9 @@
       },
       "shopping_cart": {
         "unit_of_measurement": "artikelen"
+      },
+      "emergency_supply": {
+        "name": "Noodvoorraden"
       }
     }
   },
@@ -107,6 +110,21 @@
         "33": "Babyvoeding",
         "34": "Huis & Tuin",
         "35": "Overig"
+      }
+    },
+    "emergency_group": {
+      "options": {
+        "beverages": "Dranken",
+        "cereals": "Graanproducten",
+        "dairy": "Melk, zuivel",
+        "fats": "Vetten, oliën",
+        "fruits": "Fruit, noten",
+        "grains": "Granen, brood, aardappelen",
+        "oil": "Plantaardige olie",
+        "protein": "Vlees, vis, eieren",
+        "pulses": "Peulvruchten",
+        "sugar_salt": "Suiker & zout",
+        "vegetables": "Groenten, peulvruchten"
       }
     }
   }

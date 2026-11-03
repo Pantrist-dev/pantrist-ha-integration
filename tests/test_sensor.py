@@ -12,12 +12,15 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from custom_components.pantrist.const import DOMAIN
 from custom_components.pantrist.coordinator import PantristCoordinator, PantristData
 from custom_components.pantrist.sensor import (
+    PantristEmergencySupplySensor,
     PantristExpiringSoonSensor,
     PantristNextExpirationSensor,
     PantristPantrySensor,
     PantristShoppingCartSensor,
     PantristShoppingListSensor,
 )
+
+from custom_components.pantrist.units import async_load_unit_labels
 
 from .conftest import LIST_ID, LIST_NAME
 
@@ -51,6 +54,7 @@ async def test_sensors_materialize(
     assert f"{LIST_ID}_expiring_soon" in unique_ids
     assert f"{LIST_ID}_shopping_cart" in unique_ids
     assert f"{LIST_ID}_next_expiration" in unique_ids
+    assert f"{LIST_ID}_emergency_supply" in unique_ids
     # binary sensors + calendar materialise via the same setup
     assert f"{LIST_ID}_low_stock" in unique_ids
     assert f"{LIST_ID}_has_expired_items" in unique_ids
@@ -332,3 +336,77 @@ async def test_next_expiration_sensor_returns_none_when_no_dates(
 ) -> None:
     coord = _make_coordinator(hass, PantristData(pantry={"items": [{}, {}]}))
     assert PantristNextExpirationSensor(coord).native_value is None
+
+
+SUPPLY = {
+    "enabled": True,
+    "standard": "bmel",
+    "peopleCount": 2,
+    "days": 0.3125,
+    "scarcestGroup": "beverages",
+    "foodWeight": 12.3456,
+    "groups": [
+        {
+            "id": "grains",
+            "days": 14.0,
+            "status": "ok",
+            "currentAmount": 9.24,
+            "requiredAmount": 6.6,
+            "unit": "kg",
+            "articleCount": 4,
+        },
+        {
+            "id": "beverages",
+            "days": 0.3125,
+            "status": "critical",
+            "currentAmount": 1.25,
+            "requiredAmount": 40,
+            "unit": "l",
+            "articleCount": 1,
+        },
+    ],
+}
+
+
+async def test_emergency_supply_sensor(hass: HomeAssistant) -> None:
+    """The Notvorrat reach in days, with the scarcest group and per group (#31)."""
+    hass.config.language = "de"
+    await async_load_unit_labels(hass)
+    coord = _make_coordinator(hass, PantristData(emergency_supply=SUPPLY))
+    sensor = PantristEmergencySupplySensor(coord)
+    sensor.hass = hass
+
+    assert sensor.native_value == 0.31
+    attrs = sensor.extra_state_attributes
+    assert attrs["scarcest_group"] == "beverages"
+    assert attrs["scarcest_group_name"] == "Getränke"
+    assert attrs["standard"] == "bmel"
+    assert attrs["people_count"] == 2
+    assert attrs["food_weight_kg"] == 12.35
+    assert attrs["groups"][0] == {
+        "id": "grains",
+        "name": "Getreide, Brot, Kartoffeln",
+        "days": 14.0,
+        "status": "ok",
+        "current_amount": 9.24,
+        "required_amount": 6.6,
+        "unit": "kg",
+        "article_count": 4,
+    }
+
+
+async def test_emergency_supply_sensor_switched_off(hass: HomeAssistant) -> None:
+    coord = _make_coordinator(
+        hass, PantristData(emergency_supply={"enabled": False, "groups": []})
+    )
+    sensor = PantristEmergencySupplySensor(coord)
+    assert sensor.native_value is None
+    assert sensor.extra_state_attributes["enabled"] is False
+
+
+async def test_emergency_supply_sensor_before_the_api_answered(
+    hass: HomeAssistant,
+) -> None:
+    sensor = PantristEmergencySupplySensor(_make_coordinator(hass, PantristData()))
+    assert sensor.native_value is None
+    assert sensor.extra_state_attributes["groups"] == []

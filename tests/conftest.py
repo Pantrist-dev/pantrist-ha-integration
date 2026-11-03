@@ -96,6 +96,7 @@ def mock_api() -> Generator[MagicMock, None, None]:
         api.get_shopping_cart = AsyncMock(return_value=[])
         api.get_list_units = AsyncMock(return_value=[])
         api.get_list_categories = AsyncMock(return_value=[])
+        api.get_emergency_supply = AsyncMock(return_value={})
         api.add_to_shopping_list_by_name = AsyncMock(return_value={})
         api.add_to_shopping_list_by_barcode = AsyncMock(return_value={})
         api.check_shopping_list_item = AsyncMock(return_value=None)

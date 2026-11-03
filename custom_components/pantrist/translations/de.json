@@ -98,6 +98,9 @@
       },
       "latest_shopping_item": {
         "name": "Letzter Einkaufslisten-Eintrag"
+      },
+      "emergency_supply": {
+        "name": "Notvorrat"
       }
     },
     "binary_sensor": {
@@ -382,6 +385,21 @@
         "33": "Babynahrung",
         "34": "Baumarkt & Garten",
         "35": "Sonstiges"
+      }
+    },
+    "emergency_group": {
+      "options": {
+        "beverages": "Getränke",
+        "cereals": "Getreideprodukte",
+        "dairy": "Milch, Milchprodukte",
+        "fats": "Fette, Öle",
+        "fruits": "Obst, Nüsse",
+        "grains": "Getreide, Brot, Kartoffeln",
+        "oil": "Pflanzenöl",
+        "protein": "Fleisch, Fisch, Eier",
+        "pulses": "Hülsenfrüchte",
+        "sugar_salt": "Zucker & Salz",
+        "vegetables": "Gemüse, Hülsenfrüchte"
       }
     }
   }

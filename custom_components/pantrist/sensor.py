@@ -6,16 +6,23 @@ from datetime import date, datetime, time, timedelta, timezone
 import logging
 from typing import Any
 
-from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorStateClass,
+)
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import UnitOfTime
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.translation import async_get_cached_translations
 
 from .categories import category_name, category_names
 from .const import (
     DOMAIN,
+    SENSOR_EMERGENCY_SUPPLY,
     SENSOR_EXPIRING_SOON,
     SENSOR_LATEST_SHOPPING_ITEM,
     SENSOR_NEXT_EXPIRATION,
@@ -54,6 +61,7 @@ async def async_setup_entry(
             PantristShoppingCartSensor(coordinator),
             PantristNextExpirationSensor(coordinator),
             PantristLatestShoppingItemSensor(coordinator),
+            PantristEmergencySupplySensor(coordinator),
         ]
 
     initial: list[SensorEntity] = []
@@ -383,4 +391,80 @@ class PantristLatestShoppingItemSensor(PantristEntity, SensorEntity):
             "display": _format_item(item, self.hass, self.coordinator.data.units).get(
                 "display"
             ),
+        }
+
+
+def _emergency_group_name(hass: HomeAssistant | None, group_id: str | None) -> str | None:
+    """The app's name of an emergency supply group, e.g. "Getränke".
+
+    The labels live under ``selector.emergency_group`` in the translation
+    files (loaded at setup with the unit labels); an unknown group keeps its id.
+    """
+    if group_id is None:
+        return None
+    if hass is None:
+        return group_id
+    strings = async_get_cached_translations(
+        hass, hass.config.language, "selector", DOMAIN
+    )
+    return strings.get(
+        f"component.{DOMAIN}.selector.emergency_group.options.{group_id}", group_id
+    )
+
+
+def _round(value: Any, digits: int = 2) -> float | None:
+    return None if value is None else round(float(value), digits)
+
+
+class PantristEmergencySupplySensor(_PantristBaseSensor):
+    """How many days the emergency supply ("Notvorrat") lasts.
+
+    Pantrist counts it like the app's pantry analysis: per food group of the
+    list's standard (BMEL or WFP), and the whole supply lasts as long as the
+    group that runs out first. Unknown while the list switched the emergency
+    supply off.
+    """
+
+    _attr_icon = "mdi:shield-home"
+    _attr_translation_key = SENSOR_EMERGENCY_SUPPLY
+    _attr_device_class = SensorDeviceClass.DURATION
+    _attr_native_unit_of_measurement = UnitOfTime.DAYS
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_suggested_display_precision = 1
+
+    def __init__(self, coordinator: PantristCoordinator) -> None:
+        super().__init__(coordinator, SENSOR_EMERGENCY_SUPPLY)
+
+    @property
+    def native_value(self) -> float | None:
+        supply = self.data.emergency_supply
+        if not supply.get("enabled"):
+            return None
+        return _round(supply.get("days"))
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        supply = self.data.emergency_supply
+        scarcest = supply.get("scarcestGroup")
+        return {
+            "list_id": self.coordinator.list_id,
+            "enabled": bool(supply.get("enabled")),
+            "standard": supply.get("standard"),
+            "people_count": supply.get("peopleCount"),
+            "scarcest_group": scarcest,
+            "scarcest_group_name": _emergency_group_name(self.hass, scarcest),
+            "food_weight_kg": _round(supply.get("foodWeight")),
+            "groups": [
+                {
+                    "id": group.get("id"),
+                    "name": _emergency_group_name(self.hass, group.get("id")),
+                    "days": _round(group.get("days")),
+                    "status": group.get("status"),
+                    "current_amount": _round(group.get("currentAmount")),
+                    "required_amount": _round(group.get("requiredAmount")),
+                    "unit": group.get("unit"),
+                    "article_count": group.get("articleCount"),
+                }
+                for group in supply.get("groups") or []
+            ],
         }

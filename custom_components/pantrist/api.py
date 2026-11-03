@@ -31,6 +31,9 @@ from .const import API_BASE
 from .pantrist_client import AuthenticatedClient
 from .pantrist_client.api.barcode import barcode_controller_find_one
 from .pantrist_client.api.list_ import list_controller_get_list
+from .pantrist_client.api.list_analysis import (
+    list_emergency_supply_controller_get_emergency_supply as _emergency_get,
+)
 from .pantrist_client.api.list_categories import (
     list_categories_controller_get_categories as _categories_get,
 )
@@ -247,6 +250,21 @@ class PantristApi:
         if result is None:
             raise PantristApiError("The categories endpoint did not return a list")
         return self._wrap(result) or []
+
+    async def get_emergency_supply(self, list_id: str) -> dict[str, Any]:
+        """GET /list/{list_id}/analysis/emergencySupply — the Notvorrat.
+
+        Counted by the API with the same analysis the app runs, so the days
+        match the app's pantry analysis.
+        """
+        client = await self._client()
+        result = await self._call(
+            _emergency_get.asyncio(client=client, list_id=list_id)
+        )
+        if result is None:
+            raise PantristApiError("The emergency supply endpoint did not answer")
+        wrapped: dict[str, Any] = self._wrap(result)
+        return wrapped
 
     # ------------------------------------------------------------------
     # Shopping list

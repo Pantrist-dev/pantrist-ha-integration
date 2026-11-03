@@ -284,6 +284,26 @@ async def test_get_list_categories_raises_when_the_endpoint_did_not_answer(
         await api.get_list_categories(LIST_ID)
 
 
+async def test_get_emergency_supply(api: PantristApi) -> None:
+    supply = _make_dto(enabled=True, days=3.5, scarcestGroup="beverages")
+    with patch(
+        "custom_components.pantrist.api._emergency_get.asyncio",
+        new=AsyncMock(return_value=supply),
+    ):
+        result = await api.get_emergency_supply(LIST_ID)
+    assert result == {"enabled": True, "days": 3.5, "scarcestGroup": "beverages"}
+
+
+async def test_get_emergency_supply_raises_without_an_answer(
+    api: PantristApi,
+) -> None:
+    with patch(
+        "custom_components.pantrist.api._emergency_get.asyncio",
+        new=AsyncMock(return_value=None),
+    ), pytest.raises(PantristApiError):
+        await api.get_emergency_supply(LIST_ID)
+
+
 async def test_get_pantry_list_empty(api: PantristApi) -> None:
     with patch(
         "custom_components.pantrist.api._pantry_get_items.asyncio",

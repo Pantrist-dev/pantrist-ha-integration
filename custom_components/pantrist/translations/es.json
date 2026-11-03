@@ -12,6 +12,9 @@
       },
       "shopping_cart": {
         "unit_of_measurement": "artículos"
+      },
+      "emergency_supply": {
+        "name": "Suministros de emergencia"
       }
     }
   },
@@ -107,6 +110,21 @@
         "33": "",
         "34": "",
         "35": ""
+      }
+    },
+    "emergency_group": {
+      "options": {
+        "beverages": "Bebidas",
+        "cereals": "Productos de cereales",
+        "dairy": "Leche, productos lácteos",
+        "fats": "Grasas, aceites",
+        "fruits": "Frutas, frutos secos",
+        "grains": "Cereales, pan, patatas",
+        "oil": "Aceite vegetal",
+        "protein": "Carne, pescado, huevos",
+        "pulses": "Legumbres",
+        "sugar_salt": "Azúcar y sal",
+        "vegetables": "Verduras, legumbres"
       }
     }
   }

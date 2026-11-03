@@ -112,6 +112,7 @@ automatically when the connection is restored.
 | `sensor.<list>_expiring_soon` | Items expiring within a 7-day window |
 | `sensor.<list>_shopping_cart` | Items in the intermediate cart |
 | `sensor.<list>_next_expiration` | Timestamp sensor — soonest best-before date across the pantry (drives Lovelace countdowns and the calendar card) |
+| `sensor.<list>_emergency_supplies` | How many days the emergency supply ("Notvorrat") lasts, per food group in its attributes |
 
 All count sensors carry an `items` attribute with the full per-item payload (uuid,
 name, amount, unit, brand, category, image URL, notes). The category comes as
@@ -158,6 +159,46 @@ expire this month" as a template:
 {{ item.batches | selectattr('best_before')
    | selectattr('best_before', 'lt', (now() + timedelta(days=30)).date() | string)
    | sum(attribute='count') }} of {{ item.amount }}
+```
+
+### Emergency supply
+
+The emergency supply sensor shows what the app's pantry analysis shows: how many
+days the pantry lasts for everyone on the list, counted per food group of the
+standard you picked in the app (BMEL or WFP). The whole supply lasts as long as
+the group that runs out first. Pantrist does the counting, so the numbers match
+the app; change the standard, the people or the category mapping in the app's
+analysis settings.
+
+Attributes: `scarcest_group` (id) and `scarcest_group_name`, `food_weight_kg`,
+`standard`, `people_count`, `enabled` and `groups`, one entry per group:
+
+```yaml
+groups:
+  - id: beverages
+    name: Getränke
+    days: 0.3
+    status: critical      # below 5 days; warning below 10, ok from 10 on
+    current_amount: 1.25
+    required_amount: 40   # for ten days, for everyone
+    unit: l
+    article_count: 1
+```
+
+The state is unknown while the emergency supply is switched off in the app. A
+notification when it drops below a week:
+
+```yaml
+triggers:
+  - trigger: numeric_state
+    entity_id: sensor.<list>_emergency_supplies
+    below: 7
+actions:
+  - action: notify.notify
+    data:
+      message: >
+        The emergency supply lasts {{ states('sensor.<list>_emergency_supplies') }} days.
+        Scarcest: {{ state_attr('sensor.<list>_emergency_supplies', 'scarcest_group_name') }}.
 ```
 
 ### Binary sensors (per list)

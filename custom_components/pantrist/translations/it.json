@@ -12,6 +12,9 @@
       },
       "shopping_cart": {
         "unit_of_measurement": "articoli"
+      },
+      "emergency_supply": {
+        "name": "Forniture di emergenza"
       }
     }
   },
@@ -107,6 +110,21 @@
         "33": "Alimenti per neonati",
         "34": "Casa e giardino",
         "35": "Altro"
+      }
+    },
+    "emergency_group": {
+      "options": {
+        "beverages": "Bevande",
+        "cereals": "Prodotti cerealicoli",
+        "dairy": "Latte, latticini",
+        "fats": "Grassi, oli",
+        "fruits": "Frutta, noci",
+        "grains": "Cereali, pane, patate",
+        "oil": "Olio vegetale",
+        "protein": "Carne, pesce, uova",
+        "pulses": "Legumi",
+        "sugar_salt": "Zucchero e sale",
+        "vegetables": "Verdura, legumi"
       }
     }
   }
