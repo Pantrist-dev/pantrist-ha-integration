@@ -1,131 +1,153 @@
 {
-  "entity": {
-    "sensor": {
-      "shopping_list": {
-        "unit_of_measurement": "artikelen"
-      },
-      "pantry": {
-        "unit_of_measurement": "artikelen"
-      },
-      "expiring_soon": {
-        "unit_of_measurement": "artikelen"
-      },
-      "shopping_cart": {
-        "unit_of_measurement": "artikelen"
-      },
-      "emergency_supply": {
-        "name": "Noodvoorraden"
-      }
+    "entity": {
+        "sensor": {
+            "shopping_list": {
+                "unit_of_measurement": "artikelen"
+            },
+            "pantry": {
+                "unit_of_measurement": "artikelen"
+            },
+            "expiring_soon": {
+                "unit_of_measurement": "artikelen"
+            },
+            "shopping_cart": {
+                "unit_of_measurement": "artikelen"
+            },
+            "emergency_supply": {
+                "name": "Noodvoorraden"
+            }
+        }
+    },
+    "selector": {
+        "unit_name": {
+            "options": {
+                "cup": "cup(s)",
+                "fl-oz": "fl-oz",
+                "g": "g",
+                "gal": "gal",
+                "kg": "kg",
+                "l": "L",
+                "lbs": "lbs",
+                "ml": "ml",
+                "oz": "oz",
+                "packet": "pak(ken)",
+                "pieces": "stuk(s)",
+                "qt": "qt",
+                "tbsp": "el.",
+                "tsp": "tl."
+            }
+        },
+        "unit_singular": {
+            "options": {
+                "cup": "cup",
+                "fl-oz": "fl-oz",
+                "g": "g",
+                "gal": "gal",
+                "kg": "kg",
+                "l": "L",
+                "lbs": "lbs",
+                "ml": "ml",
+                "oz": "oz",
+                "packet": "pak",
+                "pieces": "stuk",
+                "qt": "qt",
+                "tbsp": "el.",
+                "tsp": "tl."
+            }
+        },
+        "unit_plural": {
+            "options": {
+                "cup": "cups",
+                "fl-oz": "fl-oz",
+                "g": "g",
+                "gal": "gal",
+                "kg": "kg",
+                "l": "L",
+                "lbs": "lbs",
+                "ml": "ml",
+                "oz": "oz",
+                "packet": "pakken",
+                "pieces": "stukken",
+                "qt": "qt",
+                "tbsp": "el.",
+                "tsp": "tl."
+            }
+        },
+        "category_name": {
+            "options": {
+                "1": "Ongecategoriseerd",
+                "2": "Alcohol & Tabak",
+                "3": "Brood & Gebak",
+                "4": "Badproducten",
+                "5": "Dranken",
+                "6": "Koude Gerechten",
+                "7": "Lichaamsverzorging",
+                "8": "Ingeblikt voedsel",
+                "9": "Afgekoeld",
+                "10": "Delicatessen",
+                "11": "Eieren & zuivelproducten",
+                "12": "Vis",
+                "13": "Vaste producten",
+                "14": "Bevroren voedsel",
+                "15": "Fruit & groenten",
+                "16": "Haarverzorging",
+                "17": "Huishouding",
+                "18": "Vlees",
+                "19": "Medische producten",
+                "20": "Kantoorartikelen",
+                "21": "Pasta & Granen",
+                "22": "Huisdier",
+                "23": "Peulvruchten & Granen",
+                "24": "Sauzen",
+                "25": "Hapjes",
+                "26": "Kruiden & Ingrediënten",
+                "27": "Broodbeleg",
+                "28": "Snoepgoed",
+                "29": "Schoonmaak",
+                "30": "Azijn en olie",
+                "31": "Veganistisch",
+                "32": "Nagerecht",
+                "33": "Babyvoeding",
+                "34": "Huis & Tuin",
+                "35": "Overig"
+            }
+        },
+        "emergency_group": {
+            "options": {
+                "beverages": "Dranken",
+                "cereals": "Graanproducten",
+                "dairy": "Melk, zuivel",
+                "fats": "Vetten, oliën",
+                "fruits": "Fruit, noten",
+                "grains": "Granen, brood, aardappelen",
+                "oil": "Plantaardige olie",
+                "protein": "Vlees, vis, eieren",
+                "pulses": "Peulvruchten",
+                "sugar_salt": "Suiker & zout",
+                "vegetables": "Groenten, peulvruchten"
+            }
+        }
+    },
+    "config": {
+        "step": {
+            "pick_implementation": {
+                "title": "Koppel je Pantrist-account",
+                "description": "Geef Home Assistant toestemming om toegang te krijgen tot je Pantrist-gegevens."
+            },
+            "reauth_confirm": {
+                "title": "Koppel je Pantrist-account opnieuw",
+                "description": "Je Pantrist-verversingstoken (refresh token) is niet langer geldig. Autoriseer opnieuw om updates te blijven ontvangen.(Bewerkt)Origineel herstellen."
+            }
+        },
+        "abort": {
+            "authorize_url_timeout": "Time-out bij het genereren van de autorisatie-URL.",
+            "missing_configuration": "De inloggegevens voor de Pantrist-applicatie zijn niet ingesteld.",
+            "missing_list_id": "Pantrist heeft geen lijst-ID geretourneerd — probeer het opnieuw en selecteer een lijst tijdens de toestemmingsstap.",
+            "already_configured": "Deze Pantrist-lijst is al verbonden.",
+            "wrong_account": "Bij de herauthenticatie is een andere lijst geselecteerd dan bij de oorspronkelijke authenticatie. Verwijder dit item en voeg in plaats daarvan een nieuw item toe.",
+            "reauth_successful": "De verbinding met Pantrist is succesvol hersteld.",
+            "reconfigure_successful": "Pantrist succesvol opnieuw geconfigureerd.",
+            "invalid_auth": "De Pantrist-API heeft het toegangstoken geweigerd. Probeer het opnieuw."
+        }
     }
-  },
-  "selector": {
-    "unit_name": {
-      "options": {
-        "cup": "cup(s)",
-        "fl-oz": "fl-oz",
-        "g": "g",
-        "gal": "gal",
-        "kg": "kg",
-        "l": "L",
-        "lbs": "lbs",
-        "ml": "ml",
-        "oz": "oz",
-        "packet": "pak(ken)",
-        "pieces": "stuk(s)",
-        "qt": "qt",
-        "tbsp": "el.",
-        "tsp": "tl."
-      }
-    },
-    "unit_singular": {
-      "options": {
-        "cup": "cup",
-        "fl-oz": "fl-oz",
-        "g": "g",
-        "gal": "gal",
-        "kg": "kg",
-        "l": "L",
-        "lbs": "lbs",
-        "ml": "ml",
-        "oz": "oz",
-        "packet": "pak",
-        "pieces": "stuk",
-        "qt": "qt",
-        "tbsp": "el.",
-        "tsp": "tl."
-      }
-    },
-    "unit_plural": {
-      "options": {
-        "cup": "cups",
-        "fl-oz": "fl-oz",
-        "g": "g",
-        "gal": "gal",
-        "kg": "kg",
-        "l": "L",
-        "lbs": "lbs",
-        "ml": "ml",
-        "oz": "oz",
-        "packet": "pakken",
-        "pieces": "stukken",
-        "qt": "qt",
-        "tbsp": "el.",
-        "tsp": "tl."
-      }
-    },
-    "category_name": {
-      "options": {
-        "1": "Ongecategoriseerd",
-        "2": "Alcohol & Tabak",
-        "3": "Brood & Gebak",
-        "4": "Badproducten",
-        "5": "Dranken",
-        "6": "Koude Gerechten",
-        "7": "Lichaamsverzorging",
-        "8": "Ingeblikt voedsel",
-        "9": "Afgekoeld",
-        "10": "Delicatessen",
-        "11": "Eieren & zuivelproducten",
-        "12": "Vis",
-        "13": "Vaste producten",
-        "14": "Bevroren voedsel",
-        "15": "Fruit & groenten",
-        "16": "Haarverzorging",
-        "17": "Huishouding",
-        "18": "Vlees",
-        "19": "Medische producten",
-        "20": "Kantoorartikelen",
-        "21": "Pasta & Granen",
-        "22": "Huisdier",
-        "23": "Peulvruchten & Granen",
-        "24": "Sauzen",
-        "25": "Hapjes",
-        "26": "Kruiden & Ingrediënten",
-        "27": "Broodbeleg",
-        "28": "Snoepgoed",
-        "29": "Schoonmaak",
-        "30": "Azijn en olie",
-        "31": "Veganistisch",
-        "32": "Nagerecht",
-        "33": "Babyvoeding",
-        "34": "Huis & Tuin",
-        "35": "Overig"
-      }
-    },
-    "emergency_group": {
-      "options": {
-        "beverages": "Dranken",
-        "cereals": "Graanproducten",
-        "dairy": "Melk, zuivel",
-        "fats": "Vetten, oliën",
-        "fruits": "Fruit, noten",
-        "grains": "Granen, brood, aardappelen",
-        "oil": "Plantaardige olie",
-        "protein": "Vlees, vis, eieren",
-        "pulses": "Peulvruchten",
-        "sugar_salt": "Suiker & zout",
-        "vegetables": "Groenten, peulvruchten"
-      }
-    }
-  }
 }
